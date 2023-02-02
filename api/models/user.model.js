@@ -41,6 +41,24 @@ const userSchema = new mongoose.Schema({
 		type: String,
 		required: true,
 	},
+    createdBy:{
+        name:{
+            type:String,
+		    lowercase:true,
+        },
+        _id:{
+            type: mongoose.Schema.Types.ObjectId,
+        }
+    },
+    modifiedBy:{
+        name:{
+            type:String,
+		    lowercase:true,
+        },
+        _id:{
+            type: mongoose.Schema.Types.ObjectId,
+        }
+    }
 }, {
 	timestamps: true
 })

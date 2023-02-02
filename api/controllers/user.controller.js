@@ -1,11 +1,17 @@
 const User = require('../models/user.model')
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
+
 exports.register = async (req, res) => {
 	const { name, phoneNumber, email, role, password } = req.body;
 	const hash_password = bcrypt.hashSync(password, 10)
 	const isActive = true;
-	const user = new User({ name, phoneNumber,email, role, hash_password, isActive });
+    const createdBy = {
+        _id: req?.token?.id,
+        name:req?.token?.name
+    }
+	const user = new User({ name, phoneNumber,email, role, hash_password, isActive, createdBy, modifiedBy: createdBy });
 	try {
 		await user.save()
 		res.status(201).json({
@@ -31,15 +37,15 @@ exports.singIn = async (req, res) => {
             const maxAge = 24 * 60 * 60;
             const jwtSecret = process.env.JWT;
             const token = jwt.sign(
-              { id: user._id, role: user.role },
+              { id: user._id, name: user.name, role: user.role },
               jwtSecret,
               {
-                expiresIn: maxAge, // 3hrs in sec
+                expiresIn: maxAge, 
               }
             );
             res.cookie("jwt", token, {
               httpOnly: true,
-              maxAge: maxAge * 1000, // 3hrs in ms
+              maxAge: maxAge * 1000, 
             });
             res.status(200).json({user})
         }else{
@@ -50,11 +56,31 @@ exports.singIn = async (req, res) => {
         }
 		
 	} catch (error) {
-		console.log(error)
+		res.status(500).send(error)
 	}
 };
 
 exports.getAllUsers =async(req, res)=>{
-    const users = await User.find({})
-    res.json({users})
+    try {
+        const users = await User.find({isActive:true})
+        res.json({users})    
+    } catch (error) {
+        res.status(500).send(error)
+    }
+   
+}
+
+exports.deleteUserById =async(req, res)=>{
+    const { id } = req.body;
+    const _id = new mongoose.mongo.ObjectId(id);
+    try {
+       const response =  await User.findByIdAndUpdate(_id, {$set:{isActive:false}}, {runValidators:true})
+       res.status(200).json({
+        message:'successfully deleted'
+       })
+    } catch (error) {
+        console.log(error)
+        res.status(500).send(error)
+    }
+   
 }

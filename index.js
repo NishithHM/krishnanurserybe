@@ -6,8 +6,10 @@ const dotenv = require('dotenv')
 const dbCon = require('./db/connection')
 const cookieParser = require("cookie-parser");
 
+
 const app = express()
 dotenv.config({ path: './.env' })
+dbCon.connect()
 const port = process.env.PORT;
 app.use(cors())
 app.use(cookieParser())
