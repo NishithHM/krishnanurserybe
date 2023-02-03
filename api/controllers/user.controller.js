@@ -61,10 +61,49 @@ exports.singIn = async (req, res) => {
 };
 
 exports.getAllUsers =async(req, res)=>{
+    const {pageNumber, search, isCount} = req.body;
     try {
-        const users = await User.find({isActive:true})
+        const match = [
+            {
+              '$match': {
+                'isActive': true
+              }
+            },
+          ]
+        const pagination = [ {
+            '$skip': 10 * (pageNumber -1)
+          }, {
+            '$limit': 10
+          }] 
+        const searchMatch = [
+            {
+              '$match': {
+                'name': {$regex:search, $options:"is"}
+              }
+            },
+        ]  
+        const count = [
+            {
+              '$count': 'count'
+            },
+        ]  
+
+        const pipeline = []
+        pipeline.push(...match)
+        if(search){
+            pipeline.push(...searchMatch)
+        }
+        if(pageNumber){
+            pipeline.push(...pagination)
+        }
+        if(isCount){
+            pipeline.push(...count)
+        }
+        console.log("getAllUsers-pipeline",JSON.stringify(pipeline))
+        const users = await User.aggregate(pipeline)
         res.json({users})    
     } catch (error) {
+        console.log(error)
         res.status(500).send(error)
     }
    
