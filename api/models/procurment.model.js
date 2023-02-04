@@ -32,6 +32,32 @@ const Procurement = new mongoose.Schema({
         type: Date,
         required: true
     },
+    minimumQuantity:{
+        type: Number,
+        default: 0
+    },
+    variants:{
+        type:[{
+            names:{
+                en:{
+                    name:{
+                        type: String,
+                    }
+                },
+                ka:{
+                    name:{
+                        type: String
+                    }
+                }
+            },
+            minPrice:{
+                type: Number
+            },
+            maxPrice:{
+                type: Number
+            }
+        }]
+    },
     procurementHistory: {
         type: [{
             createdBy: {

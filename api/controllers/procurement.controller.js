@@ -3,6 +3,8 @@ const Vendor = require('../models/vendor.model')
 const ProcurementHistory = require('../models/procurementHistory.model')
 const mongoose = require('mongoose')
 const dayjs = require('dayjs')
+const uniq = require('lodash/uniq')
+
 exports.addNewProcurement = async (req, res) => {
     const { nameInEnglish, nameInKannada, vendorName, vendorContact, totalQuantity, totalPrice, description, vendorId } = req.body
     const names = {
@@ -218,4 +220,46 @@ exports.getAllProcurementsHistory =async(req, res)=>{
         res.status(500).send(error)
     }
    
+}
+
+exports.addProcurementVariants = async (req, res) => {
+    const { id, variants, minimumQuantity } = req.body
+    try {
+        const procurement = await Procurement.findById(id)
+        if (procurement) {
+            procurement.minimumQuantity = minimumQuantity
+            const variantsDb = variants.map(val=>({
+                names:{
+                    en:{
+                        name: val.variantNameInEnglish
+                    },
+                    ka:{
+                        name: val.variantNameInKannada
+                    }
+                },
+                minPrice : val.minPrice,
+                maxPrice : val.maxPrice
+            }));
+            
+            procurement.variants = [...procurement.variants, ...variantsDb]
+            const names = procurement.variants.map(val=>(
+                val.variantNameInEnglish
+            ));
+            const uniqVal = uniq(names)
+            if(names.length === uniqVal.length){
+                const response = await procurement.save()
+                res.json(response)
+            }else{
+                res.status(400).json({error: 'duplicate variant name'})
+            }
+            
+
+        } else {
+            res.status(400).send("Record not found")
+        }
+    } catch (error) {
+        console.log(error)
+        res.status(500).send(error)
+    }
+
 }

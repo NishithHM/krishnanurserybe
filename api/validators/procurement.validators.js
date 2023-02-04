@@ -36,3 +36,14 @@ exports.getProcurementsHistorySchema = Joi.object().keys({
     startDate : Joi.string().pattern(new RegExp(/\d{4}-\d{2}-\d{2}/)).required(),
     endDate : Joi.string().pattern(new RegExp(/\d{4}-\d{2}-\d{2}/)).required()
 });
+
+exports.addVariantsSchema = Joi.object().keys({
+    id: Joi.string().required(),
+    variants: Joi.array().items(Joi.object().keys({
+        variantNameInEnglish: Joi.string().pattern(new RegExp(/[A-Za-z]/)).required(),
+        variantNameInKannada: Joi.string().required(),
+        minPrice: Joi.number().required(),
+        maxPrice: Joi.number().required()
+    })),
+    minimumQuantity: Joi.number().required()
+})
