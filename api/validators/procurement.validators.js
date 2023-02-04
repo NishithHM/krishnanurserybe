@@ -51,3 +51,10 @@ exports.setProcurementMinQuantitySchema = Joi.object().keys({
     id: Joi.string().required(),
     minimumQuantity: Joi.number().required()
 })
+
+exports.getProcurementsLowSchema = Joi.object().keys({
+    pageNumber: Joi.number(),
+    isCount: Joi.boolean(),
+    sortBy: Joi.string().valid('minimumQuantity'),
+    sortType: Joi.number().valid(-1, 1).default(1)
+});

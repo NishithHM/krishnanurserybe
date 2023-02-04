@@ -280,3 +280,57 @@ exports.setMinimumQuantity = async (req, res) => {
     }
 
 }
+
+exports.getLowProcurements = async (req, res) => {
+    const { pageNumber, isCount, sortBy, sortType } = req.body;
+    try {
+        const match = [
+            {
+                '$match': {
+                    $expr:{
+                      $lt:["$remainingQuantity", "$minimumQuantity"]
+                    }
+                  }
+            },
+        ]
+        const pagination = [{
+            '$skip': 10 * (pageNumber - 1)
+        }, {
+            '$limit': 10
+        }]
+        
+        const count = [
+            {
+                '$count': 'count'
+            },
+        ]
+        const sortVal = {
+            "minimumQuantity": "minimumQuantity"
+        }
+        const sortStage = [{
+            '$sort': {
+                [sortVal[sortBy]]: parseInt(sortType)
+            }
+        }]
+
+        const pipeline = []
+        pipeline.push(...match)
+        if (sortBy && sortType) {
+            pipeline.push(...sortStage)
+        }
+        if (pageNumber) {
+            pipeline.push(...pagination)
+        }
+        if (isCount) {
+            pipeline.push(...count)
+        }
+
+        console.log("getAllProcurements-pipeline", JSON.stringify(pipeline))
+        const procurements = await Procurement.aggregate(pipeline)
+        res.json(procurements)
+    } catch (error) {
+        console.log(error)
+        res.status(500).send(error)
+    }
+
+}
