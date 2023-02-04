@@ -6,8 +6,8 @@ const { authWall, bodyValidator, paramsToBody } = require('./middlewares/auth.mi
 const { createUserSchema, loginUserSchema, deleteUserSchema, getUsersSchema } = require('./validators/user.validators')
 const { createCategorySchema, deleteCategorySchema, getCategorySchema } = require('./validators/categories.validators')
 const {createCategory, deleteCategoryById, getAllCategories} = require('./controllers/categories.controller')
-const {createProcurementSchema, updateProcurementSchema, getProcurementsSchema, getProcurementsHistorySchema, addVariantsSchema} = require('./validators/procurement.validators')
-const {addNewProcurement, updateProcurement, getAllProcurements, getAllProcurementsHistory, addProcurementVariants} = require('./controllers/procurement.controller')
+const {createProcurementSchema, updateProcurementSchema, getProcurementsSchema, getProcurementsHistorySchema, addVariantsSchema, setProcurementMinQuantitySchema} = require('./validators/procurement.validators')
+const {addNewProcurement, updateProcurement, getAllProcurements, getAllProcurementsHistory, addProcurementVariants,setMinimumQuantity } = require('./controllers/procurement.controller')
 const {getVendorsSchema} = require('./validators/vendor.validators')
 const {getVendorList} = require('./controllers/vendor.controller')
 // user
@@ -28,6 +28,7 @@ router.post('/api/procurements/update/:id', [authWall(['procurement']), paramsTo
 router.get('/api/procurements/getAll', [authWall(['admin', 'procurement']), paramsToBody(['pageNumber', 'search', 'isCount', 'sortBy', 'sortType'], 'query'), bodyValidator(getProcurementsSchema)],getAllProcurements )
 router.get('/api/procurements/getAllHistory', [authWall(['admin', 'procurement']), paramsToBody(['pageNumber', 'isCount', 'id', 'startDate', 'endDate'], 'query'), bodyValidator(getProcurementsHistorySchema)],getAllProcurementsHistory )
 router.post('/api/procurements/variants/:id', [authWall(['admin']), paramsToBody(['id'], 'params'), bodyValidator(addVariantsSchema)], addProcurementVariants)
+router.post('/api/procurements/minimumQuantity/:id', [authWall(['admin']), paramsToBody(['id'], 'params'), bodyValidator(setProcurementMinQuantitySchema)], setMinimumQuantity)
 
 // vendors
 router.get('/api/vendors/getAll', [authWall(['procurement']), paramsToBody(['search'], 'query'), bodyValidator(getVendorsSchema)],getVendorList )

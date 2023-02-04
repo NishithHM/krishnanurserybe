@@ -45,5 +45,9 @@ exports.addVariantsSchema = Joi.object().keys({
         minPrice: Joi.number().required(),
         maxPrice: Joi.number().required()
     })),
+})
+
+exports.setProcurementMinQuantitySchema = Joi.object().keys({
+    id: Joi.string().required(),
     minimumQuantity: Joi.number().required()
 })

@@ -16,8 +16,8 @@ exports.addNewProcurement = async (req, res) => {
         }
     }
     let newVendorId
-    if(!vendorId){
-        const vendorData = await new Vendor({contact: vendorContact, name: vendorName})
+    if (!vendorId) {
+        const vendorData = await new Vendor({ contact: vendorContact, name: vendorName })
         newVendorId = vendorData._id
         vendorData.save()
     }
@@ -64,8 +64,8 @@ exports.updateProcurement = async (req, res) => {
                 name: req?.token?.name
             }
             let newVendorId
-            if(!vendorId){
-                const vendorData = await new Vendor({contact: vendorContact, name: vendorName})
+            if (!vendorId) {
+                const vendorData = await new Vendor({ contact: vendorContact, name: vendorName })
                 newVendorId = vendorData._id
                 vendorData.save()
             }
@@ -106,97 +106,97 @@ exports.updateProcurement = async (req, res) => {
 
 }
 
-exports.getAllProcurements =async(req, res)=>{
-    const {pageNumber, search, isCount, sortBy, sortType} = req.body;
+exports.getAllProcurements = async (req, res) => {
+    const { pageNumber, search, isCount, sortBy, sortType } = req.body;
     try {
         const match = [
             {
-              '$match': {
-              }
-            },
-          ]
-        const pagination = [ {
-            '$skip': 10 * (pageNumber -1)
-          }, {
-            '$limit': 10
-          }] 
-        const searchMatch = [
-            {
-              '$match': {
-                'names.en.name': {$regex:search, $options:"i"}
-              }
-            },
-        ]  
-        const count = [
-            {
-              '$count': 'count'
+                '$match': {
+                }
             },
         ]
-        const sortVal ={
-            "plantName" : "names.en.name",
+        const pagination = [{
+            '$skip': 10 * (pageNumber - 1)
+        }, {
+            '$limit': 10
+        }]
+        const searchMatch = [
+            {
+                '$match': {
+                    'names.en.name': { $regex: search, $options: "i" }
+                }
+            },
+        ]
+        const count = [
+            {
+                '$count': 'count'
+            },
+        ]
+        const sortVal = {
+            "plantName": "names.en.name",
             "lastProcuredOn": "lastProcuredOn"
         }
         const sortStage = [{
-            '$sort':{
-                [sortVal[sortBy]] : parseInt(sortType)
+            '$sort': {
+                [sortVal[sortBy]]: parseInt(sortType)
             }
         }]
 
         const pipeline = []
         pipeline.push(...match)
-        if(search){
+        if (search) {
             pipeline.push(...searchMatch)
         }
-        if(sortBy && sortType) {
+        if (sortBy && sortType) {
             pipeline.push(...sortStage)
         }
-        if(pageNumber){
+        if (pageNumber) {
             pipeline.push(...pagination)
         }
-        if(isCount){
+        if (isCount) {
             pipeline.push(...count)
         }
-        
-        console.log("getAllProcurements-pipeline",JSON.stringify(pipeline))
+
+        console.log("getAllProcurements-pipeline", JSON.stringify(pipeline))
         const procurements = await Procurement.aggregate(pipeline)
-        res.json(procurements)    
+        res.json(procurements)
     } catch (error) {
         console.log(error)
         res.status(500).send(error)
     }
-   
+
 }
 
-exports.getAllProcurementsHistory =async(req, res)=>{
-    const {pageNumber, isCount, id, startDate, endDate} = req.body;
+exports.getAllProcurementsHistory = async (req, res) => {
+    const { pageNumber, isCount, id, startDate, endDate } = req.body;
     const procurementId = new mongoose.mongo.ObjectId(id);
     try {
         const match = [
             {
-              '$match': {
-                procurementId,
-                createdAt:{
-                    $gte:dayjs(startDate, 'YYYY-MM-DD').toDate(), 
-                    $lt: dayjs(endDate, 'YYYY-MM-DD').add(1, 'day').toDate()
+                '$match': {
+                    procurementId,
+                    createdAt: {
+                        $gte: dayjs(startDate, 'YYYY-MM-DD').toDate(),
+                        $lt: dayjs(endDate, 'YYYY-MM-DD').add(1, 'day').toDate()
+                    }
                 }
-              }
-            },
-          ]
-        const pagination = [ {
-            '$skip': 10 * (pageNumber -1)
-          }, {
-            '$limit': 10
-          }] 
-         
-        const count = [
-            {
-              '$count': 'count'
             },
         ]
-        
+        const pagination = [{
+            '$skip': 10 * (pageNumber - 1)
+        }, {
+            '$limit': 10
+        }]
+
+        const count = [
+            {
+                '$count': 'count'
+            },
+        ]
+
         const sortStage = [{
-            '$sort':{
-                createdAt : -1
+            '$sort': {
+                createdAt: -1
             }
         }]
 
@@ -204,56 +204,73 @@ exports.getAllProcurementsHistory =async(req, res)=>{
         pipeline.push(...match)
         pipeline.push(...sortStage)
 
-        if(pageNumber){
+        if (pageNumber) {
             pipeline.push(...pagination)
         }
 
-        if(isCount){
+        if (isCount) {
             pipeline.push(...count)
         }
-        
-        console.log("getAllProcurementsHistory-pipeline",JSON.stringify(pipeline))
+
+        console.log("getAllProcurementsHistory-pipeline", JSON.stringify(pipeline))
         const procurements = await ProcurementHistory.aggregate(pipeline)
-        res.json(procurements)    
+        res.json(procurements)
     } catch (error) {
         console.log(error)
         res.status(500).send(error)
     }
-   
+
 }
 
 exports.addProcurementVariants = async (req, res) => {
-    const { id, variants, minimumQuantity } = req.body
+    const { id, variants } = req.body
     try {
         const procurement = await Procurement.findById(id)
         if (procurement) {
-            procurement.minimumQuantity = minimumQuantity
-            const variantsDb = variants.map(val=>({
-                names:{
-                    en:{
+            const variantsDb = variants.map(val => ({
+                names: {
+                    en: {
                         name: val.variantNameInEnglish
                     },
-                    ka:{
+                    ka: {
                         name: val.variantNameInKannada
                     }
                 },
-                minPrice : val.minPrice,
-                maxPrice : val.maxPrice
+                minPrice: val.minPrice,
+                maxPrice: val.maxPrice
             }));
-            
+
             procurement.variants = [...procurement.variants, ...variantsDb]
-            const names = procurement.variants.map(val=>(
+            const names = procurement.variants.map(val => (
                 val.variantNameInEnglish
             ));
             const uniqVal = uniq(names)
-            if(names.length === uniqVal.length){
+            if (names.length === uniqVal.length) {
                 const response = await procurement.save()
                 res.json(response)
-            }else{
-                res.status(400).json({error: 'duplicate variant name'})
+            } else {
+                res.status(400).json({ error: 'duplicate variant name' })
             }
-            
 
+
+        } else {
+            res.status(400).send("Record not found")
+        }
+    } catch (error) {
+        console.log(error)
+        res.status(500).send(error)
+    }
+
+}
+
+exports.setMinimumQuantity = async (req, res) => {
+    const { id, minimumQuantity } = req.body
+    try {
+        const procurement = await Procurement.findById(id)
+        if (procurement) {
+            procurement.minimumQuantity = minimumQuantity;
+            const response = await procurement.save()
+            res.json(response)
         } else {
             res.status(400).send("Record not found")
         }
