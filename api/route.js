@@ -14,7 +14,7 @@ const {getVendorList} = require('./controllers/vendor.controller')
 // user
 router.post('/api/user/create/cmwcwec', [bodyValidator(createUserSchema)], register)
 router.post('/api/user/create', [authWall(['admin']), bodyValidator(createUserSchema)], register)
-router.get('/api/user/login', [bodyValidator(loginUserSchema)], singIn)
+router.post('/api/user/login', [bodyValidator(loginUserSchema)], singIn)
 router.get('/api/user/getAll', [authWall(['admin']), paramsToBody(['pageNumber', 'search', 'isCount'], 'query'), bodyValidator(getUsersSchema)], getAllUsers)
 router.put('/api/user/delete/:id', [authWall(['admin'])], paramsToBody(['id'], 'params'), bodyValidator(deleteUserSchema), deleteUserById)
 
