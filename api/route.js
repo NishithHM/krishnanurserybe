@@ -10,6 +10,7 @@ const {createProcurementSchema, updateProcurementSchema, getProcurementsSchema, 
 const {addNewProcurement, updateProcurement, getAllProcurements, getAllProcurementsHistory, addProcurementVariants,setMinimumQuantity, getLowProcurements  } = require('./controllers/procurement.controller')
 const {getVendorsSchema} = require('./validators/vendor.validators')
 const {getVendorList} = require('./controllers/vendor.controller')
+
 // user
 router.post('/api/user/create/cmwcwec', [bodyValidator(createUserSchema)], register)
 router.post('/api/user/create', [authWall(['admin']), bodyValidator(createUserSchema)], register)
