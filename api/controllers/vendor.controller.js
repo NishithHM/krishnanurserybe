@@ -1,0 +1,15 @@
+const Vendor = require('../models/vendor.model')
+
+exports.getVendorList = async (req, res)=>{
+    const {search} = req.body
+    const query = {
+        'name': {$regex:search, $options:"i"}
+     }
+    try {
+        const vendors = await Vendor.find(query)
+        res.status(200).json(vendors)
+    } catch (error) {
+        console.log(error)
+        res.status(500).send(error)
+    }
+}

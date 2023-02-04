@@ -2,7 +2,7 @@ const jwt = require("jsonwebtoken")
 const Joi = require("joi")
 const isEmpty = require('lodash/isEmpty')
 const User = require('../models/user.model')
-exports.authWall = (role)=>(req, res, next) => {
+exports.authWall = (roles)=>(req, res, next) => {
     const token = req.cookies.jwt
     const jwtSecret = process.env.JWT;
     if (token) {
@@ -11,7 +11,7 @@ exports.authWall = (role)=>(req, res, next) => {
                 console.log({ err })
                 return res.status(401).json({ message: "Not authorized" })
             } else {
-                if (decodedToken.role !== role) {
+                if (!roles.includes(decodedToken.role)) {
                     return res.status(401).json({ message: "Not authorized" })
                 } else if (decodedToken.id) {
                     const users = await User.findOne({ _id: decodedToken.id, isActive: true })
