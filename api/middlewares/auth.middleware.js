@@ -1,9 +1,8 @@
 const jwt = require("jsonwebtoken")
-const Joi = require("joi")
 const isEmpty = require('lodash/isEmpty')
 const User = require('../models/user.model')
 exports.authWall = (roles)=>(req, res, next) => {
-    const token = req.cookies.jwt
+    const token = req.cookies.jwt;
     const jwtSecret = process.env.JWT;
     if (token) {
         jwt.verify(token, jwtSecret, async (err, decodedToken) => {
