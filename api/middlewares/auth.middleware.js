@@ -3,7 +3,17 @@ const Joi = require("joi")
 const isEmpty = require('lodash/isEmpty')
 const User = require('../models/user.model')
 exports.authWall = (roles)=>(req, res, next) => {
-    const token = req.cookies.jwt
+    let token;
+    if(process.env.ENV === "DEV" ){
+        token = req.cookies.jwt
+        if(!token){
+            token = req.headers['Authorisation']
+        }
+    }else if(process.env.ENV === "PROD" ){
+        token = req.cookies.jwt
+    }
+        
+    }
     const jwtSecret = process.env.JWT;
     if (token) {
         jwt.verify(token, jwtSecret, async (err, decodedToken) => {
