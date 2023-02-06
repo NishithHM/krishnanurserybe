@@ -3,16 +3,15 @@ const isEmpty = require('lodash/isEmpty')
 const User = require('../models/user.model')
 exports.authWall = (roles)=>(req, res, next) => {
     let token;
-    if(process.env.ENV === "DEV" ){
+    if(process.env.ENV === "dev" ){
         token = req.cookies.jwt
         if(!token){
-            token = req.headers['Authorisation']
+            token = req.headers['authorization']
         }
-    }else if(process.env.ENV === "PROD" ){
+    }else if(process.env.ENV === "prod" ){
         token = req.cookies.jwt
     }
         
-    }
     const jwtSecret = process.env.JWT;
     if (token) {
         jwt.verify(token, jwtSecret, async (err, decodedToken) => {
