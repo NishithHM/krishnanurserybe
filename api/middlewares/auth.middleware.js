@@ -1,5 +1,4 @@
 const jwt = require("jsonwebtoken")
-const Joi = require("joi")
 const isEmpty = require('lodash/isEmpty')
 const User = require('../models/user.model')
 exports.authWall = (roles)=>(req, res, next) => {

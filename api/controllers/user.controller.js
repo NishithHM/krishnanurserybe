@@ -90,7 +90,7 @@ exports.getAllUsers =async(req, res)=>{
 
         const pipeline = []
         pipeline.push(...match)
-        if(search){
+        if(search != ""){
             pipeline.push(...searchMatch)
         }
         if(pageNumber){
