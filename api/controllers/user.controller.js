@@ -47,7 +47,12 @@ exports.singIn = async (req, res) => {
               httpOnly: true,
               maxAge: maxAge * 1000, 
             });
-            res.status(200).json({user})
+            if(process.env.ENV === "dev" ){
+                res.status(200).json({user, token})
+            }else if(process.env.ENV === "prod" ){
+                res.status(200).json({user})
+            }
+            
         }else{
             res.status(400).json({
                 message: "Login not successful",
