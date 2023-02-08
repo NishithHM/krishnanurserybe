@@ -25,7 +25,7 @@ const customerSchema = new mongoose.Schema({
 	interestedCategories: {
 		type: [{
 			_id: {
-				type: String,
+				type: mongoose.Schema.Types.ObjectId,
 				required: true
 			},
 			names: {

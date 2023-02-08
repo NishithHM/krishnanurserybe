@@ -9,7 +9,11 @@ const { createCategory, deleteCategoryById, getAllCategories } = require('./cont
 const { createProcurementSchema, updateProcurementSchema, getProcurementsSchema, getProcurementsHistorySchema, addVariantsSchema, setProcurementMinQuantitySchema, getProcurementsLowSchema } = require('./validators/procurement.validators')
 const { addNewProcurement, updateProcurement, getAllProcurements, getAllProcurementsHistory, addProcurementVariants, setMinimumQuantity, getLowProcurements } = require('./controllers/procurement.controller')
 const { customerSchema } = require('./validators/customer.validators')
+const { addToCartSchema } = require('./validators/sales.validators')
+
 const { customerRegister } = require('./controllers/customer.controller');
+const { addToCart } = require('./controllers//sales.controller');
+
 
 
 const { getVendorsSchema } = require('./validators/vendor.validators')
@@ -40,6 +44,10 @@ router.get('/api/procurements/low-quantity', [authWall(['procurement', 'admin'])
 router.get('/api/vendors/getAll', [authWall(['procurement']), paramsToBody(['search'], 'query'), bodyValidator(getVendorsSchema)], getVendorList)
 
 //customers
-router.post('/api/customer/create', [bodyValidator(customerSchema)], customerRegister)
+router.post('/api/customer/create', [bodyValidator(customerSchema)], customerRegister);
+
+//sales
+router.post('/api/sales/addToCart', [authWall(['sales','admin']), bodyValidator(addToCartSchema)], addToCart)
+
 
 module.exports = router

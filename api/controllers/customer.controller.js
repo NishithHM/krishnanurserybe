@@ -6,32 +6,34 @@ const mongoose = require('mongoose');
 
 exports.customerRegister = async (req, res) => {
   const { name, phoneNumber, dob, categoryList } = req.body;
-  let interestedCategories = categoryList.map(function (val) {
+  const interestedCategories = categoryList.map(function (val) {
     return {
       _id: val.id,
       names: {
         en: {
-          name: val.CategoryNameInEnglish
+          name: val.categoryNameInEnglish
         },
         ka: {
-          name: val.CategoryNameInKannada
+          name: val.categoryNameInKannada
         }
       }
     }
   })
   try {
-    var obj_ids = interestedCategories.map(function (val) { return new mongoose.mongo.ObjectId((val._id)); });
-    const idMatchedInDBCount = await Category.find({ _id: { $in: obj_ids } }).count();
+    const objIds = interestedCategories.map(function (val) { return new mongoose.mongo.ObjectId((val._id)); });
+    const idMatchedInDBCount = await Category.find({ _id: { $in: objIds } }).count();
     // checking for invalid ID's 
-    if (obj_ids.length != idMatchedInDBCount) {
+    if (objIds.length != idMatchedInDBCount) {
       res.status(403).send("Forbidden Operation");
     } else {
-      const customer = new Customer({ name, phoneNumber, dob, interestedCategories: interestedCategories })
+      console.log(...interestedCategories)
+      const customer = new Customer({ name, phoneNumber, dob, interestedCategories })
       await customer.save();
       res.status(201).json({ customer })
     }
   } catch (error) {
     console.log(error);
-    res.status(400).send(error)
+    res.status(500).send(error)
   }
 };
+

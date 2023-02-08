@@ -6,7 +6,7 @@ exports.customerSchema = Joi.object().keys({
     dob: Joi.date().required(),
     categoryList: Joi.array().items(Joi.object().keys({
         id: Joi.string().required(),
-        CategoryNameInEnglish: Joi.string().pattern(new RegExp(/[A-Za-z]/)).required(),
-        CategoryNameInKannada: Joi.string().required(),
+        categoryNameInEnglish: Joi.string().pattern(new RegExp(/[A-Za-z]/)).required(),
+        categoryNameInKannada: Joi.string().required(),
     }))
 });
