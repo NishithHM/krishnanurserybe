@@ -1,7 +1,7 @@
 const mongoose = require('mongoose')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
-const salesSchema = new mongoose.Schema({
+const BillingHistory = new mongoose.Schema({
 		customer_id: {
 			type: mongoose.Schema.Types.ObjectId,
 			required:true,
@@ -58,51 +58,47 @@ const salesSchema = new mongoose.Schema({
 			rate: {
 				type: Number,
 				required: true,
-			},
-			isActive:{
-				type:Boolean,
-				default:true
 			}
 		}],
-		totalPrice: {
-			type: Number,
-			required: true,
+    },
+	totalPrice: {
+		type: Number,
+		required: true,
+	},
+	discount: {
+		type: Number,
+		default:0
+	},
+	roundOff: {
+		type: Number,
+		default:0
+	},
+	soldBy: {
+		name: {
+			type: String,
+			lowercase: true,
 		},
-		discount: {
-			type: Number,
-			default:0
-		},
-		roundOff: {
-			type: Number,
-			default:0
-		},
-		SoldBy: {
-			name: {
-				type: String,
-				lowercase: true,
-			},
-			_id: {
-				type: mongoose.Schema.Types.ObjectId,
-				required:true
-			}
-		},
-		billedBy: {
-			name: {
-				type: String,
-				lowercase: true,
-			},
-			_id: {
-				type: mongoose.Schema.Types.ObjectId,
-				required:true
-			}
-		},
-		status:{
-			type:String,
+		_id: {
+			type: mongoose.Schema.Types.ObjectId,
 			required:true
 		}
+	},
+	billedBy: {
+		name: {
+			type: String,
+			lowercase: true,
+		},
+		_id: {
+			type: mongoose.Schema.Types.ObjectId,
+			required:true
+		}
+	},
+	status:{
+		type:String,
+		required:true
 	}
 }, {
 	timestamps: true
 })
 
-module.exports = mongoose.model("sales", salesSchema)
+module.exports = mongoose.model("billing_history", BillingHistory)

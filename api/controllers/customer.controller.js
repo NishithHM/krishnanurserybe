@@ -3,6 +3,7 @@ const Category = require('../models/categories.model')
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
+const dayjs = require('dayjs');
 
 exports.customerRegister = async (req, res) => {
   const { name, phoneNumber, dob, categoryList } = req.body;
@@ -27,7 +28,7 @@ exports.customerRegister = async (req, res) => {
       res.status(403).send("Forbidden Operation");
     } else {
       console.log(...interestedCategories)
-      const customer = new Customer({ name, phoneNumber, dob, interestedCategories })
+      const customer = new Customer({ name, phoneNumber, dob : dayjs(dob, 'YYYY-MM-DD').toDate(), interestedCategories })
       await customer.save();
       res.status(201).json({ customer })
     }
