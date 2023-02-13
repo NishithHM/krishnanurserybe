@@ -12,3 +12,18 @@ exports.addToCartSchema = Joi.object().keys({
         price: Joi.number().min(0).required(),
     })),
 });
+
+exports.updateCartSchema = Joi.object().keys({
+    id: Joi.string().required(),
+    items: Joi.array().items(Joi.object().keys({
+        procurementId: Joi.string().required(),
+        variantId: Joi.string().required(),
+        quantity: Joi.number().min(0).required(),
+        price: Joi.number().min(0).required(),
+    })),
+});
+
+exports.confirmCartSchema = Joi.object().keys({
+    id: Joi.string().required(),
+    roundOff: Joi.number().min(0).max(500).default(0)
+});

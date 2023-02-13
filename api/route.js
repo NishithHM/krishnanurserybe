@@ -9,10 +9,10 @@ const { createCategory, deleteCategoryById, getAllCategories } = require('./cont
 const { createProcurementSchema, updateProcurementSchema, getProcurementsSchema, getProcurementsHistorySchema, addVariantsSchema, setProcurementMinQuantitySchema, getProcurementsLowSchema } = require('./validators/procurement.validators')
 const { addNewProcurement, updateProcurement, getAllProcurements, getAllProcurementsHistory, addProcurementVariants, setMinimumQuantity, getLowProcurements } = require('./controllers/procurement.controller')
 const { customerSchema } = require('./validators/customer.validators')
-const { addToCartSchema } = require('./validators/billing.validators')
+const { addToCartSchema, updateCartSchema, confirmCartSchema } = require('./validators/billing.validators')
 
 const { customerRegister } = require('./controllers/customer.controller');
-const { addToCart } = require('./controllers/billings.controller');
+const { addToCart, updateCart, confirmCart } = require('./controllers/billings.controller');
 
 
 
@@ -48,6 +48,7 @@ router.post('/api/customer/create', [bodyValidator(customerSchema)], customerReg
 
 //billing
 router.post('/api/billing/addToCart', [authWall(['sales']), bodyValidator(addToCartSchema)], addToCart)
-
+router.post('/api/billing/update-cart/:id', [authWall(['sales']),paramsToBody(['id'], "params"), bodyValidator(updateCartSchema)], updateCart)
+router.post('/api/billing/confirm-cart/:id', [authWall(['sales']),paramsToBody(['id'], "params"), bodyValidator(confirmCartSchema)], confirmCart)
 
 module.exports = router

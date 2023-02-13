@@ -44,7 +44,8 @@ const customerSchema = new mongoose.Schema({
         required: false
     },
     billingHistory: {
-        items: [{
+        type:[{
+            items: [{
             procurement_id: {
                 type: mongoose.Schema.Types.ObjectId,
                 required: true
@@ -102,7 +103,6 @@ const customerSchema = new mongoose.Schema({
             },
             _id: {
                 type: mongoose.Schema.Types.ObjectId,
-                required: true
             }
         },
         billedBy: {
@@ -117,7 +117,9 @@ const customerSchema = new mongoose.Schema({
         },
         billedDate:{
             type: Date
-        }
+        },
+    }],
+    required:false
     }
 }, {
     timestamps: true

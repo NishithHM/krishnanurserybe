@@ -1,95 +1,216 @@
 const Customer = require('../models/customer.model');
 const uniq = require('lodash/uniq')
+const isEmpty = require('lodash/isEmpty')
 const mongoose = require('mongoose');
 const dayjs = require('dayjs');
 const Procurements = require('../models/procurment.model')
-
+const Billing = require('../models/billings.model');
 exports.addToCart = async (req, res) => {
-//   console.log(req.body);
-  const {customerNumber, customerName, customerDob, items, customerId } = req.body;
-  if(!customerId){
-    const customer = new Customer({phoneNumber: customerNumber, dob: dayjs(customerDob, 'YYYY-MM-DD').toDate(), name: customerName})
-    // customer.save()
-  }
-  
-  const errors = await validatePricesAndQuantity(items)
+    try {
+        const { customerNumber, customerName, customerDob, items, customerId } = req.body;
+        const soldBy = {
+            _id: req?.token?.id,
+            name:req?.token?.name
+        }
+        let customerRes
+        if (!customerId) {
+            const customer = new Customer({ phoneNumber: parseInt(customerNumber, 10), dob: dayjs(customerDob, 'YYYY-MM-DD').toDate(), name: customerName })
+            customerRes = await customer.save()
+        } else {
+            customerRes = await Customer.findById(customerId);
+        }
+        if (!isEmpty(customerRes)) {
+            const {errors, formattedItems, totalPrice, discount } = await validatePricesAndQuantityAndFormatItems(items)
+            console.log(JSON.stringify(formattedItems), 'formattedItems')
+            if (isEmpty(errors)) {
+               const billing = new Billing({customerName: customerRes.name, customerId: customerRes._id, customerNumber: customerRes.phoneNumber, soldBy, items: formattedItems, totalPrice, discount, status: "CART"})
+               const cartDetails = await billing.save()
+               res.status(200).send(cartDetails)
+            } else {
+                res.status(400).send(errors)
+            }
 
-  res.status(200).send(errors)
+        } else {
+            res.status(400).send(['Unable to find the customer, please try again'])
+        }
+    } catch (error) {
+            res.status(500).send(error)
+    }
+
 };
 
-const validatePricesAndQuantity=async(items)=>{
-        const procurements = uniq(items.map(ele=>  new mongoose.mongo.ObjectId(ele.procurementId)))
-        const variants = uniq(items.map(ele=> new mongoose.mongo.ObjectId(ele.variantId)))
-        const pipeline = [
-            {
-              '$match': {
-                '_id': {
-                  '$in': procurements
+exports.updateCart = async (req, res) => {
+    try {
+        const {items, id } = req.body;
+        const billData = await Billing.findById(id)
+        if(billData){
+            const {errors, formattedItems, totalPrice, discount } = await validatePricesAndQuantityAndFormatItems(items)
+            if (isEmpty(errors)) {
+               billData.items = formattedItems;
+               billData.totalPrice = totalPrice;
+               billData.discount = discount;
+               const cartDetails = await billData.save()
+               res.status(200).send(cartDetails)
+            } else {
+                res.status(400).send(errors)
+            }
+        }else{
+            res.status(400).send("Unable to find the cart items, try again")
+        }
+    } catch (error) {
+        res.status(500).send(error)
+    }
+   
+}
+
+exports.confirmCart = async (req, res) =>{
+    const { id, roundOff=0} = req.body;
+    try {
+     const billData = await Billing.findById(id)
+     if(billData){
+        const roundOfError = validateRoundOff();
+        if(isEmpty(roundOfError)){
+            const procurementQuantityMapping = {}
+            const itemList = billData?.items?.map(ele=>{
+                if(procurementQuantityMapping[ele.procurementId.toString()]){
+                    procurementQuantityMapping[ele.procurementId.toString()] = procurementQuantityMapping[ele.procurementId.toString()] + ele.quantity
+                }else{
+                    procurementQuantityMapping[ele.procurementId.toString()] = ele.quantity
                 }
-              }
-            }, {
-              '$unwind': {
-                'path': '$variants', 
+                return {
+                "procurementId": ele.procurementId.toString(),
+                "variantId" : ele.variant.variantId.toString(),
+                "quantity" : ele.quantity,
+                "price": ele.rate
+            }})
+            const {errors } = await validatePricesAndQuantityAndFormatItems(itemList)
+            if(isEmpty(errors)){
+                const billedBy = {
+                    _id: req?.token?.id,
+                    name:req?.token?.name
+                }
+                billData.totalPrice = billData.totalPrice - roundOff
+                billData.roundOff = roundOff
+                billData.status = "BILLED"
+                billData.billedBy = billedBy
+                updateRemainingQuantity(procurementQuantityMapping)
+                await billData.save()
+                res.status(200).send(billData)
+            }else{
+                res.status(400).send(errors)
+            }
+            
+            
+        }else{
+            res.status(400).send(roundOfError)
+        }
+    }else{
+        res.status(400).send("Unable to find the cart items, try again")
+    }
+        
+    } catch (error) {
+        console.log(error)
+        res.status(500).send(error)
+    }
+}
+
+const validatePricesAndQuantityAndFormatItems = async (items) => {
+    const procurements = uniq(items.map(ele => new mongoose.mongo.ObjectId(ele.procurementId)))
+    const variants = uniq(items.map(ele => new mongoose.mongo.ObjectId(ele.variantId)))
+    const pipeline = [
+        {
+            '$match': {
+                '_id': {
+                    '$in': procurements
+                }
+            }
+        }, {
+            '$unwind': {
+                'path': '$variants',
                 'preserveNullAndEmptyArrays': true
-              }
-            }, {
-              '$match': {
+            }
+        }, {
+            '$match': {
                 'variants._id': {
-                  '$in': variants
+                    '$in': variants
                 }
-              }
-            }, {
-              '$group': {
+            }
+        }, {
+            '$group': {
                 '_id': {
-                  'procurementId': '$_id', 
-                  'variantId': '$variants._id'
-                }, 
+                    'procurementId': '$_id',
+                    'variantId': '$variants._id'
+                },
                 'val': {
-                    $first: {$mergeObjects:["$$ROOT.variants", {remainingQuantity:"$$ROOT.remainingQuantity"}, {pNames:"$$ROOT.names"}]}
+                    $first: { $mergeObjects: ["$$ROOT.variants", { remainingQuantity: "$$ROOT.remainingQuantity" }, { pNames: "$$ROOT.names" }] }
                 }
-              }
-            }, {
-              '$replaceRoot': {
+            }
+        }, {
+            '$replaceRoot': {
                 'newRoot': {
-                  '$mergeObjects': [
-                    '$_id', '$val'
-                  ]
+                    '$mergeObjects': [
+                        '$_id', '$val'
+                    ]
                 }
-              }
-            }
-          ]
-        console.log("validatePricesAndQuantity", JSON.stringify(pipeline))  
-        const results = await Procurements.aggregate(pipeline)
-        console.log(results)
-        const errors = []
-        for(const element of results){
-            const {
-                procurementId: resultProcurementId,
-                variantId: resultVariantId,
-                names: resultVariantNames,
-                pNames: procurementNames,
-                minPrice,
-                maxPrice,
-                remainingQuantity,
-              } = element
-              
-            const {procurementId: itemProcurmentId, itemVariantId, quantity, price} = items.find((ele)=> ele.procurementId === resultProcurementId.toString() && ele.variantId === resultVariantId.toString()) || {}
-            if(price > maxPrice){
-                errors.push(`"${procurementNames?.en?.name}" of variant "${resultVariantNames?.en?.name}" should be less than "${maxPrice}"`)
-            }
-            if(price < minPrice){
-                errors.push(`"${procurementNames?.en?.name}" of variant "${resultVariantNames?.en?.name}" price is invalid, increase price and try again`) 
-            }
-            if(quantity > remainingQuantity){
-                errors.push(`Ooops!! stock of "${procurementNames?.en?.name}" is low, maximum order can be "${remainingQuantity}"`) 
             }
         }
+    ]
+    console.log("validatePricesAndQuantity", JSON.stringify(pipeline))
+    const results = await Procurements.aggregate(pipeline)
+    const errors = []
+    const formattedItems = []
+    let totalPrice = 0;
+    let discount = 0
+    for (const element of results) {
+        const {
+            procurementId: resultProcurementId,
+            variantId: resultVariantId,
+            names: resultVariantNames,
+            pNames: procurementNames,
+            minPrice,
+            maxPrice,
+            remainingQuantity,
+        } = element
 
-        return errors
+        const { procurementId: itemProcurmentId, procurementId: itemVariantId, quantity, price } = items.find((ele) => ele.procurementId === resultProcurementId.toString() && ele.variantId === resultVariantId.toString()) || {}
+        if (price > maxPrice) {
+            errors.push(`"${procurementNames?.en?.name}" of variant "${resultVariantNames?.en?.name}" should be less than "${maxPrice}"`)
+        }
+        if (price < minPrice) {
+            errors.push(`"${procurementNames?.en?.name}" of variant "${resultVariantNames?.en?.name}" price is invalid, increase price and try again`)
+        }
+        if (quantity > remainingQuantity) {
+            errors.push(`Ooops!! stock of "${procurementNames?.en?.name}" is low, maximum order can be "${remainingQuantity}"`)
+        }
+        formattedItems.push({procurementId : itemProcurmentId, procurementName:procurementNames, variant:{ variantId: itemVariantId, ...resultVariantNames }, quantity, mrp: maxPrice, rate: price  })
+        totalPrice = totalPrice + price * quantity;
+        discount = discount + (maxPrice - price) * quantity;
+    }
+
+    return {errors, formattedItems, totalPrice, discount}
 
 
 
-}   
+}
+
+const validateRoundOff = (totalPrice, amount) =>{
+    const maxRound = totalPrice * 0.1 > 500 ? 500 : totalPrice*0.1
+    if(amount> maxRound){
+        return "Round off amount is higher, please reduce and try again later"
+    }
+    return null
+}
+
+const updateRemainingQuantity = async (object)=>{
+    const listValues = Object.entries(object);
+    for(const [key, value] of listValues){
+        const procurment = await Procurements.findById(key)
+        procurment.remainingQuantity = procurment.remainingQuantity - value
+        await procurment.save()
+    }
+}
+
+
 
 
 //should not be less than min price , more than max price
