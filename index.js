@@ -10,6 +10,7 @@ const app = express()
 dotenv.config({ path: './.env' })
 dbCon.connect()
 const port = process.env.PORT;
+console.log(process.env.ENV)
 if(process.env.ENV==='dev'){
     app.use(cors())
 }
