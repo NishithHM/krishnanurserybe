@@ -94,6 +94,7 @@ exports.confirmCart = async (req, res) =>{
                 billData.status = "BILLED"
                 billData.billedBy = billedBy
                 updateRemainingQuantity(procurementQuantityMapping)
+                updateCustomerPurchaseHistory(billData)
                 await billData.save()
                 res.status(200).send(billData)
             }else{
@@ -112,6 +113,17 @@ exports.confirmCart = async (req, res) =>{
         console.log(error)
         res.status(500).send(error)
     }
+}
+
+exports.getCustomerCart=async(req, res)=>{
+    const { id } = req.body;
+    try{
+        const cart = await Billing.findOne({status:"CART", customerId: new mongoose.mongo.ObjectId(id) }, null , {updatedAt:-1})
+        res.status(200).send(cart)
+    }catch(error){
+        res.status(500).send(error)
+    }
+    
 }
 
 const validatePricesAndQuantityAndFormatItems = async (items) => {
@@ -207,7 +219,38 @@ const updateRemainingQuantity = async (object)=>{
         const procurment = await Procurements.findById(key)
         procurment.remainingQuantity = procurment.remainingQuantity - value
         await procurment.save()
+        // update customer schema
+        // new api to get cart items via customer id
     }
+}
+
+const updateCustomerPurchaseHistory = async (billData)=>{
+    const customerId = billData.customerId
+    const  {
+        items,
+        totalPrice,
+        discount,
+        roundOff,
+        soldBy,
+        billedBy,
+    } =billData
+    const purchaseData = {
+        items,
+        totalPrice,
+        discount,
+        roundOff,
+        soldBy,
+        billedBy,
+        billedDate: new Date()
+    }
+    const customer  = await Customer.findById(customerId);
+    if (customer.billingHistory.length > 20) {
+        customer.billingHistory.shift()
+        customer.billingHistory.push(purchaseData)
+    } else {
+        customer.billingHistory.push(purchaseData)
+    }
+    await customer.save()
 }
 
 

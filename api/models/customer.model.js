@@ -46,16 +46,25 @@ const customerSchema = new mongoose.Schema({
     billingHistory: {
         type:[{
             items: [{
-            procurement_id: {
+            procurementId: {
                 type: mongoose.Schema.Types.ObjectId,
                 required: true
             },
             procurementName: {
-                type: String,
-                required: true
+                en: {
+                    name: {
+                        type: String,
+                        required: true,
+                    }
+                },
+                ka: {
+                    name: {
+                        type: String,
+                    }
+                }
             },
-            variantsName: {
-                variant_id: {
+            variant: {
+                variantId: {
                     type: mongoose.Schema.Types.ObjectId,
                     required: true
                 },
