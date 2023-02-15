@@ -50,5 +50,5 @@ router.post('/api/customer/create', [bodyValidator(customerSchema)], customerReg
 router.post('/api/billing/addToCart', [authWall(['sales']), bodyValidator(addToCartSchema)], addToCart)
 router.post('/api/billing/update-cart/:id', [authWall(['sales']),paramsToBody(['id'], "params"), bodyValidator(updateCartSchema)], updateCart)
 router.post('/api/billing/confirm-cart/:id', [authWall(['sales']),paramsToBody(['id'], "params"), bodyValidator(confirmCartSchema)], confirmCart)
-router.get('/api/billing/get-cart/:id', [authWall(['sales']),paramsToBody(['id'], "params"), bodyValidator(confirmCartSchema)], getCustomerCart)
+router.get('/api/billing/get-cart/:id', [authWall(['sales']),paramsToBody(['id'], "params"), bodyValidator(getCustomerCartSchema)], getCustomerCart)
 module.exports = router
