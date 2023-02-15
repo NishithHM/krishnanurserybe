@@ -45,7 +45,7 @@ router.get('/api/vendors/getAll', [authWall(['procurement']), paramsToBody(['sea
 
 //customers
 router.post('/api/customer/create', [bodyValidator(customerSchema)], customerRegister);
-router.post('/api/customer/get-customer/:phoneNumber', [authWall(['sales']), bodyValidator(getCustomerSchema)], getCustomerByNumber);
+router.get('/api/customer/get-customer/:phoneNumber', [authWall(['sales']), bodyValidator(getCustomerSchema)], getCustomerByNumber);
 
 //billing
 router.post('/api/billing/addToCart', [authWall(['sales']), bodyValidator(addToCartSchema)], addToCart)
