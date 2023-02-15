@@ -29,7 +29,7 @@ exports.register = async (req, res) => {
 exports.singIn = async (req, res) => {
 	try {
 		const {phoneNumber, password}  = req.body
-        const user = await User.findOne({phoneNumber})
+        const user = await User.findOne({phoneNumber, isActive: true})
         if (!user) {
             res.status(400).json({
               message: "Login not successful",

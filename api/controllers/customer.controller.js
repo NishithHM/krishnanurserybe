@@ -4,6 +4,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const dayjs = require('dayjs');
+const { handleMongoError } = require('../utils');
 
 exports.customerRegister = async (req, res) => {
   const { name, phoneNumber, dob, categoryList } = req.body;
@@ -38,4 +39,17 @@ exports.customerRegister = async (req, res) => {
     res.status(500).send(err)
   }
 };
+
+exports.getCustomerByNumber = async (req, res)=>{
+    const {phoneNumber} = req.body
+    try { 
+        const customer = await Customer.findOne({phoneNumber: parseInt(phoneNumber, 10)})
+        res.status(200).send(customer)
+    } catch (error) {
+        console.log(error)
+        const err = handleMongoError(error)
+        res.status(400).send(err)
+    }
+   
+}
 

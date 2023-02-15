@@ -10,3 +10,8 @@ exports.customerSchema = Joi.object().keys({
         categoryNameInKannada: Joi.string().required(),
     }))
 });
+
+exports.getCustomerSchema = Joi.object().keys({
+    phoneNumber: Joi.string().required().min(10).max(10)
+});
+
