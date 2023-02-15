@@ -34,7 +34,8 @@ exports.customerRegister = async (req, res) => {
     }
   } catch (error) {
     console.log(error);
-    res.status(500).send(error)
+    const err = handleMongoError(error)
+    res.status(500).send(err)
   }
 };
 

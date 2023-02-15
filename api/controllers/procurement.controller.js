@@ -48,7 +48,8 @@ exports.addNewProcurement = async (req, res) => {
 
     } catch (error) {
         console.log(error)
-        res.status(500).send(error)
+        const err = handleMongoError(error)
+        res.status(500).send(err)
     }
 
 }
@@ -101,7 +102,8 @@ exports.updateProcurement = async (req, res) => {
         }
     } catch (error) {
         console.log(error)
-        res.status(500).send(error)
+        const err = handleMongoError(error)
+        res.status(500).send(err)
     }
 
 }
@@ -162,7 +164,8 @@ exports.getAllProcurements = async (req, res) => {
         res.json(procurements)
     } catch (error) {
         console.log(error)
-        res.status(500).send(error)
+        const err = handleMongoError(error)
+        res.status(500).send(err)
     }
 
 }
@@ -217,7 +220,8 @@ exports.getAllProcurementsHistory = async (req, res) => {
         res.json(procurements)
     } catch (error) {
         console.log(error)
-        res.status(500).send(error)
+        const err = handleMongoError(error)
+        res.status(500).send(err)
     }
 
 }
@@ -258,7 +262,8 @@ exports.addProcurementVariants = async (req, res) => {
         }
     } catch (error) {
         console.log(error)
-        res.status(500).send(error)
+        const err = handleMongoError(error)
+        res.status(500).send(err)
     }
 
 }
@@ -276,7 +281,8 @@ exports.setMinimumQuantity = async (req, res) => {
         }
     } catch (error) {
         console.log(error)
-        res.status(500).send(error)
+        const err = handleMongoError(error)
+        res.status(500).send(err)
     }
 
 }
@@ -330,7 +336,8 @@ exports.getLowProcurements = async (req, res) => {
         res.json(procurements)
     } catch (error) {
         console.log(error)
-        res.status(500).send(error)
+        const err = handleMongoError(error)
+        res.status(500).send(err)
     }
 
 }

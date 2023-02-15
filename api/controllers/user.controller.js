@@ -2,6 +2,7 @@ const User = require('../models/user.model')
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
+const { handleMongoError } = require('../utils');
 
 exports.register = async (req, res) => {
 	const { name, phoneNumber, email, role, password } = req.body;
@@ -19,7 +20,8 @@ exports.register = async (req, res) => {
 		})
 	} catch (error) {
 		console.log(error)
-		res.status(400).send(error)
+        const err = handleMongoError(error)
+        res.status(400).send(err)
 	}
 };
 
@@ -61,7 +63,8 @@ exports.singIn = async (req, res) => {
         }
 		
 	} catch (error) {
-		res.status(500).send(error)
+        const err = handleMongoError(error)
+		res.status(500).send(err)
 	}
 };
 
@@ -109,7 +112,8 @@ exports.getAllUsers =async(req, res)=>{
         res.json({users})    
     } catch (error) {
         console.log(error)
-        res.status(500).send(error)
+        const err = handleMongoError(error)
+        res.status(500).send(err)
     }
    
 }
@@ -124,7 +128,8 @@ exports.deleteUserById =async(req, res)=>{
        })
     } catch (error) {
         console.log(error)
-        res.status(500).send(error)
+        const err = handleMongoError(error)
+        res.status(500).send(err)
     }
    
 }

@@ -58,7 +58,8 @@ exports.updateCart = async (req, res) => {
             res.status(400).send("Unable to find the cart items, try again")
         }
     } catch (error) {
-        res.status(500).send(error)
+        const err = handleMongoError(error)
+        res.status(500).send(err)
     }
    
 }
@@ -111,7 +112,8 @@ exports.confirmCart = async (req, res) =>{
         
     } catch (error) {
         console.log(error)
-        res.status(500).send(error)
+        const err = handleMongoError(error)
+        res.status(500).send(err)
     }
 }
 
@@ -121,7 +123,8 @@ exports.getCustomerCart=async(req, res)=>{
         const cart = await Billing.findOne({status:"CART", customerId: new mongoose.mongo.ObjectId(id) }, null , {updatedAt:-1})
         res.status(200).send(cart)
     }catch(error){
-        res.status(500).send(error)
+        const err = handleMongoError(error)
+        res.status(500).send(err)
     }
     
 }
