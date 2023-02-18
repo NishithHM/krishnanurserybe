@@ -28,7 +28,7 @@ router.put('/api/user/delete/:id', [authWall(['admin'])], paramsToBody(['id'], '
 
 // categories
 router.post('/api/category/create', [authWall(['admin']), bodyValidator(createCategorySchema)], createCategory)
-router.get('/api/category/getAll', [authWall(['admin']), paramsToBody(['pageNumber', 'search', 'isCount', 'sortBy', 'sortType'], 'query'), bodyValidator(getCategorySchema)], getAllCategories)
+router.get('/api/category/getAll', [authWall(['admin', 'procurement']), paramsToBody(['pageNumber', 'search', 'isCount', 'sortBy', 'sortType'], 'query'), bodyValidator(getCategorySchema)], getAllCategories)
 router.put('/api/category/delete/:id', [authWall(['admin'])], paramsToBody(['id'], 'params'), bodyValidator(deleteCategorySchema), deleteCategoryById)
 
 // procurements
