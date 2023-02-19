@@ -55,7 +55,7 @@ exports.addNewProcurement = async (req, res) => {
 }
 
 exports.updateProcurement = async (req, res) => {
-    const { vendorName, vendorContact, totalQuantity, totalPrice, description, id, vendorId } = req.body
+    const { vendorName, vendorContact, totalQuantity, totalPrice, description, id, vendorId, categories } = req.body
     try {
         const procurement = await Procurement.findById(id)
         if (procurement) {
@@ -73,6 +73,7 @@ exports.updateProcurement = async (req, res) => {
             procurement.totalQuantity += totalQuantity
             procurement.remainingQuantity += totalQuantity
             procurement.lastProcuredOn = new Date()
+            procurement.categories = categories;
             const procurementHistoryData = [{
                 createdBy,
                 quantity: totalQuantity,
