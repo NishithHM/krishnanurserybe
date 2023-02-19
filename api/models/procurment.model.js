@@ -18,6 +18,17 @@ const Procurement = new mongoose.Schema({
             }
         }
     },
+    categories: {
+        types:[{
+            name: {
+                type: String,
+                lowercase: true,
+            },
+            _id: {
+                type: mongoose.Schema.Types.ObjectId,
+            }
+        }],
+    },
     totalQuantity: {
         type: Number,
         default: 0,

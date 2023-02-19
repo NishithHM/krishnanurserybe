@@ -6,7 +6,7 @@ const dayjs = require('dayjs')
 const uniq = require('lodash/uniq')
 
 exports.addNewProcurement = async (req, res) => {
-    const { nameInEnglish, nameInKannada, vendorName, vendorContact, totalQuantity, totalPrice, description, vendorId } = req.body
+    const { nameInEnglish, nameInKannada, vendorName, vendorContact, totalQuantity, totalPrice, description, vendorId, categories } = req.body
     const names = {
         en: {
             name: nameInEnglish
@@ -37,7 +37,7 @@ exports.addNewProcurement = async (req, res) => {
     }]
     const procurementHistoryDataObj = { ...procurementHistoryData[0], names }
 
-    const procurement = new Procurement({ names, totalQuantity, remainingQuantity: totalQuantity, lastProcuredOn: new Date(), procurementHistory: procurementHistoryData })
+    const procurement = new Procurement({ names, totalQuantity, remainingQuantity: totalQuantity, lastProcuredOn: new Date(), procurementHistory: procurementHistoryData, categories })
     try {
         const response = await procurement.save()
         const procurementHistory = new ProcurementHistory({ ...procurementHistoryDataObj, procurementId: response._id })

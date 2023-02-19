@@ -8,7 +8,11 @@ exports.createProcurementSchema = Joi.object().keys({
     totalQuantity: Joi.number().required(),
     totalPrice: Joi.number().required(),
     description: Joi.string(),
-    vendorId: Joi.string()
+    vendorId: Joi.string(),
+    categories: Joi.object().keys({
+        _id:Joi.string().required(),
+        name: Joi.string().required()
+    })
 });
 
 exports.updateProcurementSchema = Joi.object().keys({
