@@ -8,6 +8,9 @@ exports.handleMongoError=(error)=>{
                 errors.push(`${k} ${error?.keyValue[k]} is already registered`)
             }
         })
+        if(errors.length===0){
+            errors.push('Something went wrong')
+        }
         return errors
 
     }else{
