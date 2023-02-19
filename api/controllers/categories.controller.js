@@ -1,5 +1,6 @@
 const Category = require('../models/categories.model')
 const mongoose = require('mongoose');
+const { handleMongoError } = require('../utils');
 
 exports.createCategory = async (req, res) => {
 	const { nameInEnglish, nameInKannada } = req.body;

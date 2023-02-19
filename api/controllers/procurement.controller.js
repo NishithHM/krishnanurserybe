@@ -4,6 +4,7 @@ const ProcurementHistory = require('../models/procurementHistory.model')
 const mongoose = require('mongoose')
 const dayjs = require('dayjs')
 const uniq = require('lodash/uniq')
+const { handleMongoError } = require('../utils')
 
 exports.addNewProcurement = async (req, res) => {
     const { nameInEnglish, nameInKannada, vendorName, vendorContact, totalQuantity, totalPrice, description, vendorId, categories } = req.body
