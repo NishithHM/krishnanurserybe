@@ -73,7 +73,7 @@ exports.updateProcurement = async (req, res) => {
             procurement.totalQuantity += totalQuantity
             procurement.remainingQuantity += totalQuantity
             procurement.lastProcuredOn = new Date()
-            procurement.categories = categories;
+            procurement.categories = [...categories];
             const procurementHistoryData = [{
                 createdBy,
                 quantity: totalQuantity,

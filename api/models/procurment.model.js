@@ -19,13 +19,13 @@ const Procurement = new mongoose.Schema({
         }
     },
     categories: {
-        types:[{
+        type:[{
             name: {
                 type: String,
                 lowercase: true,
             },
             _id: {
-                type: mongoose.Schema.Types.ObjectId,
+                type: String,
             }
         }],
     },
