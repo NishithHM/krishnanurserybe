@@ -148,6 +148,16 @@ exports.getAllProcurements = async (req, res) => {
 
         const pipeline = []
         pipeline.push(...match)
+        if(req?.token?.role==="sales"){
+            const salesMatch = [
+                {
+                    '$match': {
+                        "variants.0": {$exists: true}
+                    }
+                },
+            ]
+            pipeline.push(...salesMatch)
+        }
         if (search) {
             pipeline.push(...searchMatch)
         }
@@ -245,10 +255,9 @@ exports.addProcurementVariants = async (req, res) => {
                 minPrice: val.minPrice,
                 maxPrice: val.maxPrice
             }));
-
             procurement.variants = [...procurement.variants, ...variantsDb]
             const names = procurement.variants.map(val => (
-                val.variantNameInEnglish
+                val.names.en
             ));
             const uniqVal = uniq(names)
             if (names.length === uniqVal.length) {
