@@ -22,7 +22,6 @@ exports.addToCart = async (req, res) => {
         }
         if (!isEmpty(customerRes)) {
             const {errors, formattedItems, totalPrice, discount } = await validatePricesAndQuantityAndFormatItems(items)
-            console.log(JSON.stringify(formattedItems), 'formattedItems')
             if (isEmpty(errors)) {
                const billing = new Billing({customerName: customerRes.name, customerId: customerRes._id, customerNumber: customerRes.phoneNumber, soldBy, items: formattedItems, totalPrice, discount, status: "CART"})
                const cartDetails = await billing.save()
@@ -35,7 +34,8 @@ exports.addToCart = async (req, res) => {
             res.status(400).send(['Unable to find the customer, please try again'])
         }
     } catch (error) {
-            res.status(500).send(error)
+        const err = handleMongoError(error)
+        res.status(500).send(err)
     }
 
 };
@@ -53,7 +53,7 @@ exports.updateCart = async (req, res) => {
                const cartDetails = await billData.save()
                res.status(200).send(cartDetails)
             } else {
-                res.status(400).send(errors)
+                res.status(400).send({error: errors.join(',')})
             }
         }else{
             res.status(400).send("Unable to find the cart items, try again")
@@ -68,7 +68,7 @@ exports.updateCart = async (req, res) => {
 exports.confirmCart = async (req, res) =>{
     const { id, roundOff=0} = req.body;
     try {
-     const billData = await Billing.findById(id)
+     const billData = await Billing.findOne({_id: new mongoose.mongo.ObjectId(id), status:'CART'})
      if(billData){
         const roundOfError = validateRoundOff();
         if(isEmpty(roundOfError)){
