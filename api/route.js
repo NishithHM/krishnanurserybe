@@ -1,6 +1,8 @@
 // add api routes
 const express = require('express');
 const router = express.Router();
+const multer = require('multer')
+const path = require('path');
 const { register, singIn, getAllUsers, deleteUserById } = require('./controllers/user.controller');
 const { authWall, bodyValidator, paramsToBody } = require('./middlewares/auth.middleware')
 const { createUserSchema, loginUserSchema, deleteUserSchema, getUsersSchema } = require('./validators/user.validators')
@@ -17,7 +19,20 @@ const { addToCart, updateCart, confirmCart, getCustomerCart } = require('./contr
 
 
 const { getVendorsSchema } = require('./validators/vendor.validators')
-const { getVendorList } = require('./controllers/vendor.controller')
+const { getVendorList } = require('./controllers/vendor.controller');
+const { testUpload, videoRender } = require('./controllers/test.contoller');
+
+const fileStorageEngine = multer.diskStorage({
+	destination:(req,file,cb) =>{
+		cb(null,path.join(__dirname,'./uploads'))
+
+	},
+	filename:(req,file,cb)=>{
+		cb(null,Date.now() + path.extname(file.originalname))
+
+	}
+})
+const upload = multer({storage:fileStorageEngine})
 
 // user
 router.post('/api/user/create/cmwcwec', [bodyValidator(createUserSchema)], register)
@@ -52,4 +67,10 @@ router.post('/api/billing/addToCart', [authWall(['sales']), bodyValidator(addToC
 router.post('/api/billing/update-cart/:id', [authWall(['sales']),paramsToBody(['id'], "params"), bodyValidator(updateCartSchema)], updateCart)
 router.post('/api/billing/confirm-cart/:id', [authWall(['sales']),paramsToBody(['id'], "params"), bodyValidator(confirmCartSchema)], confirmCart)
 router.get('/api/billing/get-cart/:id', [authWall(['sales']),paramsToBody(['id'], "params"), bodyValidator(getCustomerCartSchema)], getCustomerCart)
+
+// s3 test
+
+router.post('/api/upload-test',[upload.single('bill')], testUpload)
+router.get('/video', videoRender)
+
 module.exports = router
