@@ -5,8 +5,11 @@ const dotenv = require('dotenv')
 const dbCon = require('./db/connection')
 const cookieParser = require("cookie-parser");
 const cors = require('cors')
-
-const app = express()
+const compression = require('compression')
+const helmet = require('helmet')
+const app = express();
+app.use(compression())
+app.use(helmet())
 dotenv.config({ path: './.env' })
 dbCon.connect()
 const port = process.env.PORT;
