@@ -87,7 +87,7 @@ exports.updateProcurement = async (req, res) => {
             }]
 
             const procurementHistoryDataObj = { ...procurementHistoryData[0], names, procurementId: procurement._id }
-            if (procurement.procurementHistory.length > 20) {
+            if (procurement.procurementHistory.length > 10) {
                 procurement.procurementHistory.shift()
                 procurement.procurementHistory.push(procurementHistoryDataObj)
             } else {
