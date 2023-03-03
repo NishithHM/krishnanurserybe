@@ -5,7 +5,7 @@ const mongoose = require('mongoose')
 const dayjs = require('dayjs')
 const uniq = require('lodash/uniq')
 const { handleMongoError } = require('../utils')
-
+const logger = require('../../loggers')
 exports.addNewProcurement = async (req, res) => {
     const { nameInEnglish, nameInKannada, vendorName, vendorContact, totalQuantity, totalPrice, description, vendorId, categories } = req.body
     const names = {
@@ -87,7 +87,7 @@ exports.updateProcurement = async (req, res) => {
             }]
 
             const procurementHistoryDataObj = { ...procurementHistoryData[0], names, procurementId: procurement._id }
-            if (procurement.procurementHistory.length > 10) {
+            if (procurement.procurementHistory.length >= 10) {
                 const newHistory =  [...procurement.procurementHistory]
                 newHistory.shift()
                 newHistory.push(procurementHistoryDataObj)
