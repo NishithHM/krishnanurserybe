@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const { handleMongoError } = require('../utils');
+const logger = require('../../loggers')
 
 exports.register = async (req, res) => {
 	const { name, phoneNumber, email, role, password } = req.body;
@@ -30,6 +31,7 @@ exports.singIn = async (req, res) => {
 	try {
 		const {phoneNumber, password}  = req.body
         const user = await User.findOne({phoneNumber, isActive: true})
+        logger.info(`user-info  ${JSON.stringify(user)}`)
         if (!user) {
             res.status(400).json({
               message: "Login not successful",
@@ -108,6 +110,7 @@ exports.getAllUsers =async(req, res)=>{
             pipeline.push(...count)
         }
         console.log("getAllUsers-pipeline",JSON.stringify(pipeline))
+        logger.info(JSON.stringify(pipeline))
         const users = await User.aggregate(pipeline)
         res.json({users})    
     } catch (error) {

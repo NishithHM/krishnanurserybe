@@ -8,6 +8,7 @@ const cors = require('cors')
 const compression = require('compression')
 const helmet = require('helmet')
 const app = express();
+const logger = require('./loggers')
 app.use(compression())
 app.use(helmet())
 dotenv.config({ path: './.env' })
@@ -20,7 +21,9 @@ if(process.env.ENV==='dev'){
 app.use(cookieParser())
 app.use(bodyParser.json({ limit: '1mb' }))
 app.use(router)
-app.listen(port, () => {
+const server = app.listen(port, () => {
 	console.log(`Server is running on port ${port}`)
+    logger.info("Server Sent A Hello World!");
 })
+server.setTimeout(5000)
 
