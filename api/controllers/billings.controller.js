@@ -41,7 +41,8 @@ exports.addToCart = async (req, res) => {
         }
     } catch (error) {
         const err = handleMongoError(error)
-        loggers.info('addToCart-failure', JSON.stringify(error))
+        loggers.info('addToCart-error', error)
+        console.log('addToCart-error', error)
         res.status(500).send(err)
     }
 
@@ -70,6 +71,8 @@ exports.updateCart = async (req, res) => {
             res.status(400).send("Unable to find the cart items, try again")
         }
     } catch (error) {
+        loggers.info('updateCart-error', error)
+        console.log('updateCart-error', error)
         const err = handleMongoError(error)
         res.status(500).send(err)
     }
@@ -123,8 +126,8 @@ exports.confirmCart = async (req, res) =>{
     }
         
     } catch (error) {
-        console.log("confirmCart-failure", JSON.stringify(error))
-        loggers.info("confirmCart-failure", JSON.stringify(error))
+        loggers.info('confirm-cart-error', error)
+        console.log('confirm-cart-error', error)
         const err = handleMongoError(error)
         res.status(500).send(err)
     }
@@ -136,7 +139,7 @@ exports.getCustomerCart=async(req, res)=>{
         const pipeline = [
             {
               '$match': {
-                'customerId': new ObjectId(id), 
+                'customerId': new mongoose.mongo.ObjectId(id), 
                 'status': 'CART'
               },
             },{
@@ -216,8 +219,8 @@ exports.getCustomerCart=async(req, res)=>{
           const results = await Billing.aggregate(pipeline)
           res.status(200).send(results[0])
     }catch(error){
-        loggers.info('getCustomerCart-error', JSON.stringify(error))
-        console.log('getCustomerCart-error', JSON.stringify(error))
+        loggers.info('getCustomerCart-error', error)
+        console.log('getCustomerCart-error', error)
         const err = handleMongoError(error)
         res.status(500).send(err)
     }
