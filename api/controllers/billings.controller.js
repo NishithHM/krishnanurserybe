@@ -54,11 +54,15 @@ exports.updateCart = async (req, res) => {
         if(billData){
             const {errors, formattedItems, totalPrice, discount } = await validatePricesAndQuantityAndFormatItems(items)
             if (isEmpty(errors)) {
-               billData.items = formattedItems;
-               billData.totalPrice = totalPrice;
-               billData.discount = discount;
-               const cartDetails = await billData.save()
-               res.status(200).send(cartDetails)
+                if(formattedItems.length > 0){
+                   billData.items = formattedItems;
+                   billData.totalPrice = totalPrice;
+                   billData.discount = discount;
+                   const cartDetails = await billData.save()
+                   res.status(200).send(cartDetails)
+              }else{
+                res.status(400).send({error:'Unable to add empty cart'})
+            }
             } else {
                 res.status(400).send({error: errors.join(',')})
             }
