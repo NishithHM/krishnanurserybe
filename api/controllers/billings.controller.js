@@ -212,8 +212,7 @@ exports.getCustomerCart=async(req, res)=>{
             }
           ]
           const results = await Billing.aggregate(pipeline)
-        const cart = await Billing.findOne({status:"CART", customerId: new mongoose.mongo.ObjectId(id) }, null , {updatedAt:-1})
-        res.status(200).send(cart)
+          res.status(200).send(results[0])
     }catch(error){
         const err = handleMongoError(error)
         res.status(500).send(err)
