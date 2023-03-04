@@ -70,7 +70,7 @@ exports.confirmCart = async (req, res) =>{
     try {
      const billData = await Billing.findOne({_id: new mongoose.mongo.ObjectId(id), status:'CART'})
      if(billData){
-        const roundOfError = validateRoundOff();
+        const roundOfError = validateRoundOff(billData.totalPrice, roundOff);
         if(isEmpty(roundOfError)){
             const procurementQuantityMapping = {}
             const itemList = billData?.items?.map(ele=>{
