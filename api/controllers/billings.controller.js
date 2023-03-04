@@ -6,6 +6,7 @@ const dayjs = require('dayjs');
 const Procurements = require('../models/procurment.model')
 const Billing = require('../models/billings.model');
 const { handleMongoError } = require('../utils');
+const loggers = require('../../loggers')
 exports.addToCart = async (req, res) => {
     try {
         const { customerNumber, customerName, customerDob, items, customerId } = req.body;
@@ -32,7 +33,7 @@ exports.addToCart = async (req, res) => {
                 }
                
             } else {
-                res.status(400).send(errors)
+                res.status(400).send({error:errors.join(',')})
             }
 
         } else {
@@ -40,6 +41,7 @@ exports.addToCart = async (req, res) => {
         }
     } catch (error) {
         const err = handleMongoError(error)
+        loggers.info('addToCart', JSON.stringify(error))
         res.status(500).send(err)
     }
 
