@@ -100,12 +100,12 @@ exports.confirmCart = async (req, res) =>{
                 await billData.save()
                 res.status(200).send(billData)
             }else{
-                res.status(400).send(errors)
+                res.status(400).send({error:errors.join(' ')})
             }
             
             
         }else{
-            res.status(400).send(roundOfError)
+            res.status(400).send({error: roundOfError})
         }
     }else{
         res.status(400).send("Unable to find the cart items, try again")
