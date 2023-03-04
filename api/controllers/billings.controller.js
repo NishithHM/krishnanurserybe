@@ -136,7 +136,7 @@ exports.getCustomerCart=async(req, res)=>{
         const pipeline = [
             {
               '$match': {
-                'customerId': new ObjectId('63ec67d3a57cdb2adb9daabe'), 
+                'customerId': new ObjectId(id), 
                 'status': 'CART'
               },
             },{
