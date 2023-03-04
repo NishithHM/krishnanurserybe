@@ -211,6 +211,8 @@ exports.getCustomerCart=async(req, res)=>{
               }
             }
           ]
+          loggers.info('getCustomerCart-pipeline', JSON.stringify(pipeline))
+          console.log('getCustomerCart-pipeline', JSON.stringify(pipeline))
           const results = await Billing.aggregate(pipeline)
           res.status(200).send(results[0])
     }catch(error){
