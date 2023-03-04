@@ -37,7 +37,7 @@ exports.addToCart = async (req, res) => {
             }
 
         } else {
-            res.status(400).send(['Unable to find the customer, please try again'])
+            res.status(400).send({error:['Unable to find the customer, please try again']})
         }
     } catch (error) {
         const err = handleMongoError(error)
