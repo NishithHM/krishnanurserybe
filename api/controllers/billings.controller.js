@@ -68,7 +68,7 @@ exports.updateCart = async (req, res) => {
                 res.status(400).send({error: errors.join(',')})
             }
         }else{
-            res.status(400).send("Unable to find the cart items, try again")
+            res.status(400).send({error:"Unable to find the cart items, try again"})
         }
     } catch (error) {
         loggers.info('updateCart-error', error)
@@ -207,15 +207,15 @@ exports.getCustomerCart=async(req, res)=>{
               }
             }, {
               '$group': {
-                '_id': '$customerId', 
+                '_id': '$_id', 
                 'items': {
                   '$push': '$items'
                 }
               }
             }
           ]
-          loggers.info('getCustomerCart-pipeline', JSON.stringify(pipeline))
-          console.log('getCustomerCart-pipeline', JSON.stringify(pipeline))
+          loggers.info('getCustomerCart-pipeline', pipeline)
+          console.log('getCustomerCart-pipeline', pipeline)
           const results = await Billing.aggregate(pipeline)
           res.status(200).send(results[0])
     }catch(error){
