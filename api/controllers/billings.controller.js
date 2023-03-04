@@ -133,6 +133,85 @@ exports.confirmCart = async (req, res) =>{
 exports.getCustomerCart=async(req, res)=>{
     const { id } = req.body;
     try{
+        const pipeline = [
+            {
+              '$match': {
+                'customerId': new ObjectId('63ec67d3a57cdb2adb9daabe'), 
+                'status': 'CART'
+              },
+            },{
+                '$sort':{
+                    updatedAt: -1
+                }
+            },{
+                '$limit':1
+            }, {
+              '$unwind': {
+                'path': '$items'
+              }
+            }, {
+              '$lookup': {
+                'from': 'procurements', 
+                'let': {
+                  'pId': '$items.procurementId', 
+                  'vId': '$items.variant.variantId'
+                }, 
+                'pipeline': [
+                  {
+                    '$match': {
+                      '$expr': {
+                        '$and': [
+                          {
+                            '$eq': [
+                              '$_id', '$$pId'
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  }, {
+                    '$unwind': {
+                      'path': '$variants'
+                    }
+                  }, {
+                    '$match': {
+                      '$expr': {
+                        '$and': [
+                          {
+                            '$eq': [
+                              '$variants._id', "$$vId"
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  }, {
+                    '$project': {
+                      'variants': 1
+                    }
+                  }
+                ], 
+                'as': 'result'
+              }
+            }, {
+              '$unwind': {
+                'path': '$result'
+              }
+            }, {
+              '$addFields': {
+                'items.maxPrice': '$result.variants.maxPrice', 
+                'items.minPrice': '$result.variants.minPrice'
+              }
+            }, {
+              '$group': {
+                '_id': '$customerId', 
+                'items': {
+                  '$push': '$items'
+                }
+              }
+            }
+          ]
+          const results = await Billing.aggregate(pipeline)
         const cart = await Billing.findOne({status:"CART", customerId: new mongoose.mongo.ObjectId(id) }, null , {updatedAt:-1})
         res.status(200).send(cart)
     }catch(error){
