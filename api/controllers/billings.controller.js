@@ -216,6 +216,8 @@ exports.getCustomerCart=async(req, res)=>{
           const results = await Billing.aggregate(pipeline)
           res.status(200).send(results[0])
     }catch(error){
+        loggers.info('getCustomerCart-error', JSON.stringify(error))
+        console.log('getCustomerCart-error', JSON.stringify(error))
         const err = handleMongoError(error)
         res.status(500).send(err)
     }
