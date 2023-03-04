@@ -41,7 +41,7 @@ exports.addToCart = async (req, res) => {
         }
     } catch (error) {
         const err = handleMongoError(error)
-        loggers.info('addToCart', JSON.stringify(error))
+        loggers.info('addToCart-failure', JSON.stringify(error))
         res.status(500).send(err)
     }
 
@@ -123,7 +123,8 @@ exports.confirmCart = async (req, res) =>{
     }
         
     } catch (error) {
-        console.log(error)
+        console.log("confirmCart-failure", JSON.stringify(error))
+        loggers.info("confirmCart-failure", JSON.stringify(error))
         const err = handleMongoError(error)
         res.status(500).send(err)
     }
@@ -199,7 +200,7 @@ const validatePricesAndQuantityAndFormatItems = async (items) => {
             remainingQuantity,
         } = element
 
-        const { procurementId: itemProcurmentId, procurementId: itemVariantId, quantity, price } = items.find((ele) => ele.procurementId === resultProcurementId.toString() && ele.variantId === resultVariantId.toString()) || {}
+        const { procurementId: itemProcurmentId, variantId: itemVariantId, quantity, price } = items.find((ele) => ele.procurementId === resultProcurementId.toString() && ele.variantId === resultVariantId.toString()) || {}
         if (price > maxPrice) {
             errors.push(`"${procurementNames?.en?.name}" of variant "${resultVariantNames?.en?.name}" should be less than "${maxPrice}"`)
         }
