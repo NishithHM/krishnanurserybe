@@ -35,7 +35,7 @@ exports.customerRegister = async (req, res) => {
     }
   } catch (error) {
     console.log(error);
-    loggers.info("customerRegister-error", error)
+    loggers.info(`customerRegister-error, ${error}`)
     const err = handleMongoError(error)
     res.status(500).send(err)
   }
@@ -48,7 +48,7 @@ exports.getCustomerByNumber = async (req, res)=>{
         res.status(200).send(customer)
     } catch (error) {
         console.log(error)
-        loggers.info("getCustomerByNumber-error", error)
+        loggers.info(`getCustomerByNumber-error, ${error}`)
         const err = handleMongoError(error)
         res.status(400).send(err)
     }

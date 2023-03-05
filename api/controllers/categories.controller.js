@@ -28,7 +28,7 @@ exports.createCategory = async (req, res) => {
 		})
 	} catch (error) {
 		console.log(error)
-        loggers.info("createCategory-error",error)
+        loggers.info(`createCategory-error, ${error}`)
 		const err = handleMongoError(error)
         res.status(400).send(err)
 	}
@@ -88,12 +88,12 @@ exports.getAllCategories =async(req, res)=>{
         }
         
         console.log("getAllCategories-pipeline",JSON.stringify(pipeline))
-        loggers.info("getAllCategories-pipeline",JSON.stringify(pipeline))
+        loggers.info(`getAllCategories-pipeline, ${JSON.stringify(pipeline)}`)
         const categories = await Category.aggregate(pipeline)
         res.json(categories)    
     } catch (error) {
         console.log(error)
-        loggers.info("getAllCategories-error", error)
+        loggers.info(`getAllCategories-error, ${error}`)
         const err = handleMongoError(error)
         res.status(500).send(err)
     }
@@ -110,7 +110,7 @@ exports.deleteCategoryById =async(req, res)=>{
        })
     } catch (error) {
         console.log(error)
-        loggers.info("deleteCategoryById-error", error)
+        loggers.info(`deleteCategoryById-error, ${error}`)
         const err = handleMongoError(error)
         res.status(500).send(err)
     }

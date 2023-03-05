@@ -50,7 +50,7 @@ exports.addNewProcurement = async (req, res) => {
 
     } catch (error) {
         console.log(error)
-        loggers.info('addNewProcurement-error', error)
+        loggers.info(`addNewProcurement-error, ${error}`)
         const err = handleMongoError(error)
         res.status(500).send(err)
     }
@@ -108,7 +108,7 @@ exports.updateProcurement = async (req, res) => {
         }
     } catch (error) {
         console.log(error)
-        loggers.info('updateProcurement-error', error)
+        loggers.info(`updateProcurement-error, ${error}`)
         const err = handleMongoError(error)
         res.status(500).send(err)
     }
@@ -177,7 +177,7 @@ exports.getAllProcurements = async (req, res) => {
         }
 
         console.log("getAllProcurements-pipeline", JSON.stringify(pipeline))
-        loggers.info("getAllProcurements-pipeline", pipeline)
+        loggers.info(`getAllProcurements-pipeline, ${JSON.stringify(pipeline)}`)
         const procurements = await Procurement.aggregate(pipeline)
         const procurementsWithAvg = procurements.map(procurement=>{
             const sum = procurement.procurementHistory.reduce((acc, ele)=> {
@@ -189,7 +189,7 @@ exports.getAllProcurements = async (req, res) => {
         res.json(procurementsWithAvg)
     } catch (error) {
         console.log(error)
-        loggers.info("getAllProcurements-error", error)
+        loggers.info(`getAllProcurements-error, ${error}`)
         const err = handleMongoError(error)
         res.status(500).send(err)
     }
@@ -255,11 +255,11 @@ exports.getAllProcurementsHistory = async (req, res) => {
 
         console.log("getAllProcurementsHistory-pipeline", JSON.stringify(pipeline))
         const procurements = await ProcurementHistory.aggregate(pipeline)
-        loggers.info("getAllProcurementsHistory-pipeline", pipeline)
+        loggers.info(`getAllProcurementsHistory-pipeline, ${JSON.stringify(pipeline)}`)
         res.json(procurements)
     } catch (error) {
         console.log(error)
-        loggers.info("getAllProcurementsHistory-error", error)
+        loggers.info(`getAllProcurementsHistory-error, ${error}`)
         const err = handleMongoError(error)
         res.status(500).send(err)
     }
@@ -301,7 +301,7 @@ exports.addProcurementVariants = async (req, res) => {
         }
     } catch (error) {
         console.log(error)
-        loggers.info("addProcurementVariants-error", error)
+        loggers.info(`addProcurementVariants-error, ${error}`)
         const err = handleMongoError(error)
         res.status(500).send(err)
     }
@@ -321,7 +321,7 @@ exports.setMinimumQuantity = async (req, res) => {
         }
     } catch (error) {
         console.log(error)
-        loggers.info("setMinimumQuantity-error", error)
+        loggers.info(`setMinimumQuantity-error, ${error}`)
         const err = handleMongoError(error)
         res.status(500).send(err)
     }
@@ -373,12 +373,12 @@ exports.getLowProcurements = async (req, res) => {
         }
 
         console.log("getLowProcurements-pipeline", JSON.stringify(pipeline))
-        loggers.info("getLowProcurements-pipeline", pipeline)
+        loggers.info(`getLowProcurements-pipeline, ${JSON.stringify(pipeline)}`)
         const procurements = await Procurement.aggregate(pipeline)
         res.json(procurements)
     } catch (error) {
         console.log(error)
-        loggers.info("getLowProcurements-error", error)
+        loggers.info(`getLowProcurements-error, ${error}`)
         const err = handleMongoError(error)
         res.status(500).send(err)
     }

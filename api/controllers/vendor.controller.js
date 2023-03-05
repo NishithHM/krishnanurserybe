@@ -12,7 +12,7 @@ exports.getVendorList = async (req, res)=>{
         res.status(200).json(vendors)
     } catch (error) {
         console.log(error)
-        loggers.info("getVendorList-error", error)
+        loggers.info(`getVendorList-error, ${error}`)
         const err = handleMongoError(error)
         res.status(500).send(err)
     }

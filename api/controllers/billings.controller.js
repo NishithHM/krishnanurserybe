@@ -42,7 +42,7 @@ exports.addToCart = async (req, res) => {
         }
     } catch (error) {
         const err = handleMongoError(error)
-        loggers.info('addToCart-error', error)
+        loggers.info(`addToCart-error, ${error}`)
         console.log('addToCart-error', error)
         res.status(500).send(err)
     }
@@ -72,7 +72,7 @@ exports.updateCart = async (req, res) => {
             res.status(400).send({error:"Unable to find the cart items, try again"})
         }
     } catch (error) {
-        loggers.info('updateCart-error', error)
+        loggers.info(`updateCart-error, ${error}`)
         console.log('updateCart-error', error)
         const err = handleMongoError(error)
         res.status(500).send(err)
@@ -127,7 +127,7 @@ exports.confirmCart = async (req, res) =>{
     }
         
     } catch (error) {
-        loggers.info('confirm-cart-error', error)
+        loggers.info(`confirm-cart-error, ${error}`)
         console.log('confirm-cart-error', error)
         const err = handleMongoError(error)
         res.status(500).send(err)
@@ -215,12 +215,12 @@ exports.getCustomerCart=async(req, res)=>{
               }
             }
           ]
-          loggers.info('getCustomerCart-pipeline', pipeline)
+          loggers.info(`getCustomerCart-pipeline, ${JSON.stringify(pipeline)}`)
           console.log('getCustomerCart-pipeline', pipeline)
           const results = await Billing.aggregate(pipeline)
           res.status(200).send(results[0])
     }catch(error){
-        loggers.info('getCustomerCart-error', error)
+        loggers.info(`getCustomerCart-error, ${error}`)
         console.log('getCustomerCart-error', error)
         const err = handleMongoError(error)
         res.status(500).send(err)
@@ -270,7 +270,7 @@ const validatePricesAndQuantityAndFormatItems = async (items) => {
         }
     ]
     console.log("validatePricesAndQuantity", JSON.stringify(pipeline))
-    loggers.info("validatePricesAndQuantity", pipeline)
+    loggers.info(`validatePricesAndQuantity, ${pipeline}`)
     const results = await Procurements.aggregate(pipeline)
     const errors = []
     const formattedItems = []
@@ -402,11 +402,11 @@ exports.getAllBillingHistory = async (req, res) => {
 
         console.log("getAllBillingHistory-pipeline", JSON.stringify(pipeline))
         const results = await Billing.aggregate(pipeline)
-        loggers.info("getAllBillingHistory-pipeline", pipeline)
+        loggers.info(`getAllBillingHistory-pipeline, ${JSON.stringify(pipeline)}`)
         res.json(results)
     } catch (error) {
         console.log(error)
-        loggers.info("getAllProcurementsHistory-error", error)
+        loggers.info(`getAllProcurementsHistory-errr, ${error}`)
         const err = handleMongoError(error)
         res.status(500).send(err)
     }
