@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken")
-const isEmpty = require('lodash/isEmpty')
+const isEmpty = require('lodash/isEmpty');
+const loggers = require("../../loggers");
 const User = require('../models/user.model')
 exports.authWall = (roles)=>(req, res, next) => {
     let token;
@@ -17,6 +18,7 @@ exports.authWall = (roles)=>(req, res, next) => {
         jwt.verify(token, jwtSecret, async (err, decodedToken) => {
             if (err) {
                 console.log({ err })
+                loggers.info('jwt-error', err)
                 return res.status(401).json({ message: "Not authorized" })
             } else {
                 if (!roles.includes(decodedToken.role)) {
@@ -45,6 +47,7 @@ exports.bodyValidator = (schema) => (req, res, next) => {
         const { details } = error;
         const message = details.map(i => i.message).join(',');
         console.log("error", message);
+        loggers.info('bodyValidator-error', message)
         res.status(422).json({ error: message })
     } else {
         next()

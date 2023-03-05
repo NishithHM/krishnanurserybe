@@ -7,6 +7,7 @@ const Procurements = require('../models/procurment.model')
 const Billing = require('../models/billings.model');
 const { handleMongoError } = require('../utils');
 const loggers = require('../../loggers')
+
 exports.addToCart = async (req, res) => {
     try {
         const { customerNumber, customerName, customerDob, items, customerId } = req.body;
@@ -269,6 +270,7 @@ const validatePricesAndQuantityAndFormatItems = async (items) => {
         }
     ]
     console.log("validatePricesAndQuantity", JSON.stringify(pipeline))
+    loggers.info("validatePricesAndQuantity", pipeline)
     const results = await Procurements.aggregate(pipeline)
     const errors = []
     const formattedItems = []
@@ -352,6 +354,63 @@ const updateCustomerPurchaseHistory = async (billData)=>{
         customer.billingHistory.unshift(purchaseData)
     }
     await customer.save()
+}
+
+exports.getAllBillingHistory = async (req, res) => {
+    const { pageNumber, isCount, id, startDate, endDate } = req.body;
+    try {
+        const match = [
+            {
+                '$match': {
+                    status:"BILLED",
+                    createdAt: {
+                        $gte: dayjs(startDate, 'YYYY-MM-DD').toDate(),
+                        $lt: dayjs(endDate, 'YYYY-MM-DD').add(1, 'day').toDate()
+                    }
+                }
+            },
+        ]
+        const pagination = [{
+            '$skip': 10 * (pageNumber - 1)
+        }, {
+            '$limit': 10
+        }]
+
+        const count = [
+            {
+                '$count': 'count'
+            },
+        ]
+
+        const sortStage = [{
+            '$sort': {
+                createdAt: -1
+            }
+        }]
+
+        const pipeline = []
+        pipeline.push(...match)
+        pipeline.push(...sortStage)
+
+        if (pageNumber) {
+            pipeline.push(...pagination)
+        }
+
+        if (isCount) {
+            pipeline.push(...count)
+        }
+
+        console.log("getAllBillingHistory-pipeline", JSON.stringify(pipeline))
+        const results = await Billing.aggregate(pipeline)
+        loggers.info("getAllBillingHistory-pipeline", pipeline)
+        res.json(results)
+    } catch (error) {
+        console.log(error)
+        loggers.info("getAllProcurementsHistory-error", error)
+        const err = handleMongoError(error)
+        res.status(500).send(err)
+    }
+
 }
 
 

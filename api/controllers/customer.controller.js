@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const dayjs = require('dayjs');
 const { handleMongoError } = require('../utils');
+const loggers = require('../../loggers');
 
 exports.customerRegister = async (req, res) => {
   const { name, phoneNumber, dob, categoryList } = req.body;
@@ -28,13 +29,13 @@ exports.customerRegister = async (req, res) => {
     if (objIds.length != idMatchedInDBCount) {
       res.status(403).send("Forbidden Operation");
     } else {
-      console.log(...interestedCategories)
       const customer = new Customer({ name, phoneNumber, dob : dayjs(dob, 'YYYY-MM-DD').toDate(), interestedCategories })
       await customer.save();
       res.status(201).json({ customer })
     }
   } catch (error) {
     console.log(error);
+    loggers.info("customerRegister-error", error)
     const err = handleMongoError(error)
     res.status(500).send(err)
   }
@@ -47,6 +48,7 @@ exports.getCustomerByNumber = async (req, res)=>{
         res.status(200).send(customer)
     } catch (error) {
         console.log(error)
+        loggers.info("getCustomerByNumber-error", error)
         const err = handleMongoError(error)
         res.status(400).send(err)
     }

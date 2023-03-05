@@ -31,3 +31,10 @@ exports.confirmCartSchema = Joi.object().keys({
 exports.getCustomerCartSchema = Joi.object().keys({
     id: Joi.string().required(),
 });
+
+exports.getBillingHistory = Joi.object().keys({
+    pageNumber: Joi.number(),
+    isCount: Joi.boolean(),
+    startDate : Joi.string().pattern(new RegExp(/\d{4}-\d{2}-\d{2}/)).required(),
+    endDate : Joi.string().pattern(new RegExp(/\d{4}-\d{2}-\d{2}/)).required(),
+});
