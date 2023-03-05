@@ -179,14 +179,19 @@ exports.getAllProcurements = async (req, res) => {
         console.log("getAllProcurements-pipeline", JSON.stringify(pipeline))
         loggers.info(`getAllProcurements-pipeline, ${JSON.stringify(pipeline)}`)
         const procurements = await Procurement.aggregate(pipeline)
-        const procurementsWithAvg = procurements.map(procurement=>{
-            const sum = procurement.procurementHistory.reduce((acc, ele)=> {
+        if(count){
+            res.json(procurements)
+        }else{
+            const procurementsWithAvg = procurements.map(procurement=>{
+            const sum = procurement?.procurementHistory?.reduce((acc, ele)=> {
                     return acc + (ele.totalPrice / ele.quantity )
             }, 0)
             const averagePrice =  (sum  / procurement.procurementHistory.length).toFixed(2)
             return {...procurement, averagePrice}
-        })
-        res.json(procurementsWithAvg)
+            })
+            res.json(procurementsWithAvg)
+        }
+        
     } catch (error) {
         console.log(error)
         loggers.info(`getAllProcurements-error, ${error}`)
