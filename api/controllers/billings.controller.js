@@ -37,7 +37,7 @@ exports.addToCart = async (req, res) => {
             }
 
         } else {
-            res.status(400).send({error:['Unable to find the customer, please try again']})
+            res.status(400).send({error:'Unable to find the customer, please try again'})
         }
     } catch (error) {
         const err = handleMongoError(error)
@@ -345,11 +345,11 @@ const updateCustomerPurchaseHistory = async (billData)=>{
         billedDate: new Date()
     }
     const customer  = await Customer.findById(customerId);
-    if (customer.billingHistory.length > 20) {
+    if (customer.billingHistory.length >= 20) {
         customer.billingHistory.shift()
-        customer.billingHistory.push(purchaseData)
+        customer.billingHistory.unshift(purchaseData)
     } else {
-        customer.billingHistory.push(purchaseData)
+        customer.billingHistory.unshift(purchaseData)
     }
     await customer.save()
 }
