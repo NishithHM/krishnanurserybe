@@ -25,7 +25,8 @@ exports.updateCartSchema = Joi.object().keys({
 
 exports.confirmCartSchema = Joi.object().keys({
     id: Joi.string().required(),
-    roundOff: Joi.number().min(0).max(500).default(0)
+    roundOff: Joi.number().min(0).max(500).default(0),
+    invoiceId: Joi.string().min(8).max(8).required()
 });
 
 exports.getCustomerCartSchema = Joi.object().keys({

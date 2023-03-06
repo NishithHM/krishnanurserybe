@@ -81,7 +81,7 @@ exports.updateCart = async (req, res) => {
 }
 
 exports.confirmCart = async (req, res) =>{
-    const { id, roundOff=0} = req.body;
+    const { id, roundOff=0, invoiceId} = req.body;
     try {
      const billData = await Billing.findOne({_id: new mongoose.mongo.ObjectId(id), status:'CART'})
      if(billData){
@@ -110,6 +110,7 @@ exports.confirmCart = async (req, res) =>{
                 billData.roundOff = roundOff
                 billData.status = "BILLED"
                 billData.billedBy = billedBy
+                billData.invoiceId = invoiceId
                 updateRemainingQuantity(procurementQuantityMapping)
                 updateCustomerPurchaseHistory(billData)
                 await billData.save()
