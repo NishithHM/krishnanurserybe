@@ -13,7 +13,7 @@ exports.addToCart = async (req, res) => {
         const { customerNumber, customerName, customerDob, items, customerId } = req.body;
         const soldBy = {
             _id: req?.token?.id,
-            name:req?.token?.name
+            name: req?.token?.name
         }
         let customerRes
         if (!customerId) {
@@ -23,22 +23,22 @@ exports.addToCart = async (req, res) => {
             customerRes = await Customer.findById(customerId);
         }
         if (!isEmpty(customerRes)) {
-            const {errors, formattedItems, totalPrice, discount } = await validatePricesAndQuantityAndFormatItems(items)
+            const { errors, formattedItems, totalPrice, discount } = await validatePricesAndQuantityAndFormatItems(items)
             if (isEmpty(errors)) {
-                if(formattedItems.length > 0){
-                    const billing = new Billing({customerName: customerRes.name, customerId: customerRes._id, customerNumber: customerRes.phoneNumber, soldBy, items: formattedItems, totalPrice, discount, status: "CART"})
+                if (formattedItems.length > 0) {
+                    const billing = new Billing({ customerName: customerRes.name, customerId: customerRes._id, customerNumber: customerRes.phoneNumber, soldBy, items: formattedItems, totalPrice, discount, status: "CART" })
                     const cartDetails = await billing.save()
                     res.status(200).send(cartDetails)
-                }else{
-                    res.status(400).send({error:'Unable to add empty cart'})
+                } else {
+                    res.status(400).send({ error: 'Unable to add empty cart' })
                 }
-               
+
             } else {
-                res.status(400).send({error:errors.join(',')})
+                res.status(400).send({ error: errors.join(',') })
             }
 
         } else {
-            res.status(400).send({error:'Unable to find the customer, please try again'})
+            res.status(400).send({ error: 'Unable to find the customer, please try again' })
         }
     } catch (error) {
         const err = handleMongoError(error)
@@ -51,25 +51,25 @@ exports.addToCart = async (req, res) => {
 
 exports.updateCart = async (req, res) => {
     try {
-        const {items, id } = req.body;
+        const { items, id } = req.body;
         const billData = await Billing.findById(id)
-        if(billData){
-            const {errors, formattedItems, totalPrice, discount } = await validatePricesAndQuantityAndFormatItems(items)
+        if (billData) {
+            const { errors, formattedItems, totalPrice, discount } = await validatePricesAndQuantityAndFormatItems(items)
             if (isEmpty(errors)) {
-                if(formattedItems.length > 0){
-                   billData.items = formattedItems;
-                   billData.totalPrice = totalPrice;
-                   billData.discount = discount;
-                   const cartDetails = await billData.save()
-                   res.status(200).send(cartDetails)
-              }else{
-                res.status(400).send({error:'Unable to add empty cart'})
-            }
+                if (formattedItems.length > 0) {
+                    billData.items = formattedItems;
+                    billData.totalPrice = totalPrice;
+                    billData.discount = discount;
+                    const cartDetails = await billData.save()
+                    res.status(200).send(cartDetails)
+                } else {
+                    res.status(400).send({ error: 'Unable to add empty cart' })
+                }
             } else {
-                res.status(400).send({error: errors.join(',')})
+                res.status(400).send({ error: errors.join(',') })
             }
-        }else{
-            res.status(400).send({error:"Unable to find the cart items, try again"})
+        } else {
+            res.status(400).send({ error: "Unable to find the cart items, try again" })
         }
     } catch (error) {
         loggers.info(`updateCart-error, ${error}`)
@@ -77,56 +77,57 @@ exports.updateCart = async (req, res) => {
         const err = handleMongoError(error)
         res.status(500).send(err)
     }
-   
+
 }
 
-exports.confirmCart = async (req, res) =>{
-    const { id, roundOff=0, invoiceId} = req.body;
+exports.confirmCart = async (req, res) => {
+    const { id, roundOff = 0, invoiceId } = req.body;
     try {
-     const billData = await Billing.findOne({_id: new mongoose.mongo.ObjectId(id), status:'CART'})
-     if(billData){
-        const roundOfError = validateRoundOff(billData.totalPrice, roundOff);
-        if(isEmpty(roundOfError)){
-            const procurementQuantityMapping = {}
-            const itemList = billData?.items?.map(ele=>{
-                if(procurementQuantityMapping[ele.procurementId.toString()]){
-                    procurementQuantityMapping[ele.procurementId.toString()] = procurementQuantityMapping[ele.procurementId.toString()] + ele.quantity
-                }else{
-                    procurementQuantityMapping[ele.procurementId.toString()] = ele.quantity
+        const billData = await Billing.findOne({ _id: new mongoose.mongo.ObjectId(id), status: 'CART' })
+        if (billData) {
+            const roundOfError = validateRoundOff(billData.totalPrice, roundOff);
+            if (isEmpty(roundOfError)) {
+                const procurementQuantityMapping = {}
+                const itemList = billData?.items?.map(ele => {
+                    if (procurementQuantityMapping[ele.procurementId.toString()]) {
+                        procurementQuantityMapping[ele.procurementId.toString()] = procurementQuantityMapping[ele.procurementId.toString()] + ele.quantity
+                    } else {
+                        procurementQuantityMapping[ele.procurementId.toString()] = ele.quantity
+                    }
+                    return {
+                        "procurementId": ele.procurementId.toString(),
+                        "variantId": ele.variant.variantId.toString(),
+                        "quantity": ele.quantity,
+                        "price": ele.rate
+                    }
+                })
+                const { errors } = await validatePricesAndQuantityAndFormatItems(itemList)
+                if (isEmpty(errors)) {
+                    const billedBy = {
+                        _id: req?.token?.id,
+                        name: req?.token?.name
+                    }
+                    billData.totalPrice = billData.totalPrice - roundOff
+                    billData.roundOff = roundOff
+                    billData.status = "BILLED"
+                    billData.billedBy = billedBy
+                    billData.invoiceId = invoiceId
+                    updateRemainingQuantity(procurementQuantityMapping)
+                    updateCustomerPurchaseHistory(billData)
+                    await billData.save()
+                    res.status(200).send(billData)
+                } else {
+                    res.status(400).send({ error: errors.join(' ') })
                 }
-                return {
-                "procurementId": ele.procurementId.toString(),
-                "variantId" : ele.variant.variantId.toString(),
-                "quantity" : ele.quantity,
-                "price": ele.rate
-            }})
-            const {errors } = await validatePricesAndQuantityAndFormatItems(itemList)
-            if(isEmpty(errors)){
-                const billedBy = {
-                    _id: req?.token?.id,
-                    name:req?.token?.name
-                }
-                billData.totalPrice = billData.totalPrice - roundOff
-                billData.roundOff = roundOff
-                billData.status = "BILLED"
-                billData.billedBy = billedBy
-                billData.invoiceId = invoiceId
-                updateRemainingQuantity(procurementQuantityMapping)
-                updateCustomerPurchaseHistory(billData)
-                await billData.save()
-                res.status(200).send(billData)
-            }else{
-                res.status(400).send({error:errors.join(' ')})
+
+
+            } else {
+                res.status(400).send({ error: roundOfError })
             }
-            
-            
-        }else{
-            res.status(400).send({error: roundOfError})
+        } else {
+            res.status(400).send("Unable to find the cart items, try again")
         }
-    }else{
-        res.status(400).send("Unable to find the cart items, try again")
-    }
-        
+
     } catch (error) {
         loggers.info(`confirm-cart-error, ${error}`)
         console.log('confirm-cart-error', error)
@@ -135,98 +136,98 @@ exports.confirmCart = async (req, res) =>{
     }
 }
 
-exports.getCustomerCart=async(req, res)=>{
+exports.getCustomerCart = async (req, res) => {
     const { id } = req.body;
-    try{
+    try {
         const pipeline = [
             {
-              '$match': {
-                'customerId': new mongoose.mongo.ObjectId(id), 
-                'status': 'CART'
-              },
-            },{
-                '$sort':{
+                '$match': {
+                    'customerId': new mongoose.mongo.ObjectId(id),
+                    'status': 'CART'
+                },
+            }, {
+                '$sort': {
                     updatedAt: -1
                 }
-            },{
-                '$limit':1
             }, {
-              '$unwind': {
-                'path': '$items'
-              }
+                '$limit': 1
             }, {
-              '$lookup': {
-                'from': 'procurements', 
-                'let': {
-                  'pId': '$items.procurementId', 
-                  'vId': '$items.variant.variantId'
-                }, 
-                'pipeline': [
-                  {
-                    '$match': {
-                      '$expr': {
-                        '$and': [
-                          {
-                            '$eq': [
-                              '$_id', '$$pId'
-                            ]
-                          }
-                        ]
-                      }
-                    }
-                  }, {
-                    '$unwind': {
-                      'path': '$variants'
-                    }
-                  }, {
-                    '$match': {
-                      '$expr': {
-                        '$and': [
-                          {
-                            '$eq': [
-                              '$variants._id', "$$vId"
-                            ]
-                          }
-                        ]
-                      }
-                    }
-                  }, {
-                    '$project': {
-                      'variants': 1
-                    }
-                  }
-                ], 
-                'as': 'result'
-              }
-            }, {
-              '$unwind': {
-                'path': '$result'
-              }
-            }, {
-              '$addFields': {
-                'items.maxPrice': '$result.variants.maxPrice', 
-                'items.minPrice': '$result.variants.minPrice'
-              }
-            }, {
-              '$group': {
-                '_id': '$_id', 
-                'items': {
-                  '$push': '$items'
+                '$unwind': {
+                    'path': '$items'
                 }
-              }
+            }, {
+                '$lookup': {
+                    'from': 'procurements',
+                    'let': {
+                        'pId': '$items.procurementId',
+                        'vId': '$items.variant.variantId'
+                    },
+                    'pipeline': [
+                        {
+                            '$match': {
+                                '$expr': {
+                                    '$and': [
+                                        {
+                                            '$eq': [
+                                                '$_id', '$$pId'
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }, {
+                            '$unwind': {
+                                'path': '$variants'
+                            }
+                        }, {
+                            '$match': {
+                                '$expr': {
+                                    '$and': [
+                                        {
+                                            '$eq': [
+                                                '$variants._id', "$$vId"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }, {
+                            '$project': {
+                                'variants': 1
+                            }
+                        }
+                    ],
+                    'as': 'result'
+                }
+            }, {
+                '$unwind': {
+                    'path': '$result'
+                }
+            }, {
+                '$addFields': {
+                    'items.maxPrice': '$result.variants.maxPrice',
+                    'items.minPrice': '$result.variants.minPrice'
+                }
+            }, {
+                '$group': {
+                    '_id': '$_id',
+                    'items': {
+                        '$push': '$items'
+                    }
+                }
             }
-          ]
-          loggers.info(`getCustomerCart-pipeline, ${JSON.stringify(pipeline)}`)
-          console.log('getCustomerCart-pipeline', pipeline)
-          const results = await Billing.aggregate(pipeline)
-          res.status(200).send(results[0])
-    }catch(error){
+        ]
+        loggers.info(`getCustomerCart-pipeline, ${JSON.stringify(pipeline)}`)
+        console.log('getCustomerCart-pipeline', pipeline)
+        const results = await Billing.aggregate(pipeline)
+        res.status(200).send(results[0])
+    } catch (error) {
         loggers.info(`getCustomerCart-error, ${error}`)
         console.log('getCustomerCart-error', error)
         const err = handleMongoError(error)
         res.status(500).send(err)
     }
-    
+
 }
 
 const validatePricesAndQuantityAndFormatItems = async (items) => {
@@ -298,28 +299,28 @@ const validatePricesAndQuantityAndFormatItems = async (items) => {
         if (quantity > remainingQuantity) {
             errors.push(`Ooops!! stock of "${procurementNames?.en?.name}" is low, maximum order can be "${remainingQuantity}"`)
         }
-        formattedItems.push({procurementId : itemProcurmentId, procurementName:procurementNames, variant:{ variantId: itemVariantId, ...resultVariantNames }, quantity, mrp: maxPrice, rate: price  })
+        formattedItems.push({ procurementId: itemProcurmentId, procurementName: procurementNames, variant: { variantId: itemVariantId, ...resultVariantNames }, quantity, mrp: maxPrice, rate: price })
         totalPrice = totalPrice + price * quantity;
         discount = discount + (maxPrice - price) * quantity;
     }
 
-    return {errors, formattedItems, totalPrice, discount}
+    return { errors, formattedItems, totalPrice, discount }
 
 
 
 }
 
-const validateRoundOff = (totalPrice, amount) =>{
-    const maxRound = totalPrice * 0.1 > 500 ? 500 : totalPrice*0.1
-    if(amount> maxRound){
+const validateRoundOff = (totalPrice, amount) => {
+    const maxRound = totalPrice * 0.1 > 500 ? 500 : totalPrice * 0.1
+    if (amount > maxRound) {
         return "Round off amount is higher, please reduce and try again later"
     }
     return null
 }
 
-const updateRemainingQuantity = async (object)=>{
+const updateRemainingQuantity = async (object) => {
     const listValues = Object.entries(object);
-    for(const [key, value] of listValues){
+    for (const [key, value] of listValues) {
         const procurment = await Procurements.findById(key)
         procurment.remainingQuantity = procurment.remainingQuantity - value
         await procurment.save()
@@ -328,16 +329,16 @@ const updateRemainingQuantity = async (object)=>{
     }
 }
 
-const updateCustomerPurchaseHistory = async (billData)=>{
+const updateCustomerPurchaseHistory = async (billData) => {
     const customerId = billData.customerId
-    const  {
+    const {
         items,
         totalPrice,
         discount,
         roundOff,
         soldBy,
         billedBy,
-    } =billData
+    } = billData
     const purchaseData = {
         items,
         totalPrice,
@@ -347,7 +348,7 @@ const updateCustomerPurchaseHistory = async (billData)=>{
         billedBy,
         billedDate: new Date()
     }
-    const customer  = await Customer.findById(customerId);
+    const customer = await Customer.findById(customerId);
     if (customer.billingHistory.length >= 20) {
         customer.billingHistory.shift()
         customer.billingHistory.unshift(purchaseData)
@@ -358,12 +359,12 @@ const updateCustomerPurchaseHistory = async (billData)=>{
 }
 
 exports.getAllBillingHistory = async (req, res) => {
-    const { pageNumber, isCount, id, startDate, endDate } = req.body;
+    const { pageNumber, isCount, id, startDate, endDate, sortBy, sortType, search } = req.body;
     try {
         const match = [
             {
                 '$match': {
-                    status:"BILLED",
+                    status: "BILLED",
                     createdAt: {
                         $gte: dayjs(startDate, 'YYYY-MM-DD').toDate(),
                         $lt: dayjs(endDate, 'YYYY-MM-DD').add(1, 'day').toDate()
@@ -382,15 +383,33 @@ exports.getAllBillingHistory = async (req, res) => {
                 '$count': 'count'
             },
         ]
+        let sortStage
+        if (sortBy) {
+            sortStage = [{
+                '$sort': {
+                    [sortBy]: parseInt(sortType)
+                }
+            }]
+        } else {
+            sortStage = [{
+                '$sort': {
+                    updatedAt: -1
+                }
+            }]
+        }
 
-        const sortStage = [{
-            '$sort': {
-                createdAt: -1
-            }
-        }]
-
+        const searchMatch = [
+            {
+                '$match': {
+                    customerName: { $regex: search, $options: "i" }
+                }
+            },
+        ]
         const pipeline = []
         pipeline.push(...match)
+        if (search) {
+            pipeline.push(...searchMatch)
+        }
         pipeline.push(...sortStage)
 
         if (pageNumber) {
