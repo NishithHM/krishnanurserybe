@@ -75,5 +75,5 @@ router.get('/api/billing/history', [authWall(['admin']),paramsToBody(['pageNumbe
 
 // s3 test
 router.post('/api/upload-test',[upload.single('bill')], testUpload)
-router.get('/video', videoRender)
+// router.get('/video', videoRender)
 module.exports = router
