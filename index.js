@@ -24,7 +24,6 @@ app.use(router)
 // app.get("/", function (req, res) {
 //     res.sendFile(__dirname + "/index.html");
 // });
-app.listen(port, () => {
 const server = app.listen(port, () => {
 	console.log(`Server is running on port ${port}`)
     logger.info(`Server is running on port ${port}`)
