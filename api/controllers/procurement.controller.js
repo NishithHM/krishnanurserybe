@@ -288,7 +288,7 @@ exports.addProcurementVariants = async (req, res) => {
                 minPrice: val.minPrice,
                 maxPrice: val.maxPrice
             }));
-            procurement.variants = [...procurement.variants, ...variantsDb]
+            procurement.variants = [...variantsDb]
             const names = procurement.variants.map(val => (
                 val.names.en
             ));
