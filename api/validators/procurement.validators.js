@@ -42,7 +42,8 @@ exports.getProcurementsHistorySchema = Joi.object().keys({
     isCount: Joi.boolean(),
     id: Joi.string().required(),
     startDate : Joi.string().pattern(new RegExp(/\d{4}-\d{2}-\d{2}/)).required(),
-    endDate : Joi.string().pattern(new RegExp(/\d{4}-\d{2}-\d{2}/)).required()
+    endDate : Joi.string().pattern(new RegExp(/\d{4}-\d{2}-\d{2}/)).required(),
+    isAverage: Joi.boolean()
 });
 
 exports.addVariantsSchema = Joi.object().keys({
@@ -64,5 +65,5 @@ exports.getProcurementsLowSchema = Joi.object().keys({
     pageNumber: Joi.number(),
     isCount: Joi.boolean(),
     sortBy: Joi.string().valid('minimumQuantity'),
-    sortType: Joi.number().valid(-1, 1).default(1)
+    sortType: Joi.number().valid(-1, 1).default(1),
 });

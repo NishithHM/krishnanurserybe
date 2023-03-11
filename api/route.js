@@ -11,10 +11,10 @@ const { createCategory, deleteCategoryById, getAllCategories } = require('./cont
 const { createProcurementSchema, updateProcurementSchema, getProcurementsSchema, getProcurementsHistorySchema, addVariantsSchema, setProcurementMinQuantitySchema, getProcurementsLowSchema } = require('./validators/procurement.validators')
 const { addNewProcurement, updateProcurement, getAllProcurements, getAllProcurementsHistory, addProcurementVariants, setMinimumQuantity, getLowProcurements } = require('./controllers/procurement.controller')
 const { customerSchema, getCustomerSchema } = require('./validators/customer.validators')
-const { addToCartSchema, updateCartSchema, confirmCartSchema, getCustomerCartSchema } = require('./validators/billing.validators')
+const { addToCartSchema, updateCartSchema, confirmCartSchema, getCustomerCartSchema, getBillingHistory } = require('./validators/billing.validators')
 
 const { customerRegister, getCustomerByNumber } = require('./controllers/customer.controller');
-const { addToCart, updateCart, confirmCart, getCustomerCart } = require('./controllers/billings.controller');
+const { addToCart, updateCart, confirmCart, getCustomerCart, getAllBillingHistory } = require('./controllers/billings.controller');
 
 
 
@@ -50,7 +50,7 @@ router.put('/api/category/delete/:id', [authWall(['admin'])], paramsToBody(['id'
 router.post('/api/procurements/create', [authWall(['admin','procurement']), bodyValidator(createProcurementSchema)], addNewProcurement)
 router.post('/api/procurements/update/:id', [authWall(['procurement']), paramsToBody(['id'], 'params'), bodyValidator(updateProcurementSchema)], updateProcurement)
 router.get('/api/procurements/getAll', [authWall(['admin', 'procurement', 'sales']), paramsToBody(['pageNumber', 'search', 'isCount', 'sortBy', 'sortType'], 'query'), bodyValidator(getProcurementsSchema)], getAllProcurements)
-router.get('/api/procurements/getAllHistory', [authWall(['admin', 'procurement']), paramsToBody(['pageNumber', 'isCount', 'id', 'startDate', 'endDate'], 'query'), bodyValidator(getProcurementsHistorySchema)], getAllProcurementsHistory)
+router.get('/api/procurements/getAllHistory', [authWall(['admin', 'procurement']), paramsToBody(['pageNumber', 'isCount', 'id', 'startDate', 'endDate', 'isAverage'], 'query'), bodyValidator(getProcurementsHistorySchema)], getAllProcurementsHistory)
 router.post('/api/procurements/variants/:id', [authWall(['admin']), paramsToBody(['id'], 'params'), bodyValidator(addVariantsSchema)], addProcurementVariants)
 router.post('/api/procurements/minimumQuantity/:id', [authWall(['admin']), paramsToBody(['id'], 'params'), bodyValidator(setProcurementMinQuantitySchema)], setMinimumQuantity)
 router.get('/api/procurements/low-quantity', [authWall(['procurement', 'admin']), paramsToBody(['pageNumber', 'isCount', 'sortBy', 'sortType'], 'query'), bodyValidator(getProcurementsLowSchema)], getLowProcurements)
@@ -63,14 +63,17 @@ router.post('/api/customer/create', [bodyValidator(customerSchema)], customerReg
 router.get('/api/customer/get-customer/:phoneNumber', [authWall(['sales']),paramsToBody(['phoneNumber'], "params"), bodyValidator(getCustomerSchema)], getCustomerByNumber);
 
 //billing
-router.post('/api/billing/addToCart', [authWall(['sales']), bodyValidator(addToCartSchema)], addToCart)
-router.post('/api/billing/update-cart/:id', [authWall(['sales']),paramsToBody(['id'], "params"), bodyValidator(updateCartSchema)], updateCart)
+router.post('/api/billing/addToCart', [authWall(['sales', 'preSales']), bodyValidator(addToCartSchema)], addToCart)
+router.post('/api/billing/update-cart/:id', [authWall(['sales', 'preSales']),paramsToBody(['id'], "params"), bodyValidator(updateCartSchema)], updateCart)
 router.post('/api/billing/confirm-cart/:id', [authWall(['sales']),paramsToBody(['id'], "params"), bodyValidator(confirmCartSchema)], confirmCart)
 router.get('/api/billing/get-cart/:id', [authWall(['sales']),paramsToBody(['id'], "params"), bodyValidator(getCustomerCartSchema)], getCustomerCart)
 
-// s3 test
 
+
+router.get('/api/billing/get-cart/:id', [authWall(['sales', 'preSales']),paramsToBody(['id'], "params"), bodyValidator(getCustomerCartSchema)], getCustomerCart)
+router.get('/api/billing/history', [authWall(['admin']),paramsToBody(['pageNumber', 'isCount','startDate', 'endDate', 'sortBy', 'sortType', 'search'], 'query'), bodyValidator(getBillingHistory)], getAllBillingHistory)
+
+// s3 test
 router.post('/api/upload-test',[upload.single('bill')], testUpload)
 router.get('/video', videoRender)
-
 module.exports = router

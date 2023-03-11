@@ -1,6 +1,7 @@
 const Category = require('../models/categories.model')
 const mongoose = require('mongoose');
 const { handleMongoError } = require('../utils');
+const loggers = require('../../loggers');
 
 exports.createCategory = async (req, res) => {
 	const { nameInEnglish, nameInKannada } = req.body;
@@ -27,6 +28,7 @@ exports.createCategory = async (req, res) => {
 		})
 	} catch (error) {
 		console.log(error)
+        loggers.info(`createCategory-error, ${error}`)
 		const err = handleMongoError(error)
         res.status(400).send(err)
 	}
@@ -69,7 +71,6 @@ exports.getAllCategories =async(req, res)=>{
                 [sortVal[sortBy]] : parseInt(sortType)
             }
         }]
-        console.log(sortStage)
 
         const pipeline = []
         pipeline.push(...match)
@@ -87,10 +88,12 @@ exports.getAllCategories =async(req, res)=>{
         }
         
         console.log("getAllCategories-pipeline",JSON.stringify(pipeline))
+        loggers.info(`getAllCategories-pipeline, ${JSON.stringify(pipeline)}`)
         const categories = await Category.aggregate(pipeline)
         res.json(categories)    
     } catch (error) {
         console.log(error)
+        loggers.info(`getAllCategories-error, ${error}`)
         const err = handleMongoError(error)
         res.status(500).send(err)
     }
@@ -107,6 +110,7 @@ exports.deleteCategoryById =async(req, res)=>{
        })
     } catch (error) {
         console.log(error)
+        loggers.info(`deleteCategoryById-error, ${error}`)
         const err = handleMongoError(error)
         res.status(500).send(err)
     }

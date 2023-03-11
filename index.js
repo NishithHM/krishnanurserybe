@@ -5,8 +5,12 @@ const dotenv = require('dotenv')
 const dbCon = require('./db/connection')
 const cookieParser = require("cookie-parser");
 const cors = require('cors')
-
-const app = express()
+const compression = require('compression')
+const helmet = require('helmet')
+const app = express();
+const logger = require('./loggers')
+app.use(compression())
+app.use(helmet())
 dotenv.config({ path: './.env' })
 dbCon.connect()
 const port = process.env.PORT;
@@ -17,10 +21,13 @@ if(process.env.ENV==='dev'){
 app.use(cookieParser())
 app.use(bodyParser.json({ limit: '1mb' }))
 app.use(router)
-app.get("/", function (req, res) {
-    res.sendFile(__dirname + "/index.html");
-});
+// app.get("/", function (req, res) {
+//     res.sendFile(__dirname + "/index.html");
+// });
 app.listen(port, () => {
+const server = app.listen(port, () => {
 	console.log(`Server is running on port ${port}`)
+    logger.info(`Server is running on port ${port}`)
 })
+server.setTimeout(5000)
 

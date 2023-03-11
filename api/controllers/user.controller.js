@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const { handleMongoError } = require('../utils');
+const loggers = require('../../loggers');
 
 exports.register = async (req, res) => {
 	const { name, phoneNumber, email, role, password } = req.body;
@@ -20,6 +21,7 @@ exports.register = async (req, res) => {
 		})
 	} catch (error) {
 		console.log(error)
+        loggers.info(`register-error, ${error}`)
         const err = handleMongoError(error)
         res.status(400).send(err)
 	}
@@ -30,6 +32,7 @@ exports.singIn = async (req, res) => {
 	try {
 		const {phoneNumber, password}  = req.body
         const user = await User.findOne({phoneNumber, isActive: true})
+        loggers.info(`user-info, ${user}`)
         if (!user) {
             res.status(400).json({
               message: "Login not successful",
@@ -63,6 +66,7 @@ exports.singIn = async (req, res) => {
         }
 		
 	} catch (error) {
+        loggers.info(`singIn-error, ${error}`)
         const err = handleMongoError(error)
 		res.status(500).send(err)
 	}
@@ -108,10 +112,12 @@ exports.getAllUsers =async(req, res)=>{
             pipeline.push(...count)
         }
         console.log("getAllUsers-pipeline",JSON.stringify(pipeline))
+        loggers.info(`getAllUsers-pipeline, ${pipeline}`)
         const users = await User.aggregate(pipeline)
         res.json({users})    
     } catch (error) {
         console.log(error)
+        loggers.info(`getAllUsers-error, ${error}`)
         const err = handleMongoError(error)
         res.status(500).send(err)
     }
@@ -128,6 +134,7 @@ exports.deleteUserById =async(req, res)=>{
        })
     } catch (error) {
         console.log(error)
+        loggers.info(`deleteUserById-error, ${error}`)
         const err = handleMongoError(error)
         res.status(500).send(err)
     }

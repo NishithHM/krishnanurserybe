@@ -7,7 +7,6 @@ const categories = new mongoose.Schema({
             name:{
                 type: String,
                 required: true,
-                unique: true
             }
         },
         ka:{
@@ -43,6 +42,8 @@ const categories = new mongoose.Schema({
 }, {
 	timestamps: true
 })
+
+categories.index({'names.en.name': 1, 'isActive': 1}, {unique: true})
 
 
 

@@ -5,7 +5,7 @@ exports.createUserSchema = Joi.object().keys({
     email: Joi.string().email().required(),
     phoneNumber: Joi.string().min(10).max(10).required(),
     password: Joi.string().min(7).required(),
-    role: Joi.string().valid('admin', 'sales', 'procurement').required()
+    role: Joi.string().valid('admin', 'sales', 'procurement', 'preSales').required()
 });
 
 exports.loginUserSchema = Joi.object().keys({

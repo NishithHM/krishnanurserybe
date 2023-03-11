@@ -25,9 +25,20 @@ exports.updateCartSchema = Joi.object().keys({
 
 exports.confirmCartSchema = Joi.object().keys({
     id: Joi.string().required(),
-    roundOff: Joi.number().min(0).max(500).default(0)
+    roundOff: Joi.number().min(0).max(500).default(0),
+    invoiceId: Joi.string().min(8).max(8).required()
 });
 
 exports.getCustomerCartSchema = Joi.object().keys({
     id: Joi.string().required(),
+});
+
+exports.getBillingHistory = Joi.object().keys({
+    pageNumber: Joi.number(),
+    isCount: Joi.boolean(),
+    startDate : Joi.string().pattern(new RegExp(/\d{4}-\d{2}-\d{2}/)).required(),
+    endDate : Joi.string().pattern(new RegExp(/\d{4}-\d{2}-\d{2}/)).required(),
+    sortBy: Joi.string().valid('updatedAt', 'totalPrice'),
+    sortType: Joi.number().valid(-1, 1).default(1),
+    search: Joi.string().pattern(new RegExp(/[A-Za-z]/)),
 });
