@@ -76,9 +76,9 @@ exports.updateProcurement = async (req, res) => {
             }
             let newVendorId
             if (!vendorId) {
-                const vendorData = await new Vendor({ contact: vendorContact, name: vendorName })
+                const vendorData =  new Vendor({ contact: vendorContact, name: vendorName })
                 newVendorId = vendorData._id
-                vendorData.save()
+                await vendorData.save()
             }
             procurement.totalQuantity += totalQuantity
             procurement.remainingQuantity += totalQuantity
