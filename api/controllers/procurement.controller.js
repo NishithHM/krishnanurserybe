@@ -109,6 +109,7 @@ exports.updateProcurement = async (req, res) => {
             } else {
                 procurement.procurementHistory.unshift(procurementHistoryDataObj)
             }
+            console.log('shot',procurement.procurementHistory)
             const procurementHistory = new ProcurementHistory({ ...procurementHistoryDataObj })
             const response = await procurement.save()
             procurementHistory.save()
@@ -122,7 +123,7 @@ exports.updateProcurement = async (req, res) => {
             res.status(400).send("Record not found")
         }
     } catch (error) {
-        console.log(error)
+        // console.log(error)
         loggers.info(`updateProcurement-error, ${error}`)
         const err = handleMongoError(error)
         res.status(500).send(err)
