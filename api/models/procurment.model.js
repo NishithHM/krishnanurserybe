@@ -106,6 +106,10 @@ const Procurement = new mongoose.Schema({
             vendorId:{
                 type: String,
                 required: true
+            },
+            invoice: {
+                type: String,
+                required:  true,
             }
         }],
         validate: [arrayLimit, '{PATH} exceeds the limit of 10']
