@@ -86,7 +86,7 @@ exports.updateProcurement = async (req, res) => {
             procurement.categories = [...categories];
             let awsPath = ''
             if(req.file){
-                awsPath = `nursery/procurements/${req.file.filePath}`
+                awsPath = `nursery/procurements/${req.file.filename}`
              }
             const procurementHistoryData = [{
                 createdBy,

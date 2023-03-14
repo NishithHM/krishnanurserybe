@@ -59,3 +59,15 @@ exports.uploadFile = async ({ file, path }) => {
     }
 }
 
+exports.downloadFile = async (req, res) =>{
+    const {path} = req.body
+    const AWS = require('aws-sdk')
+    const s3 = new AWS.S3()
+    const bucket = `coden-aws-bucket`
+    const fileKey = `${process.env.ENV}/${path}`
+    
+    res.attachment(fileKey);
+    const fileStream = s3.getObject({Bucket:bucket, Key: fileKey}).createReadStream()
+    fileStream.pipe(res);
+}
+

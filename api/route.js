@@ -21,6 +21,7 @@ const { addToCart, updateCart, confirmCart, getCustomerCart, getAllBillingHistor
 const { getVendorsSchema } = require('./validators/vendor.validators')
 const { getVendorList } = require('./controllers/vendor.controller');
 const { testUpload, videoRender } = require('./controllers/test.contoller');
+const { downloadFile } = require('./utils');
 
 const fileStorageEngine = multer.diskStorage({
 	destination:(req,file,cb) =>{
@@ -74,6 +75,6 @@ router.get('/api/billing/get-cart/:id', [authWall(['sales', 'preSales']),paramsT
 router.get('/api/billing/history', [authWall(['admin']),paramsToBody(['pageNumber', 'isCount','startDate', 'endDate', 'sortBy', 'sortType', 'search'], 'query'), bodyValidator(getBillingHistory)], getAllBillingHistory)
 
 // s3 test
-router.post('/api/upload-test',[upload.single('bill')], testUpload)
+router.get('/api/download',[authWall(['admin','procurement', 'sales', 'preSales']), paramsToBody(['path'], "query")], downloadFile)
 // router.get('/video', videoRender)
 module.exports = router
