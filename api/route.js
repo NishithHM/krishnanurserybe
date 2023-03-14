@@ -48,7 +48,7 @@ router.put('/api/category/delete/:id', [authWall(['admin'])], paramsToBody(['id'
 
 // procurements
 router.post('/api/procurements/create', [authWall(['admin','procurement']), upload.single('invoice'), paramsToBody(['body'], 'formData'), bodyValidator(createProcurementSchema)], addNewProcurement)
-router.post('/api/procurements/update/:id', [authWall(['procurement']),  upload.single('invoice'), paramsToBody(['body'], 'formData'), bodyValidator(updateProcurementSchema)], updateProcurement)
+router.post('/api/procurements/update/:id', [authWall(['procurement']),  upload.single('invoice'), paramsToBody(['body'], 'formData'), paramsToBody(['id'], 'params'), bodyValidator(updateProcurementSchema)], updateProcurement)
 router.get('/api/procurements/getAll', [authWall(['admin', 'procurement', 'sales']), paramsToBody(['pageNumber', 'search', 'isCount', 'sortBy', 'sortType'], 'query'), bodyValidator(getProcurementsSchema)], getAllProcurements)
 router.get('/api/procurements/getAllHistory', [authWall(['admin', 'procurement']), paramsToBody(['pageNumber', 'isCount', 'id', 'startDate', 'endDate', 'isAverage'], 'query'), bodyValidator(getProcurementsHistorySchema)], getAllProcurementsHistory)
 router.post('/api/procurements/variants/:id', [authWall(['admin']), paramsToBody(['id'], 'params'), bodyValidator(addVariantsSchema)], addProcurementVariants)
