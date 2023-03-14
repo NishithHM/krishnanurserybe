@@ -4,8 +4,7 @@ const ProcurementHistory = require('../models/procurementHistory.model')
 const mongoose = require('mongoose')
 const dayjs = require('dayjs')
 const uniq = require('lodash/uniq')
-const { handleMongoError } = require('../utils')
-const logger = require('../../loggers')
+const { handleMongoError, uploadFile } = require('../utils')
 const loggers = require('../../loggers')
 exports.addNewProcurement = async (req, res) => {
     const { nameInEnglish, nameInKannada, vendorName, vendorContact, totalQuantity, totalPrice, description, vendorId, categories } = req.body
@@ -27,6 +26,10 @@ exports.addNewProcurement = async (req, res) => {
         _id: req?.token?.id,
         name: req?.token?.name
     }
+    let awsPath = ''
+    if(req.file){
+       awsPath = `nursery/procurements/${req.file.filePath}`
+    }
     const procurementHistoryData = [{
         createdBy,
         quantity: totalQuantity,
@@ -35,15 +38,19 @@ exports.addNewProcurement = async (req, res) => {
         description,
         vendorName,
         vendorContact,
-        vendorId: vendorId || newVendorId
+        vendorId: vendorId || newVendorId,
+        invoice: awsPath 
     }]
-    const procurementHistoryDataObj = { ...procurementHistoryData[0], names }
+    const procurementHistoryDataObj = { ...procurementHistoryData[0], names}
 
     const procurement = new Procurement({ names, totalQuantity, remainingQuantity: totalQuantity, lastProcuredOn: new Date(), procurementHistory: procurementHistoryData, categories })
     try {
         const response = await procurement.save()
-        const procurementHistory = new ProcurementHistory({ ...procurementHistoryDataObj, procurementId: response._id })
+        const procurementHistory = new ProcurementHistory({ ...procurementHistoryDataObj, procurementId: response._id , invoice: awsPath})
         procurementHistory.save()
+        if(req.file){
+            uploadFile({file: req.file, path:'nursery/procurements'})
+        }
         res.status(201).json({
             response
         })
@@ -77,6 +84,10 @@ exports.updateProcurement = async (req, res) => {
             procurement.remainingQuantity += totalQuantity
             procurement.lastProcuredOn = new Date()
             procurement.categories = [...categories];
+            let awsPath = ''
+            if(req.file){
+                awsPath = `nursery/procurements/${req.file.filePath}`
+             }
             const procurementHistoryData = [{
                 createdBy,
                 quantity: totalQuantity,
@@ -85,7 +96,8 @@ exports.updateProcurement = async (req, res) => {
                 description,
                 vendorName,
                 vendorContact,
-                vendorId: vendorId || newVendorId
+                vendorId: vendorId || newVendorId,
+                invoice: awsPath 
             }]
 
             const procurementHistoryDataObj = { ...procurementHistoryData[0], names, procurementId: procurement._id }
@@ -100,6 +112,9 @@ exports.updateProcurement = async (req, res) => {
             const procurementHistory = new ProcurementHistory({ ...procurementHistoryDataObj })
             const response = await procurement.save()
             procurementHistory.save()
+            if(req.file){
+                 uploadFile({file: req.file, path:'nursery/procurements'})
+           }
             res.status(201).json({
                 response
             })

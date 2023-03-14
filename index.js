@@ -21,6 +21,9 @@ if(process.env.ENV==='dev'){
 app.use(cookieParser())
 app.use(bodyParser.json({ limit: '1mb' }))
 app.use(router)
+// app.get("/", function (req, res) {
+//     res.sendFile(__dirname + "/index.html");
+// });
 const server = app.listen(port, () => {
 	console.log(`Server is running on port ${port}`)
     logger.info(`Server is running on port ${port}`)

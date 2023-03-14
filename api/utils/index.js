@@ -19,20 +19,22 @@ exports.handleMongoError=(error)=>{
     }
 }
 
-exports.uploadFile=async({file, bucketName})=> {
+exports.uploadFile=async({file, path})=> {
     const AWS = require('aws-sdk')
     const s3 = new AWS.S3()
     const fileStream = fs.createReadStream(file.path)
     const uploadParams = {
-      Bucket: bucketName,
+      Bucket: `coden-aws-bucket/${process.env.ENV}/${path}`,
       Key: file.filename,
       Body: fileStream
     }
     try {
        const  res = await s3.putObject(uploadParams).promise()
        console.log(JSON.stringify(res))
+       return res;
     } catch (error) {
         console.error(error, error.stack);
+        
     }finally{
         fs.unlinkSync(file.path)
     }

@@ -49,6 +49,10 @@ const ProcurementHistory = new mongoose.Schema({
     vendorId:{
         type: String,
         required: true
+    },
+    invoice:{
+        type: String,
+        required: true,
     }
 }, {
     timestamps: true

@@ -1,6 +1,8 @@
 // add api routes
 const express = require('express');
 const router = express.Router();
+const multer = require('multer')
+const path = require('path');
 const { register, singIn, getAllUsers, deleteUserById } = require('./controllers/user.controller');
 const { authWall, bodyValidator, paramsToBody } = require('./middlewares/auth.middleware')
 const { createUserSchema, loginUserSchema, deleteUserSchema, getUsersSchema } = require('./validators/user.validators')
@@ -17,7 +19,20 @@ const { addToCart, updateCart, confirmCart, getCustomerCart, getAllBillingHistor
 
 
 const { getVendorsSchema } = require('./validators/vendor.validators')
-const { getVendorList } = require('./controllers/vendor.controller')
+const { getVendorList } = require('./controllers/vendor.controller');
+const { testUpload, videoRender } = require('./controllers/test.contoller');
+
+const fileStorageEngine = multer.diskStorage({
+	destination:(req,file,cb) =>{
+		cb(null,path.join(__dirname,'./uploads'))
+
+	},
+	filename:(req,file,cb)=>{
+		cb(null,Date.now() + path.extname(file.originalname))
+
+	}
+})
+const upload = multer({storage:fileStorageEngine})
 
 // user
 router.post('/api/user/create/cmwcwec', [bodyValidator(createUserSchema)], register)
@@ -32,8 +47,8 @@ router.get('/api/category/getAll', [authWall(['admin', 'procurement']), paramsTo
 router.put('/api/category/delete/:id', [authWall(['admin'])], paramsToBody(['id'], 'params'), bodyValidator(deleteCategorySchema), deleteCategoryById)
 
 // procurements
-router.post('/api/procurements/create', [authWall(['admin','procurement']), bodyValidator(createProcurementSchema)], addNewProcurement)
-router.post('/api/procurements/update/:id', [authWall(['procurement']), paramsToBody(['id'], 'params'), bodyValidator(updateProcurementSchema)], updateProcurement)
+router.post('/api/procurements/create', [authWall(['admin','procurement']), upload.single('invoice'), paramsToBody(['body'], 'formData'), bodyValidator(createProcurementSchema)], addNewProcurement)
+router.post('/api/procurements/update/:id', [authWall(['procurement']),  upload.single('invoice'), paramsToBody(['body'], 'formData'), bodyValidator(updateProcurementSchema)], updateProcurement)
 router.get('/api/procurements/getAll', [authWall(['admin', 'procurement', 'sales']), paramsToBody(['pageNumber', 'search', 'isCount', 'sortBy', 'sortType'], 'query'), bodyValidator(getProcurementsSchema)], getAllProcurements)
 router.get('/api/procurements/getAllHistory', [authWall(['admin', 'procurement']), paramsToBody(['pageNumber', 'isCount', 'id', 'startDate', 'endDate', 'isAverage'], 'query'), bodyValidator(getProcurementsHistorySchema)], getAllProcurementsHistory)
 router.post('/api/procurements/variants/:id', [authWall(['admin']), paramsToBody(['id'], 'params'), bodyValidator(addVariantsSchema)], addProcurementVariants)
@@ -51,6 +66,14 @@ router.get('/api/customer/get-customer/:phoneNumber', [authWall(['sales']),param
 router.post('/api/billing/addToCart', [authWall(['sales', 'preSales']), bodyValidator(addToCartSchema)], addToCart)
 router.post('/api/billing/update-cart/:id', [authWall(['sales', 'preSales']),paramsToBody(['id'], "params"), bodyValidator(updateCartSchema)], updateCart)
 router.post('/api/billing/confirm-cart/:id', [authWall(['sales']),paramsToBody(['id'], "params"), bodyValidator(confirmCartSchema)], confirmCart)
+router.get('/api/billing/get-cart/:id', [authWall(['sales']),paramsToBody(['id'], "params"), bodyValidator(getCustomerCartSchema)], getCustomerCart)
+
+
+
 router.get('/api/billing/get-cart/:id', [authWall(['sales', 'preSales']),paramsToBody(['id'], "params"), bodyValidator(getCustomerCartSchema)], getCustomerCart)
 router.get('/api/billing/history', [authWall(['admin']),paramsToBody(['pageNumber', 'isCount','startDate', 'endDate', 'sortBy', 'sortType', 'search'], 'query'), bodyValidator(getBillingHistory)], getAllBillingHistory)
+
+// s3 test
+router.post('/api/upload-test',[upload.single('bill')], testUpload)
+// router.get('/video', videoRender)
 module.exports = router
