@@ -110,7 +110,13 @@ exports.getAllUsers =async(req, res)=>{
         }
         if(isCount){
             pipeline.push(...count)
+        }else{
+            const mandatory = ['_id', 'name', 'createdAt', 'updatedAt', 'role', 'phoneNumber']
+            const project = {}
+            mandatory.forEach(f=> project[f] = 1)
+            pipeline.push({$project: project})
         }
+        
         console.log("getAllUsers-pipeline",JSON.stringify(pipeline))
         loggers.info(`getAllUsers-pipeline, ${pipeline}`)
         const users = await User.aggregate(pipeline)

@@ -85,6 +85,11 @@ exports.getAllCategories =async(req, res)=>{
         }
         if(isCount){
             pipeline.push(...count)
+        }else{
+            const mandatory = ['_id', 'names', 'createdAt']
+            const project = {}
+            mandatory.forEach(f=> project[f] = 1)
+            pipeline.push({$project: project})
         }
         
         console.log("getAllCategories-pipeline",JSON.stringify(pipeline))

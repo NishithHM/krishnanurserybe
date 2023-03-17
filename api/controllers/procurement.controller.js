@@ -6,6 +6,7 @@ const dayjs = require('dayjs')
 const uniq = require('lodash/uniq')
 const { handleMongoError, uploadFile } = require('../utils')
 const loggers = require('../../loggers')
+
 exports.addNewProcurement = async (req, res) => {
     const { nameInEnglish, nameInKannada, vendorName, vendorContact, totalQuantity, totalPrice, description, vendorId, categories } = req.body
     const names = {
@@ -52,7 +53,7 @@ exports.addNewProcurement = async (req, res) => {
             uploadFile({file: req.file, path:'nursery/procurements'})
         }
         res.status(201).json({
-            response
+            message:'Successfully Created'
         })
 
     } catch (error) {
@@ -117,7 +118,7 @@ exports.updateProcurement = async (req, res) => {
                  uploadFile({file: req.file, path:'nursery/procurements'})
            }
             res.status(201).json({
-                response
+                message:'Successfully Created'
             })
         } else {
             res.status(400).send("Record not found")
@@ -132,6 +133,12 @@ exports.updateProcurement = async (req, res) => {
 }
 
 exports.getAllProcurements = async (req, res) => {
+    const fields ={
+        admin: ['_id', 'names', 'totalQuantity', 'remainingQuantity', 'lastProcuredOn', 'procurementHistory', 'variants', 'minimumQuantity'],
+        procurement: ['_id', 'names', 'totalQuantity', 'remainingQuantity', 'lastProcuredOn', 'procurementHistory'],
+        sales: ['_id', "names", 'variants'],
+        preSales: ['_id', "names", 'variants']
+    }
     const { pageNumber, search, isCount, sortBy, sortType } = req.body;
     try {
         const match = [
@@ -190,6 +197,14 @@ exports.getAllProcurements = async (req, res) => {
         }
         if (isCount) {
             pipeline.push(...count)
+        }else{
+            const role = req?.token?.role
+            let projectFields = fields[role];
+            if(projectFields){
+                const project = {}
+                projectFields.forEach(f=> project[f] = 1)
+                pipeline.push({$project: project})
+            }
         }
 
         console.log("getAllProcurements-pipeline", JSON.stringify(pipeline))
@@ -220,6 +235,8 @@ exports.getAllProcurements = async (req, res) => {
 exports.getAllProcurementsHistory = async (req, res) => {
     const { pageNumber, isCount, id, startDate, endDate, isAverage } = req.body;
     const procurementId = new mongoose.mongo.ObjectId(id);
+    const mandatory = ['_id', 'createdAt', 'quantity', 'vendorName', 'vendorContact', 'totalPrice', 'invoice']
+   
     try {
         const match = [
             {
@@ -273,6 +290,11 @@ exports.getAllProcurementsHistory = async (req, res) => {
             }
             pipeline.push(averagePriceStage)
         }
+        if(!isCount && !isAverage){
+            const project = {}
+            mandatory.forEach(f=> project[f] = 1)
+            pipeline.push({$project: project})
+        }
 
         console.log("getAllProcurementsHistory-pipeline", JSON.stringify(pipeline))
         const procurements = await ProcurementHistory.aggregate(pipeline)
@@ -315,8 +337,6 @@ exports.addProcurementVariants = async (req, res) => {
             } else {
                 res.status(400).json({ error: 'duplicate variant name' })
             }
-
-
         } else {
             res.status(400).send("Record not found")
         }
@@ -391,6 +411,11 @@ exports.getLowProcurements = async (req, res) => {
         }
         if (isCount) {
             pipeline.push(...count)
+        }else{
+            const project = {}
+            const mandatory = ['_id', 'names', 'totalQuantity', 'remainingQuantity', 'lastProcuredOn', 'procurementHistory']
+            mandatory.forEach(f=> project[f] = 1)
+            pipeline.push({$project: project})
         }
 
         console.log("getLowProcurements-pipeline", JSON.stringify(pipeline))
