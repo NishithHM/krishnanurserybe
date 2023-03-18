@@ -29,9 +29,9 @@ exports.addNewProcurement = async (req, res) => {
         name: req?.token?.name
     }
     let awsPath = ''
-    const path = uuid.v4()
+    const key = uuid.v4()
     if(req.file){
-       awsPath = `nursery/procurements/${path}`
+       awsPath = `nursery/procurements/${key}`
     }
     const procurementHistoryData = [{
         createdBy,
