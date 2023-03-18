@@ -54,7 +54,8 @@ exports.addNewProcurement = async (req, res) => {
         const procurementHistory = new ProcurementHistory({ ...procurementHistoryDataObj, procurementId: response._id , invoice: awsPath})
         procurementHistory.save()
         if(req.file){
-            uploadFile({file: req.file, path:'nursery/procurements', key})
+            const [name, type] = req.file.filename ? req.file.filename.split('.') : []
+            uploadFile({file: req.file, path:'nursery/procurements', key : `${key}.${type}`})
         }
         res.status(201).json({
             message:'Successfully Created'
