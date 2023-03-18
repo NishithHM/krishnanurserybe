@@ -2,6 +2,7 @@ const Procurement = require('../models/procurment.model')
 const Vendor = require('../models/vendor.model')
 const ProcurementHistory = require('../models/procurementHistory.model')
 const mongoose = require('mongoose')
+const uuid = require('uuid')
 const dayjs = require('dayjs')
 const uniq = require('lodash/uniq')
 const { handleMongoError, uploadFile } = require('../utils')
@@ -28,8 +29,9 @@ exports.addNewProcurement = async (req, res) => {
         name: req?.token?.name
     }
     let awsPath = ''
+    const path = uuid.v4()
     if(req.file){
-       awsPath = `nursery/procurements/${req.file.filePath}`
+       awsPath = `nursery/procurements/${path}`
     }
     const procurementHistoryData = [{
         createdBy,
@@ -50,7 +52,7 @@ exports.addNewProcurement = async (req, res) => {
         const procurementHistory = new ProcurementHistory({ ...procurementHistoryDataObj, procurementId: response._id , invoice: awsPath})
         procurementHistory.save()
         if(req.file){
-            uploadFile({file: req.file, path:'nursery/procurements'})
+            uploadFile({file: req.file, path:'nursery/procurements', key})
         }
         res.status(201).json({
             message:'Successfully Created'
