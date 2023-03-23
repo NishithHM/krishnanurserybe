@@ -110,7 +110,8 @@ const Procurement = new mongoose.Schema({
             invoice: {
                 type: String,
                 required:  true,
-            }
+            },
+            images: [{ type: String}]
         }],
         validate: [arrayLimit, '{PATH} exceeds the limit of 10']
     }

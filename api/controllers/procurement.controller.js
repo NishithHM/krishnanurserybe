@@ -7,8 +7,10 @@ const dayjs = require('dayjs')
 const uniq = require('lodash/uniq')
 const { handleMongoError, uploadFile } = require('../utils')
 const loggers = require('../../loggers')
+const { isEmpty } = require('lodash')
 
 exports.addNewProcurement = async (req, res) => {
+    console.log(req.files)
     const { nameInEnglish, nameInKannada, vendorName, vendorContact, totalQuantity, totalPrice, description, vendorId, categories } = req.body
     const names = {
         en: {
@@ -29,12 +31,19 @@ exports.addNewProcurement = async (req, res) => {
         name: req?.token?.name
     }
     let awsPath = ''
-    const key = uuid.v4()
-    
-    if(req.file){
-       const [name, type] = req.file.filename ? req.file.filename.split('.') : []
-       awsPath = `nursery/procurements/${key}.${type}`
+    const keys = []
+    const paths = []
+    if(!isEmpty(req.files)){
+        req.files.map(ele=>{
+            const key = uuid.v4()
+            keys.push(key)
+            const [name, type] = ele?.filename ? ele.filename.split('.') : []
+            paths.push(`nursery/procurements/${key}.${type}`)
+        })
+           
+
     }
+    const [invoice, ...images] = paths
     const procurementHistoryData = [{
         createdBy,
         quantity: totalQuantity,
@@ -44,7 +53,8 @@ exports.addNewProcurement = async (req, res) => {
         vendorName,
         vendorContact,
         vendorId: vendorId || newVendorId,
-        invoice: awsPath 
+        invoice,
+        images, 
     }]
     const procurementHistoryDataObj = { ...procurementHistoryData[0], names}
 
@@ -53,9 +63,12 @@ exports.addNewProcurement = async (req, res) => {
         const response = await procurement.save()
         const procurementHistory = new ProcurementHistory({ ...procurementHistoryDataObj, procurementId: response._id , invoice: awsPath})
         procurementHistory.save()
-        if(req.file){
-            const [name, type] = req.file.filename ? req.file.filename.split('.') : []
-            uploadFile({file: req.file, path:'nursery/procurements', key : `${key}.${type}`})
+        if(!isEmpty(req.files)){
+            req.files.map((ele, index)=>{
+                const [name, type] = ele.filename ? ele.filename.split('.') : []
+                uploadFile({file: ele, path:'nursery/procurements', key : `${keys[index]}.${type}`})
+            })
+            
         }
         res.status(201).json({
             message:'Successfully Created'
@@ -91,7 +104,7 @@ exports.updateProcurement = async (req, res) => {
             procurement.lastProcuredOn = new Date()
             procurement.categories = [...categories];
             let awsPath = ''
-            if(req.file){
+            if(req.files){
                 awsPath = `nursery/procurements/${req.file.filename}`
              }
             const procurementHistoryData = [{
@@ -240,7 +253,7 @@ exports.getAllProcurements = async (req, res) => {
 exports.getAllProcurementsHistory = async (req, res) => {
     const { pageNumber, isCount, id, startDate, endDate, isAverage } = req.body;
     const procurementId = new mongoose.mongo.ObjectId(id);
-    const mandatory = ['_id', 'createdAt', 'quantity', 'vendorName', 'vendorContact', 'totalPrice', 'invoice']
+    const mandatory = ['_id', 'createdAt', 'quantity', 'vendorName', 'vendorContact', 'totalPrice', 'invoice', 'images']
    
     try {
         const match = [

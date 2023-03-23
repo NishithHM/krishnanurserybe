@@ -53,7 +53,8 @@ const ProcurementHistory = new mongoose.Schema({
     invoice:{
         type: String,
         required: true,
-    }
+    },
+    images: [{ type: String}]
 }, {
     timestamps: true
 })
