@@ -50,7 +50,7 @@ router.get('/api/category/getAll', [authWall(['admin', 'procurement']), paramsTo
 router.put('/api/category/delete/:id', [authWall(['admin'])], paramsToBody(['id'], 'params'), bodyValidator(deleteCategorySchema), deleteCategoryById)
 
 // procurements
-router.post('/api/procurements/create', [authWall(['procurement']), uploadInvoice.array('invoice', 3), paramsToBody(['body'], 'formData'), bodyValidator(createProcurementSchema)], addNewProcurement)
+router.post('/api/procurements/create', [authWall(['procurement']), uploadInvoice.array('invoice', 4), paramsToBody(['body'], 'formData'), bodyValidator(createProcurementSchema)], addNewProcurement)
 router.post('/api/procurements/update/:id', [authWall(['procurement']),  uploadInvoice.single('invoice'), paramsToBody(['body'], 'formData'), paramsToBody(['id'], 'params'), bodyValidator(updateProcurementSchema)], updateProcurement)
 router.get('/api/procurements/getAll', [authWall(['admin', 'procurement', 'sales', 'preSales']), paramsToBody(['pageNumber', 'search', 'isCount', 'sortBy', 'sortType'], 'query'), bodyValidator(getProcurementsSchema)], getAllProcurements)
 router.get('/api/procurements/getAllHistory', [authWall(['admin', 'procurement']), paramsToBody(['pageNumber', 'isCount', 'id', 'startDate', 'endDate', 'isAverage'], 'query'), bodyValidator(getProcurementsHistorySchema)], getAllProcurementsHistory)
