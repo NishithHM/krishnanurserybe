@@ -33,7 +33,7 @@ const fileStorageEngine = multer.diskStorage({
 
 	}
 })
-const uploadInvoice = multer({storage:fileStorageEngine, limits:{fileSize: 5000000, files:1}});
+const uploadInvoice = multer({storage:fileStorageEngine, limits:{fileSize: 5000000}});
 
 
 
