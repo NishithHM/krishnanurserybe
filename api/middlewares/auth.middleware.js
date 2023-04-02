@@ -4,7 +4,7 @@ const loggers = require("../../loggers");
 const User = require('../models/user.model')
 exports.authWall = (roles)=>(req, res, next) => {
     let token;
-    if(process.env.ENV === "dev" ){
+    if(process.env.ENV === "dev" || process.env.ENV === "qa" ){
         token = req.cookies.jwt
         if(!token){
             token = req.headers['authorization']

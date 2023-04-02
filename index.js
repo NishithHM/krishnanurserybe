@@ -15,7 +15,7 @@ dotenv.config({ path: './.env' })
 dbCon.connect()
 const port = process.env.PORT;
 console.log(process.env.ENV)
-if(process.env.ENV==='dev'){
+if(process.env.ENV==='dev' || process.env.ENV==='qa'){
     app.use(cors())
 }
 app.use(cookieParser())

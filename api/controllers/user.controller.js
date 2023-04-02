@@ -52,7 +52,7 @@ exports.singIn = async (req, res) => {
               httpOnly: true,
               maxAge: maxAge * 1000, 
             });
-            if(process.env.ENV === "dev" ){
+            if(process.env.ENV === "dev" || process.env.ENV === "qa" ){
                 res.status(200).json({user, token})
             }else if(process.env.ENV === "prod" ){
                 res.status(200).json({user})
