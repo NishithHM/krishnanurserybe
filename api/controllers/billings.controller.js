@@ -6,7 +6,8 @@ const dayjs = require('dayjs');
 const Procurements = require('../models/procurment.model')
 const Billing = require('../models/billings.model');
 const { handleMongoError } = require('../utils');
-const loggers = require('../../loggers')
+const loggers = require('../../loggers');
+const { uniqBy } = require('lodash');
 
 exports.addToCart = async (req, res) => {
     try {
@@ -233,6 +234,14 @@ exports.getCustomerCart = async (req, res) => {
 const validatePricesAndQuantityAndFormatItems = async (items) => {
     const procurements = uniq(items.map(ele => new mongoose.mongo.ObjectId(ele.procurementId)))
     const variants = uniq(items.map(ele => new mongoose.mongo.ObjectId(ele.variantId)))
+    const itemsProcurmentAndVariants = items.map(ele=> ele.variantId+ele.procurementId)
+    const uniqItems = uniq(itemsProcurmentAndVariants)
+    const errors = []
+
+    if(itemsProcurmentAndVariants.length > uniqItems.length){
+        errors.push('Duplicate Item found please check')
+        return {errors}
+    }
     const pipeline = [
         {
             '$match': {
@@ -274,7 +283,6 @@ const validatePricesAndQuantityAndFormatItems = async (items) => {
     console.log("validatePricesAndQuantity", JSON.stringify(pipeline))
     loggers.info(`validatePricesAndQuantity, ${pipeline}`)
     const results = await Procurements.aggregate(pipeline)
-    const errors = []
     const formattedItems = []
     let totalPrice = 0;
     let discount = 0
