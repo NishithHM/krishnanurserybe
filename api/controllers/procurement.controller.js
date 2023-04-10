@@ -10,7 +10,6 @@ const loggers = require('../../loggers')
 const { isEmpty } = require('lodash')
 
 exports.addNewProcurement = async (req, res) => {
-    console.log(req.files)
     const { nameInEnglish, nameInKannada, vendorName, vendorContact, totalQuantity, totalPrice, description, vendorId, categories } = req.body
     const names = {
         en: {
@@ -103,10 +102,19 @@ exports.updateProcurement = async (req, res) => {
             procurement.remainingQuantity += totalQuantity
             procurement.lastProcuredOn = new Date()
             procurement.categories = [...categories];
-            let awsPath = ''
-            if(req.files){
-                awsPath = `nursery/procurements/${req.file.filename}`
-             }
+            const keys = []
+            const paths = []
+            if(!isEmpty(req.files)){
+                req.files.map(ele=>{
+                    const key = uuid.v4()
+                    keys.push(key)
+                    const [name, type] = ele?.filename ? ele.filename.split('.') : []
+                    paths.push(`nursery/procurements/${key}.${type}`)
+                })
+                   
+
+            }
+            const [invoice, ...images] = paths
             const procurementHistoryData = [{
                 createdBy,
                 quantity: totalQuantity,
@@ -116,7 +124,8 @@ exports.updateProcurement = async (req, res) => {
                 vendorName,
                 vendorContact,
                 vendorId: vendorId || newVendorId,
-                invoice: awsPath 
+                invoice,
+                images, 
             }]
 
             const procurementHistoryDataObj = { ...procurementHistoryData[0], names, procurementId: procurement._id }
@@ -132,9 +141,13 @@ exports.updateProcurement = async (req, res) => {
             const procurementHistory = new ProcurementHistory({ ...procurementHistoryDataObj })
             const response = await procurement.save()
             procurementHistory.save()
-            if(req.file){
-                 uploadFile({file: req.file, path:'nursery/procurements'})
-           }
+            if(!isEmpty(req.files)){
+                req.files.map((ele, index)=>{
+                    const [name, type] = ele.filename ? ele.filename.split('.') : []
+                    uploadFile({file: ele, path:'nursery/procurements', key : `${keys[index]}.${type}`})
+                })
+                
+            }
             res.status(201).json({
                 message:'Successfully Created'
             })
