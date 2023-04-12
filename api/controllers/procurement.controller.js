@@ -401,7 +401,7 @@ exports.setMinimumQuantity = async (req, res) => {
 }
 
 exports.getLowProcurements = async (req, res) => {
-    const { pageNumber, isCount, sortBy, sortType } = req.body;
+    const { pageNumber, isCount, sortBy, sortType, search } = req.body;
     try {
         const match = [
             {
@@ -417,7 +417,13 @@ exports.getLowProcurements = async (req, res) => {
         }, {
             '$limit': 10
         }]
-        
+        const searchMatch = [
+            {
+                '$match': {
+                    'names.en.name': { $regex: search, $options: "i" }
+                }
+            },
+        ]
         const count = [
             {
                 '$count': 'count'
@@ -434,6 +440,9 @@ exports.getLowProcurements = async (req, res) => {
 
         const pipeline = []
         pipeline.push(...match)
+        if(search){
+            pipeline.push(...searchMatch)
+        }
         if (sortBy && sortType) {
             pipeline.push(...sortStage)
         }
