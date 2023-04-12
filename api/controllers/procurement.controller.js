@@ -165,10 +165,10 @@ exports.updateProcurement = async (req, res) => {
 
 exports.getAllProcurements = async (req, res) => {
     const fields ={
-        admin: ['_id', 'names', 'totalQuantity', 'remainingQuantity', 'lastProcuredOn', 'procurementHistory', 'variants', 'minimumQuantity'],
-        procurement: ['_id', 'names', 'totalQuantity', 'remainingQuantity', 'lastProcuredOn', 'procurementHistory'],
-        sales: ['_id', "names", 'variants'],
-        preSales: ['_id', "names", 'variants']
+        admin: ['_id', 'names', 'totalQuantity', 'remainingQuantity', 'lastProcuredOn', 'procurementHistory', 'variants', 'minimumQuantity', 'categories'],
+        procurement: ['_id', 'names', 'totalQuantity', 'remainingQuantity', 'lastProcuredOn', 'procurementHistory', 'categories'],
+        sales: ['_id', "names", 'variants', 'categories'],
+        preSales: ['_id', "names", 'variants', 'categories']
     }
     const { pageNumber, search, isCount, sortBy, sortType } = req.body;
     try {
