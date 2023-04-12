@@ -410,7 +410,7 @@ exports.getAllBillingHistory = async (req, res) => {
         const searchMatch = [
             {
                 '$match': {
-                    customerName: { $regex: search, $options: "i" }
+                   $or: [ {customerName: { $regex: search, $options: "i" }}, {invoiceId: { $regex: search, $options: "i" }}]
                 }
             },
         ]
