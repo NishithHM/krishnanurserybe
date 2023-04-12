@@ -66,4 +66,5 @@ exports.getProcurementsLowSchema = Joi.object().keys({
     isCount: Joi.boolean(),
     sortBy: Joi.string().valid('minimumQuantity'),
     sortType: Joi.number().valid(-1, 1).default(1),
+    search: Joi.string().pattern(new RegExp(/[A-Za-z]/)),
 });
