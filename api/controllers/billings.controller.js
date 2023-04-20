@@ -331,6 +331,7 @@ const updateRemainingQuantity = async (object) => {
     for (const [key, value] of listValues) {
         const procurment = await Procurements.findById(key)
         procurment.remainingQuantity = procurment.remainingQuantity - value
+        procurment.soldQuantity = value
         await procurment.save()
         // update customer schema
         // new api to get cart items via customer id

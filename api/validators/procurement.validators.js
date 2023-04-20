@@ -1,6 +1,43 @@
 const Joi = require('joi')
 
-exports.createProcurementSchema = Joi.object().keys({
+exports.requestProcurementSchema = Joi.object().keys({
+    nameInEnglish: Joi.string().pattern(new RegExp(/[A-Za-z]/)).required(),
+    totalQuantity: Joi.number().required(),
+    id: Joi.string(),
+    descriptionSales: Joi.string().max(1000).required()
+});
+
+exports.rejectProcurementSchema = Joi.object().keys({
+    id: Joi.string().required(),
+    description: Joi.string().max(1000).required()
+});
+
+exports.verifyProcurementSchema = Joi.object().keys({
+    id: Joi.string().required(),
+    quantity: Joi.number().required()
+});
+
+exports.addInvoiceProcurementSchema = Joi.object().keys({
+    id: Joi.string().required(),
+});
+
+exports.getOrdersProcurementSchema = Joi.object().keys({
+    pageNumber: Joi.number(),
+    isCount: Joi.boolean(),
+    startDate : Joi.string().pattern(new RegExp(/\d{4}-\d{2}-\d{2}/)),
+    endDate : Joi.string().pattern(new RegExp(/\d{4}-\d{2}-\d{2}/)),
+    sortBy: Joi.string().valid('createdAt', 'plantName'),
+    sortType: Joi.number().valid(-1, 1).default(1),
+    search: Joi.string().pattern(new RegExp(/[A-Za-z]/)),
+    statuses: Joi.array().items(Joi.string().valid('REJECTED', 'REQUESTED', 'PLACED', 'VERIFIED'))
+});
+
+exports.updateDeliveryProcurementSchema = Joi.object().keys({
+    id: Joi.string().required(),
+    expectedDeliveryDate: Joi.string().pattern(new RegExp(/\d{4}-\d{2}-\d{2}/))
+});
+
+exports.placeOrderSchema = Joi.object().keys({
     nameInEnglish: Joi.string().pattern(new RegExp(/[A-Za-z]/)).required(),
     nameInKannada: Joi.string().required(),
     vendorName: Joi.string().required(),
@@ -12,7 +49,12 @@ exports.createProcurementSchema = Joi.object().keys({
     categories: Joi.array().items(Joi.object().keys({
         _id:Joi.string().required(),
         name: Joi.string().required()
-    }))
+    })),
+    expectedDeliveryDate: Joi.string().pattern(new RegExp(/\d{4}-\d{2}-\d{2}/)),
+    id: Joi.string().required(),
+    procurementId: Joi.string().required(),
+    currentPaidAmount: Joi.number().required(),
+
 });
 
 exports.updateProcurementSchema = Joi.object().keys({
@@ -67,4 +109,9 @@ exports.getProcurementsLowSchema = Joi.object().keys({
     sortBy: Joi.string().valid('minimumQuantity'),
     sortType: Joi.number().valid(-1, 1).default(1),
     search: Joi.string().pattern(new RegExp(/[A-Za-z]/)),
+});
+
+exports.updateDamageProcurementSchema = Joi.object().keys({
+    id: Joi.string().required(),
+    damagedQuantity: Joi.string().required()
 });
