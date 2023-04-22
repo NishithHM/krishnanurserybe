@@ -51,7 +51,7 @@ exports.placeOrderSchema = Joi.object().keys({
         name: Joi.string().required()
     })),
     expectedDeliveryDate: Joi.string().pattern(new RegExp(/\d{4}-\d{2}-\d{2}/)),
-    id: Joi.string().required(),
+    id: Joi.string(),
     procurementId: Joi.string().required(),
     currentPaidAmount: Joi.number().required(),
 
@@ -76,7 +76,8 @@ exports.getProcurementsSchema = Joi.object().keys({
     pageNumber: Joi.number(),
     isCount: Joi.boolean(),
     sortBy: Joi.string().valid('lastProcuredOn', 'plantName'),
-    sortType: Joi.number().valid(-1, 1).default(1)
+    sortType: Joi.number().valid(-1, 1).default(1),
+    isAll: Joi.string().default("false")
 });
 
 exports.getProcurementsHistorySchema = Joi.object().keys({

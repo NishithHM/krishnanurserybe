@@ -424,10 +424,10 @@ exports.getAllProcurements = async (req, res) => {
     const fields = {
         admin: ['_id', 'names', 'totalQuantity', 'remainingQuantity', 'lastProcuredOn', 'procurementHistory', 'variants', 'minimumQuantity', 'categories'],
         procurement: ['_id', 'names', 'totalQuantity', 'remainingQuantity', 'lastProcuredOn', 'procurementHistory', 'categories'],
-        sales: ['_id', "names", 'variants', 'categories'],
+        sales: ['_id', "names", 'variants', 'categories', 'remainingQuantity'],
         preSales: ['_id', "names", 'variants', 'categories']
     }
-    const { pageNumber, search, isCount, sortBy, sortType } = req.body;
+    const { pageNumber, search, isCount, sortBy, sortType, isAll } = req.body;
     try {
         const match = [
             {
@@ -496,7 +496,7 @@ exports.getAllProcurements = async (req, res) => {
 
         const pipeline = []
         pipeline.push(...match)
-        if (req?.token?.role === "sales") {
+        if (req?.token?.role === "sales" && !isAll==='true') {
             const salesMatch = [
                 {
                     '$match': {
