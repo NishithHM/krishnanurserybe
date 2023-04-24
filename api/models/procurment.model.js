@@ -28,19 +28,7 @@ const Procurement = new mongoose.Schema({
             }
         }],
     },
-    totalQuantity: {
-        type: Number,
-        default: 0,
-    },
     remainingQuantity: {
-        type: Number,
-        default: 0,
-    },
-    damagedQuantity: {
-        type: Number,
-        default: 0,
-    },
-    soldQuantity: {
         type: Number,
         default: 0,
     },

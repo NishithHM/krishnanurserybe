@@ -118,6 +118,11 @@ exports.updateDamageProcurementSchema = Joi.object().keys({
     damagedQuantity: Joi.string().required()
 });
 
+exports.updateMaintenanceProcurementSchema = Joi.object().keys({
+    id: Joi.string().required(),
+    count: Joi.string().required()
+});
+
 exports.getDamagesSchema = Joi.object().keys({
     startDate : Joi.string().pattern(new RegExp(/\d{4}-\d{2}-\d{2}/)),
     endDate : Joi.string().pattern(new RegExp(/\d{4}-\d{2}-\d{2}/)),
