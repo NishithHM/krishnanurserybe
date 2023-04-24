@@ -77,7 +77,8 @@ exports.getProcurementsSchema = Joi.object().keys({
     isCount: Joi.boolean(),
     sortBy: Joi.string().valid('lastProcuredOn', 'plantName'),
     sortType: Joi.number().valid(-1, 1).default(1),
-    isAll: Joi.string().default("false")
+    isAll: Joi.string().default("false"),
+    isList: Joi.string().default("false")
 });
 
 exports.getProcurementsHistorySchema = Joi.object().keys({
@@ -115,4 +116,10 @@ exports.getProcurementsLowSchema = Joi.object().keys({
 exports.updateDamageProcurementSchema = Joi.object().keys({
     id: Joi.string().required(),
     damagedQuantity: Joi.string().required()
+});
+
+exports.getDamagesSchema = Joi.object().keys({
+    startDate : Joi.string().pattern(new RegExp(/\d{4}-\d{2}-\d{2}/)),
+    endDate : Joi.string().pattern(new RegExp(/\d{4}-\d{2}-\d{2}/)),
+    search: Joi.string(),
 });

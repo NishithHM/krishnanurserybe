@@ -1,6 +1,7 @@
 const Procurement = require('../models/procurment.model')
 const Vendor = require('../models/vendor.model')
 const ProcurementHistory = require('../models/procurementHistory.model')
+const DamageHistory = require('../models/damageHistory.model')
 const mongoose = require('mongoose')
 const uuid = require('uuid')
 const dayjs = require('dayjs')
@@ -115,7 +116,7 @@ exports.placeOrder = async (req, res) => {
                 const res = await procurement.save()
                 procId = res._id
             }
-            const procurementHis = new ProcurementHistory({ procurementId: procId, requestedQuantity: totalQuantity, requestedBy, ...newData })
+            const procurementHis = new ProcurementHistory({ procurementId: procId, requestedQuantity: totalQuantity, requestedBy: placedBy, ...newData })
             await procurementHis.save()
             res.status(200).json({
                 message: 'Successfully Placed'
@@ -174,14 +175,14 @@ exports.verifyOrder = async (req, res) => {
             procurment.remainingQuantity = procurment.remainingQuantity + quantity
             procurment.totalQuantity = procurment.totalQuantity + quantity
             procurment.lastProcuredOn = new Date()
+            await procurment.save()
+            await procHistory.save()
             if (!isEmpty(req.files)) {
                 req.files.map((ele, index) => {
                     const [name, type] = ele.filename ? ele.filename.split('.') : []
                     uploadFile({ file: ele, path: 'nursery/procurements', key: `${keys[index]}.${type}` })
                 })
             }
-            await procurment.save()
-            await procHistory.save()
             res.status(200).json({
                 message: 'Successfully Verified'
             })
@@ -422,12 +423,12 @@ exports.updateDeliveryDate = async (req, res)=>{
 
 exports.getAllProcurements = async (req, res) => {
     const fields = {
-        admin: ['_id', 'names', 'totalQuantity', 'remainingQuantity', 'lastProcuredOn', 'procurementHistory', 'variants', 'minimumQuantity', 'categories'],
-        procurement: ['_id', 'names', 'totalQuantity', 'remainingQuantity', 'lastProcuredOn', 'procurementHistory', 'categories'],
+        admin: ['_id', 'names','remainingQuantity', 'underMaintenanceQuantity', 'lastProcuredOn', 'procurementHistory', 'variants', 'minimumQuantity', 'categories'],
+        procurement: ['_id', 'names', 'remainingQuantity', 'underMaintenanceQuantity', 'lastProcuredOn', 'procurementHistory', 'categories'],
         sales: ['_id', "names", 'variants', 'categories', 'remainingQuantity'],
         preSales: ['_id', "names", 'variants', 'categories']
     }
-    const { pageNumber, search, isCount, sortBy, sortType, isAll } = req.body;
+    const { pageNumber, search, isCount, sortBy, sortType, isAll, isList } = req.body;
     try {
         const match = [
             {
@@ -519,7 +520,7 @@ exports.getAllProcurements = async (req, res) => {
             pipeline.push(...count)
         } else {
             const role = req?.token?.role
-            if (['admin', 'procurement'].includes(role)) {
+            if (['admin', 'procurement'].includes(role) && isList !== 'true') {
                 pipeline.push(...lookupProcHistory)
             }
             let projectFields = fields[role];
@@ -767,10 +768,107 @@ exports.getLowProcurements = async (req, res) => {
 
 }
 
-exports.updateDamage = (req, res)=>{
+exports.updateDamage = async (req, res)=>{
     try {
         const {id, damagedQuantity} = req.body
+        const keys = []
+        const paths = []
+        if (!isEmpty(req.files)) {
+            req.files.map(ele => {
+                const key = uuid.v4()
+                keys.push(key)
+                const [name, type] = ele?.filename ? ele.filename.split('.') : []
+                paths.push(`nursery/damages/${key}.${type}`)
+            })
+        } else {
+            res.status(422).json({
+                message: 'Damaged Images are required'
+            })
+            return;
+        }
+        const reportedBy = {
+            _id: req?.token?.id,
+            name: req?.token?.name
+        }
+        const proc = await Procurement.findById(id)
+        proc.damagedQuantity = proc.damagedQuantity + damagedQuantity
+        const damageHistory = {
+            procurementId: proc._id,
+            names: proc.names,
+            reportedBy,
+            damagedQuantity,
+            images: paths
+        }
+        const damages = await new DamageHistory(damageHistory)
+        await proc.save()
+        await damages.save()
+        if (!isEmpty(req.files)) {
+            req.files.map((ele, index) => {
+                const [name, type] = ele.filename ? ele.filename.split('.') : []
+                uploadFile({ file: ele, path: 'nursery/procurements', key: `${keys[index]}.${type}` })
+            })
+        }
     } catch (error) {
-        
+        console.log(error)
+        loggers.info(`getLowProcurements-error, ${error}`)
+        const err = handleMongoError(error)
+        res.status(500).send(err)
     }
+}
+
+exports.getDamageList = async (req, res)=>{
+    try{
+        const { pageNumber, isCount, startDate, endDate, search } = req.body;
+       
+        const matchQuery = {}
+
+        if(search){
+            matchQuery['names.en.name'] = { $regex: search, $options: "i" }
+        }
+
+        if (startDate != null && endDate != null) {
+            matchQuery.createdAt = {
+                $gte: dayjs(startDate, 'YYYY-MM-DD').toDate(),
+                $lt: dayjs(endDate, 'YYYY-MM-DD').add(1, 'day').toDate()
+            }
+        }
+
+        const match = [
+            {
+                '$match': matchQuery
+            }
+        ]
+    
+        const pagination = [{
+            '$skip': 10 * (pageNumber - 1)
+        }, {
+            '$limit': 10
+        }]
+    
+        const count = [
+            {
+                '$count': 'count'
+            },
+        ]
+        const pipeline = []
+        pipeline.push(...match)
+    
+        if (pageNumber) {
+            pipeline.push(...pagination)
+        }
+    
+        if (isCount) {
+            pipeline.push(...count)
+        }
+        console.log("getAllDamages-pipeline", JSON.stringify(pipeline))
+        loggers.info(`getAllDamages-pipeline, ${JSON.stringify(pipeline)}`)
+        const damages = await DamageHistory.aggregate(pipeline)
+        res.json(damages)
+    }catch(error){
+        console.log(error)
+        loggers.info(`getAllDamages-error, ${error}`)
+        const err = handleMongoError(error)
+        res.status(500).send(err)
+    }
+    
 }
