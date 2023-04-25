@@ -172,7 +172,7 @@ exports.verifyOrder = async (req, res) => {
             procHistory.quantity = quantity
             procHistory.images = paths
             const procurment = await Procurement.findById(procHistory.procurementId);
-            procurment.remainingQuantity = procurment.remainingQuantity + quantity
+            procurment.remainingQuantity = procurment.remainingQuantity +  parseInt(quantity, 10)
             procurment.lastProcuredOn = new Date()
             await procurment.save()
             await procHistory.save()
@@ -790,7 +790,7 @@ exports.updateDamage = async (req, res)=>{
             name: req?.token?.name
         }
         const proc = await Procurement.findById(id)
-        proc.remainingQuantity = proc.remainingQuantity - damagedQuantity;
+        proc.remainingQuantity = proc.remainingQuantity - parseInt(damagedQuantity, 10);
         const damageHistory = {
             procurementId: proc._id,
             names: proc.names,
