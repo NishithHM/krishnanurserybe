@@ -37,7 +37,7 @@ exports.requestOrder = async (req, res) => {
             procurementHis = new ProcurementHistory({ procurementId: procurement._id, names: procurement.names, requestedQuantity: totalQuantity, requestedBy, status: 'REQUESTED', descriptionSales })
         } else {
             const res = await procurement.save()
-            procurementHis = new ProcurementHistory({ procurementId: res._id, names, requestedQuantity: totalQuantity, requestedBy, descriptionSales })
+            procurementHis = new ProcurementHistory({ procurementId: res._id, names, requestedQuantity: totalQuantity, requestedBy, descriptionSales, status: 'REQUESTED' })
         }
         await procurementHis.save()
         res.status(201).json({
@@ -331,7 +331,7 @@ exports.getAllOrders = async (req, res) => {
         const { statuses, startDate, endDate, search, sortBy, sortType, pageNumber, isCount } = req.body
         const fields = {
             admin: ['_id', 'names', 'requestedBy', 'requestedQuantity', 'totalPrice', 'currentPaidAmount', 'vendorName', 'vendorContact', 'quantity', 'orderedQuantity','createdAt', 'descriptionProc', 'expectedDeliveryDate', 'placedBy', 'status', 'descriptionSales'],
-            procurement: ['_id', 'names', 'requestedQuantity', 'totalPrice', 'currentPaidAmount', 'vendorName', 'vendorContact', 'quantity', 'orderedQuantity', 'createdAt', 'descriptionProc', 'expectedDeliveryDate', 'placedBy', 'status', 'descriptionSales', 'invoice'],
+            procurement: ['_id', 'names', 'requestedQuantity', 'totalPrice', 'currentPaidAmount', 'vendorName', 'vendorContact', 'quantity', 'orderedQuantity', 'createdAt', 'descriptionProc', 'expectedDeliveryDate', 'placedBy', 'status', 'descriptionSales', 'invoice', 'procurementId'],
             sales: ['_id', 'names', 'requestedQuantity', 'quantity', 'orderedQuantity', 'createdAt', 'descriptionProc', 'expectedDeliveryDate', 'status', 'descriptionSales'],
         }
         const role = req?.token?.role
@@ -495,7 +495,9 @@ exports.getAllProcurements = async (req, res) => {
         ]
 
         const pipeline = []
-        pipeline.push(...match)
+        if(!isList){
+            pipeline.push(...match)
+        }
         if (req?.token?.role === "sales" && !isAll==='true') {
             const salesMatch = [
                 {
