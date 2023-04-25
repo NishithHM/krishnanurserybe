@@ -424,7 +424,7 @@ exports.getAllProcurements = async (req, res) => {
     const fields = {
         admin: ['_id', 'names','remainingQuantity', 'underMaintenanceQuantity', 'lastProcuredOn', 'procurementHistory', 'variants', 'minimumQuantity', 'categories'],
         procurement: ['_id', 'names', 'remainingQuantity', 'underMaintenanceQuantity', 'lastProcuredOn', 'procurementHistory', 'categories'],
-        sales: ['_id', "names", 'variants', 'categories', 'remainingQuantity'],
+        sales: ['_id', "names", 'variants', 'categories', 'remainingQuantity', 'underMaintenanceQuantity'],
         preSales: ['_id', "names", 'variants', 'categories']
     }
     const { pageNumber, search, isCount, sortBy, sortType, isAll, isList } = req.body;
@@ -777,7 +777,7 @@ exports.updateDamage = async (req, res)=>{
                 const key = uuid.v4()
                 keys.push(key)
                 const [name, type] = ele?.filename ? ele.filename.split('.') : []
-                paths.push(`nursery/damages/${key}.${type}`)
+                paths.push(`nursery/procurements/${key}.${type}`)
             })
         } else {
             res.status(422).json({
@@ -807,6 +807,9 @@ exports.updateDamage = async (req, res)=>{
                 uploadFile({ file: ele, path: 'nursery/procurements', key: `${keys[index]}.${type}` })
             })
         }
+        res.json({
+                  message: 'Successfully Created'
+                })
     } catch (error) {
         console.log(error)
         loggers.info(`updateDamage-error, ${error}`)
@@ -875,19 +878,27 @@ exports.getDamageList = async (req, res)=>{
 exports.updateMaintenance = async (req, res)=>{
     try {
         const {id, count} = req.body
-        const keys = []
-        const paths = []
-        const reportedBy = {
-            _id: req?.token?.id,
-            name: req?.token?.name
-        }
         const proc = await Procurement.findById(id)
         proc.underMaintenanceQuantity = count
         await proc.save()
-       
+        res.json(proc)
     } catch (error) {
         console.log(error)
         loggers.info(`updateMaintenance-error, ${error}`)
+        const err = handleMongoError(error)
+        res.status(500).send(err)
+    }
+}
+
+exports.getProcurementById = async (req, res)=>{
+    try {
+        const {id} = req.body
+        const proc = await Procurement.findById(id)
+        await proc.save()
+        res.json(proc)
+    } catch (error) {
+        console.log(error)
+        loggers.info(`getProcurementById-error, ${error}`)
         const err = handleMongoError(error)
         res.status(500).send(err)
     }
