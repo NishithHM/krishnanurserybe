@@ -881,9 +881,16 @@ exports.updateMaintenance = async (req, res)=>{
     try {
         const {id, count} = req.body
         const proc = await Procurement.findById(id)
-        proc.underMaintenanceQuantity = count
-        await proc.save()
-        res.json(proc)
+        if(proc.remainingQuantity < count){
+            res.status(400).json({
+                error:'Count cannot be greater than Remaining Quantity'
+            })
+        }else{
+            proc.underMaintenanceQuantity = count
+            await proc.save()
+            res.json(proc)
+        }
+      
     } catch (error) {
         console.log(error)
         loggers.info(`updateMaintenance-error, ${error}`)

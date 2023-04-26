@@ -267,7 +267,7 @@ const validatePricesAndQuantityAndFormatItems = async (items) => {
                     'variantId': '$variants._id'
                 },
                 'val': {
-                    $first: { $mergeObjects: ["$$ROOT.variants", { remainingQuantity: "$$ROOT.remainingQuantity" }, { pNames: "$$ROOT.names" }] }
+                    $first: { $mergeObjects: ["$$ROOT.variants", { remainingQuantity: {$subtract:[ "$$ROOT.remainingQuantity", "$$ROOT.underMaintenanceQuantity" ]}, }, { pNames: "$$ROOT.names" }] }
                 }
             }
         }, {
