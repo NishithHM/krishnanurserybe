@@ -172,7 +172,7 @@ exports.verifyOrder = async (req, res) => {
             procHistory.quantity = quantity
             procHistory.images = paths
             const procurment = await Procurement.findById(procHistory.procurementId);
-            procurment.remainingQuantity = procurment.remainingQuantity +  parseInt(quantity, 10)
+            procurment.remainingQuantity = procurment.remainingQuantity + parseInt(quantity, 10)
             procurment.lastProcuredOn = new Date()
             await procurment.save()
             await procHistory.save()
@@ -330,7 +330,7 @@ exports.getAllOrders = async (req, res) => {
     try {
         const { statuses, startDate, endDate, search, sortBy, sortType, pageNumber, isCount } = req.body
         const fields = {
-            admin: ['_id', 'names', 'requestedBy', 'requestedQuantity', 'totalPrice', 'currentPaidAmount', 'vendorName', 'vendorContact', 'quantity', 'orderedQuantity','createdAt', 'descriptionProc', 'expectedDeliveryDate', 'placedBy', 'status', 'descriptionSales'],
+            admin: ['_id', 'names', 'requestedBy', 'requestedQuantity', 'totalPrice', 'currentPaidAmount', 'vendorName', 'vendorContact', 'quantity', 'orderedQuantity', 'createdAt', 'descriptionProc', 'expectedDeliveryDate', 'placedBy', 'status', 'descriptionSales'],
             procurement: ['_id', 'names', 'requestedQuantity', 'totalPrice', 'currentPaidAmount', 'vendorName', 'vendorContact', 'quantity', 'orderedQuantity', 'createdAt', 'descriptionProc', 'expectedDeliveryDate', 'placedBy', 'status', 'descriptionSales', 'invoice', 'procurementId'],
             sales: ['_id', 'names', 'requestedQuantity', 'quantity', 'orderedQuantity', 'createdAt', 'descriptionProc', 'expectedDeliveryDate', 'status', 'descriptionSales'],
         }
@@ -381,7 +381,7 @@ exports.getAllOrders = async (req, res) => {
         }
         if (isCount) {
             pipeline.push(...count)
-        }else{
+        } else {
             let projectFields = fields[role];
             if (projectFields) {
                 const project = {}
@@ -405,24 +405,24 @@ exports.getAllOrders = async (req, res) => {
 
 }
 
-exports.updateDeliveryDate = async (req, res)=>{
-     const {id, expectedDeliveryDate} = req.body
-     const procHistory = await ProcurementHistory.findOne({_id: new mongoose.mongo.ObjectId(id),  status:'PLACED'})
-     if(procHistory){
+exports.updateDeliveryDate = async (req, res) => {
+    const { id, expectedDeliveryDate } = req.body
+    const procHistory = await ProcurementHistory.findOne({ _id: new mongoose.mongo.ObjectId(id), status: 'PLACED' })
+    if (procHistory) {
         procHistory.expectedDeliveryDate = dayjs(expectedDeliveryDate, 'YYYY-MM-DD')
         res.status(200).json({
             message: 'Successfully Updated date'
         })
-     }else{
+    } else {
         res.status(400).json({
             message: 'Unable to update'
         })
-     }
+    }
 }
 
 exports.getAllProcurements = async (req, res) => {
     const fields = {
-        admin: ['_id', 'names','remainingQuantity', 'underMaintenanceQuantity', 'lastProcuredOn', 'procurementHistory', 'variants', 'minimumQuantity', 'categories'],
+        admin: ['_id', 'names', 'remainingQuantity', 'underMaintenanceQuantity', 'lastProcuredOn', 'procurementHistory', 'variants', 'minimumQuantity', 'categories'],
         procurement: ['_id', 'names', 'remainingQuantity', 'underMaintenanceQuantity', 'lastProcuredOn', 'procurementHistory', 'categories'],
         sales: ['_id', "names", 'variants', 'categories', 'remainingQuantity', 'underMaintenanceQuantity'],
         preSales: ['_id', "names", 'variants', 'categories']
@@ -495,10 +495,10 @@ exports.getAllProcurements = async (req, res) => {
         ]
 
         const pipeline = []
-        if(!isList){
+        if (!isList) {
             pipeline.push(...match)
         }
-        if ((req?.token?.role === "sales" || req?.token?.role === "preSales") && isAll!=='true') {
+        if ((req?.token?.role === "sales" || req?.token?.role === "preSales") && isAll !== 'true') {
             const salesMatch = [
                 {
                     '$match': {
@@ -801,9 +801,9 @@ exports.getLowProcurements = async (req, res) => {
 
 }
 
-exports.updateDamage = async (req, res)=>{
+exports.updateDamage = async (req, res) => {
     try {
-        const {id, damagedQuantity} = req.body
+        const { id, damagedQuantity } = req.body
         const keys = []
         const paths = []
         if (!isEmpty(req.files)) {
@@ -819,31 +819,38 @@ exports.updateDamage = async (req, res)=>{
             })
             return;
         }
+
         const reportedBy = {
             _id: req?.token?.id,
             name: req?.token?.name
         }
         const proc = await Procurement.findById(id)
-        proc.remainingQuantity = proc.remainingQuantity - parseInt(damagedQuantity, 10);
-        const damageHistory = {
-            procurementId: proc._id,
-            names: proc.names,
-            reportedBy,
-            damagedQuantity,
-            images: paths
-        }
-        const damages = await new DamageHistory(damageHistory)
-        await proc.save()
-        await damages.save()
-        if (!isEmpty(req.files)) {
-            req.files.map((ele, index) => {
-                const [name, type] = ele.filename ? ele.filename.split('.') : []
-                uploadFile({ file: ele, path: 'nursery/procurements', key: `${keys[index]}.${type}` })
+        if (proc.remainingQuantity < parseInt(damagedQuantity, 10)) {
+            res.status(400).json({
+                error: 'Count cannot be greater than Remaining Quantity'
+            })
+        } else {
+            proc.remainingQuantity = proc.remainingQuantity - parseInt(damagedQuantity, 10);
+            const damageHistory = {
+                procurementId: proc._id,
+                names: proc.names,
+                reportedBy,
+                damagedQuantity,
+                images: paths
+            }
+            const damages = await new DamageHistory(damageHistory)
+            await proc.save()
+            await damages.save()
+            if (!isEmpty(req.files)) {
+                req.files.map((ele, index) => {
+                    const [name, type] = ele.filename ? ele.filename.split('.') : []
+                    uploadFile({ file: ele, path: 'nursery/procurements', key: `${keys[index]}.${type}` })
+                })
+            }
+            res.json({
+                message: 'Successfully Created'
             })
         }
-        res.json({
-                  message: 'Successfully Created'
-                })
     } catch (error) {
         console.log(error)
         loggers.info(`updateDamage-error, ${error}`)
@@ -852,13 +859,13 @@ exports.updateDamage = async (req, res)=>{
     }
 }
 
-exports.getDamageList = async (req, res)=>{
-    try{
+exports.getDamageList = async (req, res) => {
+    try {
         const { pageNumber, isCount, startDate, endDate, search } = req.body;
-       
+
         const matchQuery = {}
 
-        if(search){
+        if (search) {
             matchQuery['names.en.name'] = { $regex: search, $options: "i" }
         }
 
@@ -878,17 +885,17 @@ exports.getDamageList = async (req, res)=>{
         const sort = [
             {
                 '$sort': {
-                    createdAt:-1
+                    createdAt: -1
                 }
             }
         ]
-    
+
         const pagination = [{
             '$skip': 10 * (pageNumber - 1)
         }, {
             '$limit': 10
         }]
-    
+
         const count = [
             {
                 '$count': 'count'
@@ -897,11 +904,11 @@ exports.getDamageList = async (req, res)=>{
         const pipeline = []
         pipeline.push(...match)
         pipeline.push(...sort)
-    
+
         if (pageNumber) {
             pipeline.push(...pagination)
         }
-    
+
         if (isCount) {
             pipeline.push(...count)
         }
@@ -909,29 +916,29 @@ exports.getDamageList = async (req, res)=>{
         loggers.info(`getAllDamages-pipeline, ${JSON.stringify(pipeline)}`)
         const damages = await DamageHistory.aggregate(pipeline)
         res.json(damages)
-    }catch(error){
+    } catch (error) {
         console.log(error)
         loggers.info(`getAllDamages-error, ${error}`)
         const err = handleMongoError(error)
         res.status(500).send(err)
     }
-    
+
 }
 
-exports.updateMaintenance = async (req, res)=>{
+exports.updateMaintenance = async (req, res) => {
     try {
-        const {id, count} = req.body
+        const { id, count } = req.body
         const proc = await Procurement.findById(id)
-        if(proc.remainingQuantity < count){
+        if (proc.remainingQuantity < count) {
             res.status(400).json({
-                error:'Count cannot be greater than Remaining Quantity'
+                error: 'Count cannot be greater than Remaining Quantity'
             })
-        }else{
+        } else {
             proc.underMaintenanceQuantity = count
             await proc.save()
             res.json(proc)
         }
-      
+
     } catch (error) {
         console.log(error)
         loggers.info(`updateMaintenance-error, ${error}`)
@@ -940,9 +947,9 @@ exports.updateMaintenance = async (req, res)=>{
     }
 }
 
-exports.getProcurementById = async (req, res)=>{
+exports.getProcurementById = async (req, res) => {
     try {
-        const {id} = req.body
+        const { id } = req.body
         const proc = await Procurement.findById(id)
         await proc.save()
         res.json(proc)
