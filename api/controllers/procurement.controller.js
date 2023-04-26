@@ -498,7 +498,7 @@ exports.getAllProcurements = async (req, res) => {
         if(!isList){
             pipeline.push(...match)
         }
-        if (req?.token?.role === "sales" && !isAll==='true') {
+        if ((req?.token?.role === "sales" || req?.token?.role === "preSales") && isAll!=='true') {
             const salesMatch = [
                 {
                     '$match': {
