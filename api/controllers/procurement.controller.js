@@ -842,6 +842,14 @@ exports.getDamageList = async (req, res)=>{
                 '$match': matchQuery
             }
         ]
+
+        const sort = [
+            {
+                '$sort': {
+                    createdAt:-1
+                }
+            }
+        ]
     
         const pagination = [{
             '$skip': 10 * (pageNumber - 1)
@@ -856,6 +864,7 @@ exports.getDamageList = async (req, res)=>{
         ]
         const pipeline = []
         pipeline.push(...match)
+        pipeline.push(...sort)
     
         if (pageNumber) {
             pipeline.push(...pagination)

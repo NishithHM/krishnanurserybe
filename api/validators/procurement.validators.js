@@ -28,7 +28,7 @@ exports.getOrdersProcurementSchema = Joi.object().keys({
     endDate : Joi.string().pattern(new RegExp(/\d{4}-\d{2}-\d{2}/)),
     sortBy: Joi.string().valid('createdAt', 'plantName').default("createdAt"),
     sortType: Joi.number().valid(-1, 1).default(-1),
-    search: Joi.string().pattern(new RegExp(/[A-Za-z]/)),
+    search: Joi.string().pattern(new RegExp(/[A-Za-z0-9]/)),
     statuses: Joi.array().items(Joi.string().valid('REJECTED', 'REQUESTED', 'PLACED', 'VERIFIED'))
 });
 
@@ -72,7 +72,7 @@ exports.updateProcurementSchema = Joi.object().keys({
 });
 
 exports.getProcurementsSchema = Joi.object().keys({
-    search: Joi.string().pattern(new RegExp(/[A-Za-z]/)),
+    search: Joi.string().pattern(new RegExp(/[A-Za-z0-9]/)),
     pageNumber: Joi.number(),
     isCount: Joi.boolean(),
     sortBy: Joi.string().valid('lastProcuredOn', 'plantName'),
@@ -110,7 +110,7 @@ exports.getProcurementsLowSchema = Joi.object().keys({
     isCount: Joi.boolean(),
     sortBy: Joi.string().valid('minimumQuantity'),
     sortType: Joi.number().valid(-1, 1).default(1),
-    search: Joi.string().pattern(new RegExp(/[A-Za-z]/)),
+    search: Joi.string().pattern(new RegExp(/[A-Za-z0-9]/)),
 });
 
 exports.updateDamageProcurementSchema = Joi.object().keys({
@@ -130,7 +130,7 @@ exports.getProcurementIdSchema = Joi.object().keys({
 exports.getDamagesSchema = Joi.object().keys({
     startDate : Joi.string().pattern(new RegExp(/\d{4}-\d{2}-\d{2}/)),
     endDate : Joi.string().pattern(new RegExp(/\d{4}-\d{2}-\d{2}/)),
-    search: Joi.string(),
+    search: Joi.string().pattern(new RegExp(/[A-Za-z0-9]/)),
     isCount: Joi.string(),
     pageNumber: Joi.number(),
 });
