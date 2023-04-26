@@ -45,6 +45,12 @@ const categories = new mongoose.Schema({
 
 categories.index({'names.en.name': 1, 'isActive': 1}, {unique: true})
 
-
+categories.on('index', function(err) {
+    if (err) {
+        console.error('categories index error: %s', err);
+    } else {
+        console.info('categories indexing complete');
+    }
+});
 
 module.exports = mongoose.model("categories", categories)

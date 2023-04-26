@@ -17,5 +17,11 @@ const vendors = new mongoose.Schema({
 
 vendors.index({'contact': 1}, {unique: true})
 
-
+vendors.on('index', function(err) {
+    if (err) {
+        console.error('vendors index error: %s', err);
+    } else {
+        console.info('vendors indexing complete');
+    }
+});
 module.exports = mongoose.model("vendors", vendors)

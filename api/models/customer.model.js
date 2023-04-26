@@ -133,5 +133,11 @@ const customerSchema = new mongoose.Schema({
     timestamps: true
 })
 customerSchema.index({'phoneNumber': 1}, {unique: true})
-
+customerSchema.on('index', function(err) {
+    if (err) {
+        console.error('customerSchema index error: %s', err);
+    } else {
+        console.info('customerSchema indexing complete');
+    }
+});
 module.exports = mongoose.model("customer", customerSchema)

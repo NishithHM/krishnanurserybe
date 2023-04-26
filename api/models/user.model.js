@@ -73,4 +73,11 @@ userSchema.methods.toJSON=function(){
 
 userSchema.index({'phoneNumber': 1, 'email':1}, {unique: true})
 
+userSchema.on('index', function(err) {
+    if (err) {
+        console.error('User index error: %s', err);
+    } else {
+        console.info('User indexing complete');
+    }
+});
 module.exports = mongoose.model("user", userSchema)
