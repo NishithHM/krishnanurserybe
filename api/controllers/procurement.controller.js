@@ -432,7 +432,7 @@ exports.getAllProcurements = async (req, res) => {
         const match = [
             {
                 '$match': {
-                    remainingQuantity: { $gt: 0 }
+                    remainingQuantity: { $gte: 0 }
                 }
             },
         ]
