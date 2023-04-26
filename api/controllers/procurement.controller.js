@@ -733,6 +733,37 @@ exports.getLowProcurements = async (req, res) => {
             }
         }]
 
+        const lookupProcHistory = [
+            {
+                $lookup: {
+                    from: "procurement_histories",
+                    let: { procurementId: "$_id" },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $eq: [
+                                        "$$procurementId",
+                                        "$procurementId",
+                                    ],
+                                },
+                                status: "VERIFIED",
+                            },
+                        },
+                        {
+                            $sort: {
+                                createdAt: -1,
+                            },
+                        },
+                        {
+                            $limit: 10
+                        },
+                    ],
+                    as: "procurementHistory",
+                }
+            }
+        ]
+
         const pipeline = []
         pipeline.push(...match)
         if (search) {
@@ -753,6 +784,7 @@ exports.getLowProcurements = async (req, res) => {
                 mandatory.push(...['variants', 'minimumQuantity'])
             }
             mandatory.forEach(f => project[f] = 1)
+            pipeline.push(...lookupProcHistory)
             pipeline.push({ $project: project })
         }
 
