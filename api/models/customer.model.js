@@ -16,7 +16,6 @@ const customerSchema = new mongoose.Schema({
                 return `${props.value} is not 10 digit long`
             }
         },
-        unique: true
     },
     dob: {
         type: Date,
@@ -133,5 +132,6 @@ const customerSchema = new mongoose.Schema({
 }, {
     timestamps: true
 })
+customerSchema.index({'phoneNumber': 1}, {unique: true})
 
 module.exports = mongoose.model("customer", customerSchema)

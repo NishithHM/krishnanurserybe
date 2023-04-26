@@ -16,14 +16,12 @@ const userSchema = new mongoose.Schema({
 				return `${props.value} is not 10 digit long`
 			}
 		},
-		unique: true
 	},
 	email:{
 		type:String,
 		trim: true,
 		lowercase: true,
 		immutable: true,
-		unique: true,
 		maxlength:30,
 	},
 	role:{
@@ -72,5 +70,7 @@ userSchema.methods.toJSON=function(){
 	delete userObj.hash_password
 	return userObj;
 }
+
+userSchema.index({'phoneNumber': 1, 'email':1}, {unique: true})
 
 module.exports = mongoose.model("user", userSchema)

@@ -5,7 +5,6 @@ const vendors = new mongoose.Schema({
 	name: {
         type: String,
         required: true,
-        unique: true,
     },
    contact:{
         type: String,
@@ -16,6 +15,7 @@ const vendors = new mongoose.Schema({
 	timestamps: true
 })
 
+vendors.index({'contact': 1}, {unique: true})
 
 
 module.exports = mongoose.model("vendors", vendors)
