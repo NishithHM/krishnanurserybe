@@ -639,6 +639,14 @@ exports.addProcurementVariants = async (req, res) => {
     const { id, variants } = req.body
     try {
         const procurement = await Procurement.findById(id)
+        let i = 0;
+        const minMaxValidation = variants.every(ele=> {
+            i++;
+            return ele.minPrice < ele.maxPrice})
+        if(!minMaxValidation){
+            res.status(400).json({ error: `${variants[i-1]?.variantNameInEnglish} min price should be less than max price` })
+            return
+        }
         if (procurement) {
             const variantsDb = variants.map(val => ({
                 names: {
