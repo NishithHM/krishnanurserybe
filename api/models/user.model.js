@@ -71,7 +71,7 @@ userSchema.methods.toJSON=function(){
 	return userObj;
 }
 
-userSchema.index({'phoneNumber': 1}, {unique: true})
+userSchema.index({'phoneNumber': 1, isActive:1}, {unique: true})
 
 userSchema.on('index', function(err) {
     if (err) {

@@ -787,7 +787,7 @@ exports.getLowProcurements = async (req, res) => {
             pipeline.push(...count)
         } else {
             const project = {}
-            const mandatory = ['_id', 'names', 'totalQuantity', 'remainingQuantity', 'lastProcuredOn', 'procurementHistory']
+            const mandatory = ['_id', 'names', 'totalQuantity', 'remainingQuantity', 'lastProcuredOn', 'procurementHistory', 'underMaintenanceQuantity']
             if (req.token?.role === 'admin') {
                 mandatory.push(...['variants', 'minimumQuantity'])
             }

@@ -18,8 +18,7 @@ exports.addToCart = async (req, res) => {
         }
         let customerRes
         if (!customerId) {
-            const customer = new Customer({ phoneNumber: parseInt(customerNumber, 10), dob: dayjs(customerDob, 'YYYY-MM-DD').toDate(), name: customerName })
-            customerRes = await customer.save()
+             customerRes = new Customer({ phoneNumber: parseInt(customerNumber, 10), dob: dayjs(customerDob, 'YYYY-MM-DD').toDate(), name: customerName })
         } else {
             customerRes = await Customer.findById(customerId);
         }
@@ -30,6 +29,9 @@ exports.addToCart = async (req, res) => {
                     const billing = new Billing({ customerName: customerRes.name, customerId: customerRes._id, customerNumber: customerRes.phoneNumber, soldBy, items: formattedItems, totalPrice, discount, status: "CART" })
                     const cartDetails = await billing.save()
                     res.status(200).send(cartDetails)
+                    if(!customerId){
+                        customerRes.save()
+                    }
                 } else {
                     res.status(400).send({ error: 'Unable to add empty cart' })
                 }
