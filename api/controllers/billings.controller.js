@@ -321,7 +321,19 @@ const validatePricesAndQuantityAndFormatItems = async (items) => {
 }
 
 const validateRoundOff = (totalPrice, amount) => {
-    const maxRound = totalPrice * 0.1 > 500 ? 500 : totalPrice * 0.1
+    let maxRound = 0
+    if(totalPrice <= 1000){
+        maxRound = 50
+    }else if(totalPrice > 1000 && totalPrice <= 5000){
+        maxRound = 300
+    }else if(totalPrice > 5009 && totalPrice <= 10000){
+        maxRound = 500
+    }else if(totalPrice > 10000 && totalPrice <= 50000){
+        maxRound = 5000
+    }else if(totalPrice > 50000){
+        maxRound = 10000
+    }
+
     if (amount > maxRound) {
         return "Round off amount is higher, please reduce and try again later"
     }
