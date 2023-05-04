@@ -444,7 +444,10 @@ exports.getAllProcurements = async (req, res) => {
         const searchMatch = [
             {
                 '$match': {
-                    'names.en.name': { $regex: search, $options: "i" }
+                   $or:[
+                    { 'names.en.name': { $regex: search, $options: "i" }},
+                    { 'names.ka.name': { $regex: search, $options: "i" }}
+                ]
                 }
             },
         ]

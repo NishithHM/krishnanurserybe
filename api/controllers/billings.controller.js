@@ -372,15 +372,20 @@ const updateCustomerPurchaseHistory = async (billData) => {
 exports.getAllBillingHistory = async (req, res) => {
     const { pageNumber, isCount, id, startDate, endDate, sortBy, sortType, search } = req.body;
     try {
+        const initialMatch = {
+            status: "BILLED",
+        }
+
+        if(startDate && endDate){
+            initialMatch.createdAt = {
+                $gte: dayjs(startDate, 'YYYY-MM-DD').toDate(),
+                $lt: dayjs(endDate, 'YYYY-MM-DD').add(1, 'day').toDate()
+            }
+        }
+
         const match = [
             {
-                '$match': {
-                    status: "BILLED",
-                    createdAt: {
-                        $gte: dayjs(startDate, 'YYYY-MM-DD').toDate(),
-                        $lt: dayjs(endDate, 'YYYY-MM-DD').add(1, 'day').toDate()
-                    }
-                }
+                '$match': {...initialMatch}
             },
         ]
         const pagination = [{
@@ -409,10 +414,12 @@ exports.getAllBillingHistory = async (req, res) => {
             }]
         }
 
+        const numberSearch = /^\d+$/.test(search) ? parseInt(search) : search;
+
         const searchMatch = [
             {
                 '$match': {
-                   $or: [ {customerName: { $regex: search, $options: "i" }}, {invoiceId: { $regex: search, $options: "i" }}]
+                   $or: [ {customerName: { $regex: search, $options: "i" }}, {invoiceId: { $regex: search, $options: "i" }}, {customerNumber: numberSearch}]
                 }
             },
         ]

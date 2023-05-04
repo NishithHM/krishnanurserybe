@@ -17,3 +17,16 @@ exports.getVendorList = async (req, res)=>{
         res.status(500).send(err)
     }
 }
+
+exports.getVendorById = async (req, res)=>{
+    const {id} = req.body
+    try {
+        const vendor = await Vendor.findById(id)
+        res.status(200).json(vendor)
+    } catch (error) {
+        console.log(error)
+        loggers.info(`getVendorList-error, ${error}`)
+        const err = handleMongoError(error)
+        res.status(500).send(err)
+    }
+}

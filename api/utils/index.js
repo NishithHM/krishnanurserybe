@@ -67,7 +67,7 @@ exports.downloadFile = async (req, res) =>{
         const bucket = `coden-aws-bucket`
         const fileKey = `${process.env.ENV}/${path}`
         console.log(fileKey)
-        const fileStream = s3.getObject({Bucket:bucket, Key: fileKey}).createReadStream()
+        const fileStream = s3.getObject({Bucket:bucket, Key: fileKey}).createReadStream().on('error', ()=>res.status(400).send({error:'Unable to download file'}) )
         res.attachment(fileKey);
         fileStream.pipe(res);
     }catch(e){
