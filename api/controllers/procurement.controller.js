@@ -202,7 +202,7 @@ exports.verifyOrder = async (req, res) => {
 
 exports.uploadInvoiceToOrder = async (req, res) => {
     try {
-        const { id } = req.body
+        const { id, finalInvoiceAmount, finalAmountPaid } = req.body
         const keys = []
         const paths = []
         if (!isEmpty(req.files)) {
@@ -214,6 +214,9 @@ exports.uploadInvoiceToOrder = async (req, res) => {
                     const [name, type] = ele?.filename ? ele.filename.split('.') : []
                     paths.push(`nursery/procurements/${key}.${type}`)
                 })
+                procHistory.totalPrice = finalInvoiceAmount;
+                const currentTxnDeviation = finalInvoiceAmount - finalAmountPaid
+                procHistory.currentPaidAmount = finalAmountPaid
                 procHistory.invoice = paths[0]
                 if (!isEmpty(req.files)) {
                     req.files.map((ele, index) => {
@@ -222,6 +225,9 @@ exports.uploadInvoiceToOrder = async (req, res) => {
                     })
                 }
                 await procHistory.save()
+               const vendorData = await Vendor.findById(procHistory.vendorId)
+               vendorData.deviation = vendorData.deviation + currentTxnDeviation;
+               vendorData.save();
                 res.status(200).json({
                     message: 'invoice uploaded'
                 })
