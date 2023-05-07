@@ -18,7 +18,7 @@ const { addToCart, updateCart, confirmCart, getCustomerCart, getAllBillingHistor
 
 
 
-const { getVendorsSchema, getVendorByIdSchema } = require('./validators/vendor.validators')
+const { getVendorSchema, getVendorByIdSchema } = require('./validators/vendor.validators')
 const { getVendorList, getVendorById } = require('./controllers/vendor.controller');
 const { testUpload, videoRender } = require('./controllers/test.contoller');
 const { downloadFile } = require('./utils');
@@ -68,7 +68,7 @@ router.get('/api/procurements/report-maintenance/:id', [authWall(['sales']), par
 router.get('/api/procurements/:id', [authWall(['sales', 'procurement']), paramsToBody(['id'], 'params'), bodyValidator(getProcurementIdSchema)], getProcurementById)
 
 // vendors
-router.get('/api/vendors/getAll', [authWall(['procurement', 'admin']), paramsToBody(['search'], 'query'), bodyValidator(getVendorsSchema)], getVendorList)
+router.get('/api/vendors/getAll', [authWall(['procurement', 'admin']), paramsToBody(['search'], 'query'), bodyValidator(getVendorSchema)], getVendorList)
 router.get('/api/vendors/:id', [authWall(['procurement', 'admin']), paramsToBody(['id'], 'params'), bodyValidator(getVendorByIdSchema)], getVendorById)
 
 //customers
