@@ -22,6 +22,9 @@ const { getVendorSchema, getVendorByIdSchema } = require('./validators/vendor.va
 const { getVendorList, getVendorById } = require('./controllers/vendor.controller');
 const { testUpload, videoRender } = require('./controllers/test.contoller');
 const { downloadFile } = require('./utils');
+const { addPayment, getPaymentHistory, addPaymentScheme, getPaymentHistorySchema } = require('./validators/payment.validators');
+const { getBrokersSchema } = require('./validators/broker.validators');
+const { getBrokerList } = require('./controllers/brokers.controller');
 
 const fileStorageEngine = multer.diskStorage({
 	destination:(req,file,cb) =>{
@@ -81,6 +84,14 @@ router.post('/api/billing/update-cart/:id', [authWall(['sales', 'preSales']),par
 router.post('/api/billing/confirm-cart/:id', [authWall(['sales']),paramsToBody(['id'], "params"), bodyValidator(confirmCartSchema)], confirmCart)
 router.get('/api/billing/get-cart/:id', [authWall(['sales', 'preSales']),paramsToBody(['id'], "params"), bodyValidator(getCustomerCartSchema)], getCustomerCart)
 router.get('/api/billing/history', [authWall(['admin', 'sales']),paramsToBody(['pageNumber', 'isCount','startDate', 'endDate', 'sortBy', 'sortType', 'search'], 'query'), bodyValidator(getBillingHistory)], getAllBillingHistory)
+
+
+// payments
+router.post('/api/payments/addPayment', [authWall(['sales', 'procurement', 'admin']), bodyValidator(addPaymentScheme)], addPayment)
+router.get('/api/payments/getAll', [authWall(['sales', 'procurement', 'admin']),paramsToBody(['pageNumber', 'isCount','startDate', 'endDate', 'sortBy', 'sortType', 'search'], 'query', 'type'), bodyValidator(getPaymentHistorySchema)], addPayment)
+
+// brokers
+router.get('/api/brokers/getAll', [authWall(['procurement', 'admin', 'sales']), paramsToBody(['search'], 'query'), bodyValidator(getBrokersSchema)], getBrokerList)
 
 // s3 test
 router.get('/api/download',[authWall(['admin','procurement', 'sales', 'preSales']), paramsToBody(['path'], "query")], downloadFile)
