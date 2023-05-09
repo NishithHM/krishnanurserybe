@@ -22,9 +22,10 @@ const { getVendorSchema, getVendorByIdSchema } = require('./validators/vendor.va
 const { getVendorList, getVendorById } = require('./controllers/vendor.controller');
 const { testUpload, videoRender } = require('./controllers/test.contoller');
 const { downloadFile } = require('./utils');
-const { addPayment, getPaymentHistory, addPaymentScheme, getPaymentHistorySchema } = require('./validators/payment.validators');
+const { addPaymentScheme, getPaymentHistorySchema } = require('./validators/payment.validators');
 const { getBrokersSchema } = require('./validators/broker.validators');
 const { getBrokerList } = require('./controllers/brokers.controller');
+const { addPayment, getPaymentHistory } = require('./controllers/payment.controller');
 
 const fileStorageEngine = multer.diskStorage({
 	destination:(req,file,cb) =>{
@@ -88,7 +89,7 @@ router.get('/api/billing/history', [authWall(['admin', 'sales']),paramsToBody(['
 
 // payments
 router.post('/api/payments/addPayment', [authWall(['sales', 'procurement', 'admin']), bodyValidator(addPaymentScheme)], addPayment)
-router.get('/api/payments/getAll', [authWall(['sales', 'procurement', 'admin']),paramsToBody(['pageNumber', 'isCount','startDate', 'endDate', 'sortBy', 'sortType', 'search'], 'query', 'type'), bodyValidator(getPaymentHistorySchema)], addPayment)
+router.get('/api/payments/getAll', [authWall(['sales', 'procurement', 'admin']),paramsToBody(['pageNumber', 'isCount','startDate', 'endDate', 'sortBy', 'sortType', 'search'], 'query', 'type'), bodyValidator(getPaymentHistorySchema)], )
 
 // brokers
 router.get('/api/brokers/getAll', [authWall(['procurement', 'admin', 'sales']), paramsToBody(['search'], 'query'), bodyValidator(getBrokersSchema)], getBrokerList)

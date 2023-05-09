@@ -42,7 +42,7 @@ exports.addPayment = async (req, res) => {
     }
 }
 
-exports.getPaymentHistory = async (res, res) => {
+exports.getPaymentHistory = async (req, res) => {
     try {
         const { pageNumber, isCount, startDate, endDate, sortBy, sortType, search, type } = req.body
         const role = req?.token?.role
