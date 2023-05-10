@@ -89,7 +89,7 @@ router.get('/api/billing/history', [authWall(['admin', 'sales']),paramsToBody(['
 
 // payments
 router.post('/api/payments/addPayment', [authWall(['sales', 'procurement', 'admin']), bodyValidator(addPaymentScheme)], addPayment)
-router.get('/api/payments/getAll', [authWall(['sales', 'procurement', 'admin']),paramsToBody(['pageNumber', 'isCount','startDate', 'endDate', 'sortBy', 'sortType', 'search'], 'query', 'type'), bodyValidator(getPaymentHistorySchema)], )
+router.get('/api/payments/getAll', [authWall(['sales', 'procurement', 'admin']),paramsToBody(['pageNumber', 'isCount','startDate', 'endDate', 'sortBy', 'sortType', 'search'], 'query', 'type'), bodyValidator(getPaymentHistorySchema)], getPaymentHistory)
 
 // brokers
 router.get('/api/brokers/getAll', [authWall(['procurement', 'admin', 'sales']), paramsToBody(['search'], 'query'), bodyValidator(getBrokersSchema)], getBrokerList)
