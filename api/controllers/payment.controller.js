@@ -103,13 +103,18 @@ exports.getPaymentHistory = async (req, res) => {
             pipeline.push(...pagination)
         }
 
-        if (isCount) {
+        if (isCount === 'true') {
             pipeline.push(...count)
         }
         console.log("getPaymentHistory-pipeline", JSON.stringify(pipeline))
-        const results = await Payment.aggregate(pipeline)
         loggers.info(`getPaymentHistory-pipeline, ${JSON.stringify(pipeline)}`)
-        res.json(results)
+        const results = await Payment.aggregate(pipeline)
+        if(results.length === 0 && isCount ==='true'){
+            res.json([{count: 0}])
+        }else{
+            res.json(results)
+
+        }
     } catch (error) {
         console.log(error)
         loggers.info(`getPaymentHistory-errr, ${error}`)
