@@ -58,7 +58,7 @@ router.post('/api/procurements/request-order', [authWall(['sales']), bodyValidat
 router.post('/api/procurements/place-order', [authWall(['procurement']), bodyValidator(placeOrderSchema)], placeOrder)
 router.post('/api/procurements/reject-order', [authWall(['procurement', 'admin']), bodyValidator(rejectProcurementSchema)], rejectOrderRequest)
 router.post('/api/procurements/verify-order', [authWall(['sales']), uploadInvoice.array('images', 3), paramsToBody(['body'], 'formData'), bodyValidator(verifyProcurementSchema)], verifyOrder)
-router.post('/api/procurements/add-invoice/:id', [authWall(['procurement']), uploadInvoice.array('invoice', 1), paramsToBody(['id'], 'params'), bodyValidator(addInvoiceProcurementSchema)], uploadInvoiceToOrder)
+router.post('/api/procurements/add-invoice/:id', [authWall(['procurement']), uploadInvoice.array('invoice', 1), paramsToBody(['id'], 'params'), paramsToBody(['body'], 'formData'), bodyValidator(addInvoiceProcurementSchema)], uploadInvoiceToOrder)
 router.post('/api/procurements/get-orders', [authWall(['procurement', 'sales', 'admin']), bodyValidator(getOrdersProcurementSchema)], getAllOrders)
 router.post('/api/procurements/update-delivery/:id', [authWall(['procurement']), bodyValidator(updateDeliveryProcurementSchema)], updateDeliveryDate)
 router.get('/api/procurements/getAll', [authWall(['admin', 'procurement', 'sales', 'preSales']), paramsToBody(['pageNumber', 'search', 'isCount', 'sortBy', 'sortType', 'isAll', 'isList'], 'query'), bodyValidator(getProcurementsSchema)], getAllProcurements)
