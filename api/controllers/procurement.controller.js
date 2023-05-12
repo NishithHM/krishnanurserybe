@@ -214,8 +214,8 @@ exports.uploadInvoiceToOrder = async (req, res) => {
                     const [name, type] = ele?.filename ? ele.filename.split('.') : []
                     paths.push(`nursery/procurements/${key}.${type}`)
                 })
-                procHistory.totalPrice = finalInvoiceAmount;
-                const currentTxnDeviation = finalInvoiceAmount - finalAmountPaid
+                procHistory.totalPrice =  parseInt(finalInvoiceAmount, 10);
+                const currentTxnDeviation = parseInt(finalInvoiceAmount, 10) - parseInt(finalAmountPaid, 10)
                 procHistory.currentPaidAmount = finalAmountPaid
                 procHistory.invoice = paths[0]
                 if (!isEmpty(req.files)) {
