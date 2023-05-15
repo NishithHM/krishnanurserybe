@@ -218,7 +218,6 @@ exports.uploadInvoiceToOrder = async (req, res) => {
                 const currentTxnDeviation = parseInt(finalInvoiceAmount, 10) - parseInt(finalAmountPaid, 10)
                 procHistory.currentPaidAmount = parseInt(finalAmountPaid, 10)
                 procHistory.invoice = paths[0]
-                console.log(currentPaidAmount)
                 if (!isEmpty(req.files)) {
                     req.files.map((ele, index) => {
                         const [name, type] = ele.filename ? ele.filename.split('.') : []
