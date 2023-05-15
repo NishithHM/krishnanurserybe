@@ -30,8 +30,9 @@ exports.getOrdersProcurementSchema = Joi.object().keys({
     endDate : Joi.string().pattern(new RegExp(/\d{4}-\d{2}-\d{2}/)),
     sortBy: Joi.string().valid('createdAt', 'plantName').default("createdAt"),
     sortType: Joi.number().valid(-1, 1).default(-1),
-    search: Joi.string().pattern(new RegExp(/[A-Za-z0-9]/)),
-    statuses: Joi.array().items(Joi.string().valid('REJECTED', 'REQUESTED', 'PLACED', 'VERIFIED'))
+    search: Joi.string().pattern(new RegExp(/[A-Za-z0-9]/)).allow(""),
+    status: Joi.array().items(Joi.string().valid('REJECTED', 'REQUESTED', 'PLACED', 'VERIFIED')),
+    vendors: Joi.array().items(Joi.string()),
 });
 
 exports.updateDeliveryProcurementSchema = Joi.object().keys({

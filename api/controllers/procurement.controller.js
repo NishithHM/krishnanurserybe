@@ -218,6 +218,7 @@ exports.uploadInvoiceToOrder = async (req, res) => {
                 const currentTxnDeviation = parseInt(finalInvoiceAmount, 10) - parseInt(finalAmountPaid, 10)
                 procHistory.currentPaidAmount = parseInt(finalAmountPaid, 10)
                 procHistory.invoice = paths[0]
+                console.log(currentPaidAmount)
                 if (!isEmpty(req.files)) {
                     req.files.map((ele, index) => {
                         const [name, type] = ele.filename ? ele.filename.split('.') : []
@@ -334,7 +335,7 @@ exports.uploadInvoiceToOrder = async (req, res) => {
 
 exports.getAllOrders = async (req, res) => {
     try {
-        const { statuses, startDate, endDate, search, sortBy, sortType, pageNumber, isCount } = req.body
+        const { status, vendors, startDate, endDate, search, sortBy, sortType, pageNumber, isCount } = req.body
         const fields = {
             admin: ['_id', 'names', 'requestedBy', 'requestedQuantity', 'totalPrice', 'currentPaidAmount', 'vendorName', 'vendorContact', 'quantity', 'orderedQuantity', 'createdAt', 'descriptionProc', 'expectedDeliveryDate', 'placedBy', 'status', 'descriptionSales', 'vendorId'],
             procurement: ['_id', 'names', 'requestedQuantity', 'totalPrice', 'currentPaidAmount', 'vendorName', 'vendorContact', 'quantity', 'orderedQuantity', 'createdAt', 'descriptionProc', 'expectedDeliveryDate', 'placedBy', 'status', 'descriptionSales', 'invoice', 'procurementId', 'vendorId'],
@@ -343,8 +344,12 @@ exports.getAllOrders = async (req, res) => {
         const role = req?.token?.role
         const matchQuery = {}
 
-        if (!isEmpty(statuses)) {
-            matchQuery.status = { $in: statuses }
+        if (!isEmpty(status)) {
+            matchQuery.status = { $in: status }
+        }
+
+        if(!isEmpty(vendors)){
+            matchQuery.vendorId = {$in: vendors}
         }
 
         if (startDate != null && endDate != null) {
