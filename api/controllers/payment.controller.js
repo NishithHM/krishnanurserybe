@@ -2,7 +2,7 @@ const { isEmpty } = require('lodash')
 const loggers = require('../../loggers')
 const Broker = require('../models/broker.model')
 const Payment = require('../models/payment.model')
-
+const Billing = require('../models/billings.model')
 exports.addPayment = async (req, res) => {
     try {
         const paymentData = {}
@@ -12,6 +12,13 @@ exports.addPayment = async (req, res) => {
         if (brokerName) {
             broker = new Broker({ name: brokerName, contact: brokerNumber })
             paymentData.invoiceId = invoiceId
+            const bill = await Billing.findOne({invoiceId})
+            if(!bill){
+                res.status(400).json({
+                    message: 'Invalid invoice id'
+                })
+                return
+            }
             paymentData.type = 'BROKER'
             paymentData.name = brokerName
             paymentData.contact = brokerNumber
@@ -28,7 +35,7 @@ exports.addPayment = async (req, res) => {
         paymentData.amount = amount
         const payment = new Payment({ ...paymentData })
         await payment.save()
-        if (broker) {
+        if (brokerName) {
             broker.save()
         }
         res.json({
