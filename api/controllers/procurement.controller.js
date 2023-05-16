@@ -11,7 +11,7 @@ const loggers = require('../../loggers')
 const { isEmpty } = require('lodash')
 
 exports.requestOrder = async (req, res) => {
-    const { nameInEnglish, totalQuantity, id, descriptionSales } = req.body
+    const { nameInEnglish, totalQuantity, id, descriptionSales, ownProduction } = req.body
     const names = {
         en: {
             name: nameInEnglish
@@ -20,10 +20,16 @@ exports.requestOrder = async (req, res) => {
             name: ''
         }
     }
-
+    const vendorData = {}
     const requestedBy = {
         _id: req?.token?.id,
         name: req?.token?.name
+    }
+    if(ownProduction){
+       const vData  = await Vendor.findOne({isDefault: true})
+       vendorData.vendorName = vData.name
+       vendorData.vendorContact = vData.contact
+       vendorData.vendorId = vData._id.toString()
     }
     let procurement;
     let procurementHis;
@@ -34,10 +40,10 @@ exports.requestOrder = async (req, res) => {
     }
     try {
         if (id) {
-            procurementHis = new ProcurementHistory({ procurementId: procurement._id, names: procurement.names, requestedQuantity: totalQuantity, requestedBy, status: 'REQUESTED', descriptionSales })
+            procurementHis = new ProcurementHistory({ procurementId: procurement._id, names: procurement.names, requestedQuantity: totalQuantity, requestedBy, status: 'REQUESTED', descriptionSales, ...vendorData})
         } else {
             const res = await procurement.save()
-            procurementHis = new ProcurementHistory({ procurementId: res._id, names, requestedQuantity: totalQuantity, requestedBy, descriptionSales, status: 'REQUESTED' })
+            procurementHis = new ProcurementHistory({ procurementId: res._id, names, requestedQuantity: totalQuantity, requestedBy, descriptionSales, status: 'REQUESTED', ...vendorData })
         }
         await procurementHis.save()
         res.status(201).json({

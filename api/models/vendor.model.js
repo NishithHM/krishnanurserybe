@@ -11,6 +11,10 @@ const vendors = new mongoose.Schema({
         required: true,
         unique: true,
    },
+   isDefault: {
+        type: Boolean,
+        default: false
+   },
    deviation: {
     type: Number,
     default: 0
@@ -28,4 +32,7 @@ vendors.on('index', function(err) {
         console.info('vendors indexing complete');
     }
 });
-module.exports = mongoose.model("vendors", vendors)
+const vendorModel = mongoose.model("vendors", vendors)
+const defaultVendor = new vendorModel({name:'Sri Krishna Nursery', contact:'9999999999', isDefault: true})
+defaultVendor.save()
+module.exports = vendorModel

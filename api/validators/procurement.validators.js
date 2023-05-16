@@ -4,6 +4,7 @@ exports.requestProcurementSchema = Joi.object().keys({
     nameInEnglish: Joi.string().pattern(new RegExp(/[A-Za-z]/)).required(),
     totalQuantity: Joi.number().required(),
     id: Joi.string(),
+    ownProduction: Joi.boolean().default(false),
     descriptionSales: Joi.string().max(1000).required()
 });
 
