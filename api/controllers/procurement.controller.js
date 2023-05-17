@@ -439,7 +439,7 @@ exports.updateDeliveryDate = async (req, res) => {
 exports.getAllProcurements = async (req, res) => {
     const fields = {
         admin: ['_id', 'names', 'remainingQuantity', 'underMaintenanceQuantity', 'lastProcuredOn', 'procurementHistory', 'variants', 'minimumQuantity', 'categories'],
-        procurement: ['_id', 'names', 'remainingQuantity', 'underMaintenanceQuantity', 'lastProcuredOn', 'procurementHistory', 'categories'],
+        procurement: ['_id', 'names', 'remainingQuantity', 'underMaintenanceQuantity', 'lastProcuredOn', 'procurementHistory', 'categories', 'minimumQuantity'],
         sales: ['_id', "names", 'variants', 'categories', 'remainingQuantity', 'underMaintenanceQuantity'],
         preSales: ['_id', "names", 'variants', 'categories']
     }
@@ -806,9 +806,9 @@ exports.getLowProcurements = async (req, res) => {
             pipeline.push(...count)
         } else {
             const project = {}
-            const mandatory = ['_id', 'names', 'totalQuantity', 'remainingQuantity', 'lastProcuredOn', 'procurementHistory', 'underMaintenanceQuantity']
+            const mandatory = ['_id', 'names', 'totalQuantity', 'remainingQuantity', 'lastProcuredOn', 'procurementHistory', 'underMaintenanceQuantity', 'minimumQuantity']
             if (req.token?.role === 'admin') {
-                mandatory.push(...['variants', 'minimumQuantity'])
+                mandatory.push(...['variants'])
             }
             mandatory.forEach(f => project[f] = 1)
             pipeline.push(...lookupProcHistory)

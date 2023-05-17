@@ -10,14 +10,16 @@ exports.addPayment = async (req, res) => {
         console.log(brokerName, invoiceId, brokerName, empName, amount, type)
         const role = req?.token?.role
         let broker;
+        if(invoiceId){
+            paymentData.invoiceId = invoiceId
+        }
         if (brokerName) {
             if(!brokerId){
                 broker = new Broker({ name: brokerName, contact: brokerNumber })
                 paymentData.brokerId = broker._id
             }else{
                 paymentData.brokerId = brokerId
-            }
-            paymentData.invoiceId = invoiceId
+            }    
             const bill = await Billing.findOne({invoiceId})
             if(!bill){
                 res.status(400).json({
