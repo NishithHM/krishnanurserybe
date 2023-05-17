@@ -6,11 +6,17 @@ const Billing = require('../models/billings.model')
 exports.addPayment = async (req, res) => {
     try {
         const paymentData = {}
-        const { brokerName, invoiceId, brokerNumber, empName, amount, type } = req.body
+        const { brokerName, invoiceId, brokerNumber, empName, amount, type, brokerId } = req.body
+        console.log(brokerName, invoiceId, brokerName, empName, amount, type)
         const role = req?.token?.role
         let broker;
         if (brokerName) {
-            broker = new Broker({ name: brokerName, contact: brokerNumber })
+            if(!brokerId){
+                broker = new Broker({ name: brokerName, contact: brokerNumber })
+                paymentData.brokerId = broker._id
+            }else{
+                paymentData.brokerId = brokerId
+            }
             paymentData.invoiceId = invoiceId
             const bill = await Billing.findOne({invoiceId})
             if(!bill){
@@ -22,20 +28,20 @@ exports.addPayment = async (req, res) => {
             paymentData.type = 'BROKER'
             paymentData.name = brokerName
             paymentData.contact = brokerNumber
-        } else if (role !== "sales") {
-            paymentData.type = type
-            paymentData.name = empName
-        } else {
+        } else if (role === "sales" && type ==='SALARY') {
             res.status(400).json({
                 message: 'Sales cannot create'
             })
             return
+        } else {
+            paymentData.type = type
+            paymentData.name = empName
         }
 
         paymentData.amount = amount
         const payment = new Payment({ ...paymentData })
         await payment.save()
-        if (brokerName) {
+        if (brokerName && !brokerId) {
             broker.save()
         }
         res.json({
@@ -56,7 +62,7 @@ exports.getPaymentHistory = async (req, res) => {
         const role = req?.token?.role
         let typeFilter = type
         if (role === 'sales') {
-            typeFilter = 'BROKER'
+            typeFilter = {$in : ['BROKER', 'OTHERS'] }
         }
         const match = {}
 

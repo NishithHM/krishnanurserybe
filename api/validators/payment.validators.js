@@ -3,6 +3,7 @@ const Joi = require('joi');
 exports.addPaymentScheme = Joi.object().keys({
     brokerName: Joi.string().pattern(new RegExp(/[A-Za-z]/)),
     invoiceId: Joi.string(),
+    brokerId: Joi.string(),
     brokerNumber: Joi.string(),
     empName: Joi.string().pattern(new RegExp(/[A-Za-z]/)),
     amount: Joi.number().required(),

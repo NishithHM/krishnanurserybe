@@ -16,6 +16,10 @@ const payments = new mongoose.Schema({
     type:{
         type: String,
         enum: ['BROKER', 'SALARY', 'OTHERS']
+    },
+    brokerId:{
+        type: String,
+        default: null
     }
 }, {
     timestamps: true
