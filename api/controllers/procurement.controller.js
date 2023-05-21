@@ -223,10 +223,10 @@ exports.uploadInvoiceToOrder = async (req, res) => {
                     const [name, type] = ele?.filename ? ele.filename.split('.') : []
                     paths.push(`nursery/procurements/${key}.${type}`)
                 })
-                for(let i=0; procHistories.length; i++){
+                for(let i=0; i<procHistories.length; i++){
                     const procHistory = procHistories[i]
                     procHistory.totalPrice =  parseInt(finalInvoiceAmount, 10);
-                    const currentTxnDeviation = parseInt(finalInvoiceAmount, 10) - parseInt(finalAmountPaid, 10)
+                   
                     procHistory.currentPaidAmount = parseInt(finalAmountPaid, 10)
                     procHistory.invoice = paths[0]
                     await procHistory.save()
@@ -238,7 +238,8 @@ exports.uploadInvoiceToOrder = async (req, res) => {
                         uploadFile({ file: ele, path: 'nursery/procurements', key: `${keys[index]}.${type}` })
                     })
                 }
-               const vendorData = await Vendor.findById(procHistory[0].vendorId)
+               const currentTxnDeviation = parseInt(finalInvoiceAmount, 10) - parseInt(finalAmountPaid, 10)
+               const vendorData = await Vendor.findById(procHistories[0].vendorId)
                vendorData.deviation = vendorData.deviation + currentTxnDeviation;
                vendorData.save();
                 res.status(200).json({

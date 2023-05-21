@@ -29,7 +29,7 @@ const { addPayment, getPaymentHistory } = require('./controllers/payment.control
 
 const fileStorageEngine = multer.diskStorage({
 	destination:(req,file,cb) =>{
-		cb(null,path.join(__dirname,'./uploads'))
+		cb(null,path.join('./uploads'))
 
 	},
 	filename:(req,file,cb)=>{
