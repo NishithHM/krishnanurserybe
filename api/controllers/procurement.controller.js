@@ -288,11 +288,16 @@ exports.getAllOrders = async (req, res) => {
             }
         }
         if (search) {
-            const searchQuery = [ {'names.en.name': { $regex: search, $options: "i" }}]
-            if(isNumber(search)){
-                searchQuery.push({'orderId': { $regex: parseInt(search, 10), $options: "i" }})
+            if(parseInt(search, 10) > 0){
+                matchQuery['$expr']= {
+                    "$regexMatch": {
+                        "input": {"$toString": "$orderId"}, 
+                        "regex": search
+                     }
+                }
+            }else{
+                matchQuery['names.en.name']  = { $regex: search, $options: "i" }
             }
-            matchQuery['$or']  = searchQuery
         }
         const matchPipe = [{
             $match: {
