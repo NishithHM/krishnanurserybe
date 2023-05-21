@@ -938,3 +938,36 @@ exports.getVendorPlacedOrders = async (req, res)=>{
         res.status(500).send(err)
     }
 }
+
+exports.getOrderIdDetails = async (req, res)=>{
+    try {
+        const { id } = req.body
+        const matchQuery = {'$match':{
+            orderId: parseInt(id, 10),
+            // status: "PLACED"
+        }}
+        const fields = ['orderedQuantity', 'currentPaidAmount', 'names', 'totalPrice']
+        const project = {}
+        fields.forEach(ele=> project[ele]= 1)
+        const projrctQuery = {$project: project}
+        const pipeline = [matchQuery, projrctQuery]
+        console.log("getOrderIdDetails-pipeline", pipeline)
+        loggers.info(`getOrderIdDetails-pipeline, ${pipeline}`)
+        const ordersData = await ProcurementHistory.aggregate(pipeline)
+        console.log(ordersData)
+        let totalAmount = 0
+        let advanceAmount = 0
+
+        for(let i=0; i< ordersData.length; i++){
+            const ele = ordersData[i]
+            totalAmount += ele?.totalPrice
+            advanceAmount += ele?.currentPaidAmount
+        }
+        res.json({items:ordersData, totalAmount, advanceAmount})
+    } catch (error) {
+        console.log(error)
+        loggers.info(`getOrderIdDetails-error, ${error}`)
+        const err = handleMongoError(error)
+        res.status(500).send(err)
+    }
+}

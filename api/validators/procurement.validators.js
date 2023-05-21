@@ -142,3 +142,7 @@ exports.getDamagesSchema = Joi.object().keys({
     isCount: Joi.string(),
     pageNumber: Joi.number(),
 });
+
+exports.getOrderIdSchema = Joi.object().keys({
+    id: Joi.number(),
+});
