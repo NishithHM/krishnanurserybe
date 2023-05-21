@@ -8,7 +8,7 @@ const dayjs = require('dayjs')
 const uniq = require('lodash/uniq')
 const { handleMongoError, uploadFile } = require('../utils')
 const loggers = require('../../loggers')
-const { isEmpty } = require('lodash')
+const { isEmpty, isNumber } = require('lodash')
 
 exports.requestOrder = async (req, res) => {
     const { nameInEnglish, totalQuantity, id, descriptionSales, ownProduction } = req.body
@@ -266,8 +266,8 @@ exports.getAllOrders = async (req, res) => {
     try {
         const { status, vendors, startDate, endDate, search, sortBy, sortType, pageNumber, isCount } = req.body
         const fields = {
-            admin: ['_id', 'names', 'requestedBy', 'requestedQuantity', 'totalPrice', 'currentPaidAmount', 'vendorName', 'vendorContact', 'quantity', 'orderedQuantity', 'createdAt', 'descriptionProc', 'expectedDeliveryDate', 'placedBy', 'status', 'descriptionSales', 'vendorId'],
-            procurement: ['_id', 'names', 'requestedQuantity', 'totalPrice', 'currentPaidAmount', 'vendorName', 'vendorContact', 'quantity', 'orderedQuantity', 'createdAt', 'descriptionProc', 'expectedDeliveryDate', 'placedBy', 'status', 'descriptionSales', 'invoice', 'procurementId', 'vendorId'],
+            admin: ['_id', 'names', 'requestedBy', 'requestedQuantity', 'totalPrice', 'currentPaidAmount', 'vendorName', 'vendorContact', 'quantity', 'orderedQuantity', 'createdAt', 'descriptionProc', 'expectedDeliveryDate', 'placedBy', 'status', 'descriptionSales', 'vendorId', 'orderId'],
+            procurement: ['_id', 'names', 'requestedQuantity', 'totalPrice', 'currentPaidAmount', 'vendorName', 'vendorContact', 'quantity', 'orderedQuantity', 'createdAt', 'descriptionProc', 'expectedDeliveryDate', 'placedBy', 'status', 'descriptionSales', 'invoice', 'procurementId', 'vendorId', 'orderId'],
             sales: ['_id', 'names', 'requestedQuantity', 'quantity', 'orderedQuantity', 'createdAt', 'descriptionProc', 'expectedDeliveryDate', 'status', 'descriptionSales'],
         }
         const role = req?.token?.role
@@ -288,7 +288,11 @@ exports.getAllOrders = async (req, res) => {
             }
         }
         if (search) {
-            matchQuery['names.en.name'] = { $regex: search, $options: "i" }
+            const searchQuery = [ {'names.en.name': { $regex: search, $options: "i" }}]
+            if(isNumber(search)){
+                searchQuery.push({'orderId': { $regex: parseInt(search, 10), $options: "i" }})
+            }
+            matchQuery['$or']  = searchQuery
         }
         const matchPipe = [{
             $match: {
