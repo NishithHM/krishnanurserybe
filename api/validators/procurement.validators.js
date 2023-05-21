@@ -58,6 +58,7 @@ exports.placeOrderSchema = Joi.object().keys({
     id: Joi.string(),
     procurementId: Joi.string(),
     currentPaidAmount: Joi.number().required(),
+    orderId: Joi.number().required()
 
 });
 

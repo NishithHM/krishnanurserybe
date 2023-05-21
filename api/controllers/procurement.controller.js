@@ -58,7 +58,7 @@ exports.requestOrder = async (req, res) => {
 }
 
 exports.placeOrder = async (req, res) => {
-    const { nameInEnglish, totalQuantity, nameInKannada, vendorContact, vendorName, vendorId, description, categories, id, procurementId, totalPrice, currentPaidAmount, expectedDeliveryDate } = req.body
+    const { nameInEnglish, totalQuantity, nameInKannada, vendorContact, vendorName, vendorId, description, categories, id, procurementId, totalPrice, currentPaidAmount, expectedDeliveryDate, orderId } = req.body
     const names = {
         en: {
             name: nameInEnglish
@@ -89,6 +89,7 @@ exports.placeOrder = async (req, res) => {
         expectedDeliveryDate: dayjs(expectedDeliveryDate, 'YYYY-MM-DD'),
         currentPaidAmount,
         totalPrice,
+        orderId
     }
     try {
         if (id) {
@@ -104,6 +105,7 @@ exports.placeOrder = async (req, res) => {
                 procurementHis.vendorContact = vendorContact,
                 procurementHis.vendorId = vendorId || newVendorId,
                 procurementHis.status = 'PLACED',
+                procurementHis.orderId = orderId
                 procurementHis.expectedDeliveryDate = dayjs(expectedDeliveryDate, 'YYYY-MM-DD'),
                 procurementHis.currentPaidAmount = currentPaidAmount
             procurementHis.totalPrice = totalPrice
