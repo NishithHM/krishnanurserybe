@@ -33,6 +33,19 @@ vendors.on('index', function(err) {
     }
 });
 const vendorModel = mongoose.model("vendors", vendors)
-const defaultVendor = new vendorModel({name:'Sri Krishna Nursery', contact:'9999999999', isDefault: true})
-defaultVendor.save()
+
+const createDefaults = async ()=>{
+    try{
+        const krishaVendor = await vendorModel.findOne({contact:'9999999999'})
+        if(!krishaVendor){
+            const defaultVendor = new vendorModel({name:'Sri Krishna Nursery', contact:'9999999999', isDefault: true})
+            defaultVendor.save()
+        }
+    }catch(e){
+        console.log('err')
+    }
+}
+
+createDefaults()
+
 module.exports = vendorModel

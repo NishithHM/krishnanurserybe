@@ -987,3 +987,35 @@ exports.getProcurementById = async (req, res) => {
         res.status(500).send(err)
     }
 }
+
+exports.getVendorPlacedOrders = async (req, res)=>{
+    try{
+        const { id } = req.body
+        const matchQuery = {'$match':{
+            vendorId: id,
+            status: "PLACED"
+        }}
+        const group = {
+            $group: {
+              _id: null,
+              orders: {
+                $addToSet: "$vendorId",
+              },
+            },
+          }
+        const pipleline = [matchQuery, group]
+        const ordersData = await ProcurementHistory.aggregate(pipleline)
+        let data = []
+        if(ordersData?.orders?.length > 0){
+            data = [...ordersData?.orders]
+        }else{
+            data = [Math.random().toString().slice(2,11)]
+        }
+        res.json(data)
+    }catch (error) {
+        console.log(error)
+        loggers.info(`getProcurementById-error, ${error}`)
+        const err = handleMongoError(error)
+        res.status(500).send(err)
+    }
+}

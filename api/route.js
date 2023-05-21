@@ -9,7 +9,7 @@ const { createUserSchema, loginUserSchema, deleteUserSchema, getUsersSchema } = 
 const { createCategorySchema, deleteCategorySchema, getCategorySchema } = require('./validators/categories.validators')
 const { createCategory, deleteCategoryById, getAllCategories } = require('./controllers/categories.controller')
 const { requestProcurementSchema, getProcurementsSchema, getProcurementsHistorySchema, addVariantsSchema, setProcurementMinQuantitySchema, getProcurementsLowSchema, createProcurementSchema, placeOrderSchema, rejectProcurementSchema, verifyProcurementSchema, addInvoiceProcurementSchema, getOrdersProcurementSchema, updateDeliveryProcurementSchema, updateDamageProcurementSchema, getDamagesSchema, updateMaintenanceProcurementSchema, getProcurementIdSchema } = require('./validators/procurement.validators')
-const { requestOrder, getAllProcurements, getAllProcurementsHistory, addProcurementVariants, setMinimumQuantity, getLowProcurements, placeOrder, rejectOrderRequest, verifyOrder, uploadInvoiceToOrder, getAllOrders, updateDeliveryDate, updateDamage, getDamageList, getProcurementById, updateMaintenance } = require('./controllers/procurement.controller')
+const { requestOrder, getAllProcurements, getAllProcurementsHistory, addProcurementVariants, setMinimumQuantity, getLowProcurements, placeOrder, rejectOrderRequest, verifyOrder, uploadInvoiceToOrder, getAllOrders, updateDeliveryDate, updateDamage, getDamageList, getProcurementById, updateMaintenance, getVendorPlacedOrders } = require('./controllers/procurement.controller')
 const { customerSchema, getCustomerSchema } = require('./validators/customer.validators')
 const { addToCartSchema, updateCartSchema, confirmCartSchema, getCustomerCartSchema, getBillingHistory } = require('./validators/billing.validators')
 
@@ -70,6 +70,8 @@ router.post('/api/procurements/report-damage/:id', [authWall(['sales']), uploadI
 router.get('/api/procurements/get-damages', [authWall(['admin', 'sales']), paramsToBody(['pageNumber', 'isCount','startDate', 'endDate', 'search'], 'query'), bodyValidator(getDamagesSchema)], getDamageList)
 router.get('/api/procurements/report-maintenance/:id', [authWall(['sales']), paramsToBody(['id'], 'params'), paramsToBody(['count'], 'query'), bodyValidator(updateMaintenanceProcurementSchema)], updateMaintenance)
 router.get('/api/procurements/:id', [authWall(['sales', 'procurement']), paramsToBody(['id'], 'params'), bodyValidator(getProcurementIdSchema)], getProcurementById)
+router.get('/api/procurements/vendor-orders/:id', [authWall(['procurement']), paramsToBody(['id'], 'params'), bodyValidator(getProcurementIdSchema)], getVendorPlacedOrders)
+
 
 // vendors
 router.get('/api/vendors/getAll', [authWall(['procurement', 'admin']), paramsToBody(['search'], 'query'), bodyValidator(getVendorSchema)], getVendorList)

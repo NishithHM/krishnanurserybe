@@ -83,6 +83,10 @@ const ProcurementHistory = new mongoose.Schema({
     expectedDeliveryDate:{
         type: Date
     },
+    orderId: {
+        type: Number,
+        required: true
+    },
     images: [{ type: String}]
 }, {
     timestamps: true
