@@ -212,26 +212,31 @@ exports.uploadInvoiceToOrder = async (req, res) => {
         const keys = []
         const paths = []
         if (!isEmpty(req.files)) {
-            const procHistory = await ProcurementHistory.findOne({ _id: new mongoose.mongo.ObjectId(id), invoice: '', status: { $in: ['PLACED', 'VERIFIED'] } });
-            if (procHistory) {
+            const procHistories = await ProcurementHistory.find({ orderId: parseInt(id, 10), invoice: '', status: { $in: ['PLACED', 'VERIFIED'] } });
+            
+            if (procHistories.length> 0) {
                 req.files.map(ele => {
                     const key = uuid.v4()
                     keys.push(key)
                     const [name, type] = ele?.filename ? ele.filename.split('.') : []
                     paths.push(`nursery/procurements/${key}.${type}`)
                 })
-                procHistory.totalPrice =  parseInt(finalInvoiceAmount, 10);
-                const currentTxnDeviation = parseInt(finalInvoiceAmount, 10) - parseInt(finalAmountPaid, 10)
-                procHistory.currentPaidAmount = parseInt(finalAmountPaid, 10)
-                procHistory.invoice = paths[0]
-                if (!isEmpty(req.files)) {
+                for(let i=0; procHistories.length; i++){
+                    const procHistory = procHistories[i]
+                    procHistory.totalPrice =  parseInt(finalInvoiceAmount, 10);
+                    const currentTxnDeviation = parseInt(finalInvoiceAmount, 10) - parseInt(finalAmountPaid, 10)
+                    procHistory.currentPaidAmount = parseInt(finalAmountPaid, 10)
+                    procHistory.invoice = paths[0]
+                    await procHistory.save()
+                }
+                
+                 if (!isEmpty(req.files)) {
                     req.files.map((ele, index) => {
                         const [name, type] = ele.filename ? ele.filename.split('.') : []
                         uploadFile({ file: ele, path: 'nursery/procurements', key: `${keys[index]}.${type}` })
                     })
                 }
-                await procHistory.save()
-               const vendorData = await Vendor.findById(procHistory.vendorId)
+               const vendorData = await Vendor.findById(procHistory[0].vendorId)
                vendorData.deviation = vendorData.deviation + currentTxnDeviation;
                vendorData.save();
                 res.status(200).json({
