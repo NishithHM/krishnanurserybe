@@ -944,6 +944,7 @@ exports.getVendorPlacedOrders = async (req, res)=>{
         let data = []
         if(ordersData?.orders?.length > 0){
             data = [...ordersData?.orders]
+            data.push(Math.random().toString().slice(2,11))
         }else{
             data = [Math.random().toString().slice(2,11)]
         }
@@ -961,7 +962,7 @@ exports.getOrderIdDetails = async (req, res)=>{
         const { id } = req.body
         const matchQuery = {'$match':{
             orderId: parseInt(id, 10),
-            // status: "PLACED"
+            status: "PLACED"
         }}
         const fields = ['orderedQuantity', 'currentPaidAmount', 'names', 'totalPrice']
         const project = {}
@@ -971,7 +972,6 @@ exports.getOrderIdDetails = async (req, res)=>{
         console.log("getOrderIdDetails-pipeline", pipeline)
         loggers.info(`getOrderIdDetails-pipeline, ${pipeline}`)
         const ordersData = await ProcurementHistory.aggregate(pipeline)
-        console.log(ordersData)
         let totalAmount = 0
         let advanceAmount = 0
 
