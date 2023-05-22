@@ -210,25 +210,26 @@ exports.verifyOrder = async (req, res) => {
 
 exports.uploadInvoiceToOrder = async (req, res) => {
     try {
-        const { id, finalInvoiceAmount, finalAmountPaid } = req.body
+        const { orderData, finalAmountPaid } = req.body
+        const finalInvoiceAmount = orderData.totalAmount
         const keys = []
         const paths = []
+        let vendorId
         if (!isEmpty(req.files)) {
-            const procHistories = await ProcurementHistory.find({ orderId: parseInt(id, 10), invoice: '', status: { $in: ['PLACED', 'VERIFIED'] } });
-            
-            if (procHistories.length> 0) {
+            if (orderData?.items.length> 0) {
                 req.files.map(ele => {
                     const key = uuid.v4()
                     keys.push(key)
                     const [name, type] = ele?.filename ? ele.filename.split('.') : []
                     paths.push(`nursery/procurements/${key}.${type}`)
                 })
-                for(let i=0; i<procHistories.length; i++){
-                    const procHistory = procHistories[i]
-                    procHistory.totalPrice =  parseInt(finalInvoiceAmount, 10);
-                   
-                    procHistory.currentPaidAmount = parseInt(finalAmountPaid, 10)
+                for(let i=0; i <orderData.items.length; i++){
+                    const item = orderData?.items?.[i]
+                    const procHistory = await ProcurementHistory.findById(item?._id)
+                    procHistory.totalPrice =  parseInt(item.totalPrice, 10);
+                    procHistory.currentPaidAmount = parseInt(item.totalPrice, 10)
                     procHistory.invoice = paths[0]
+                    vendorId = procHistory.vendorId
                     await procHistory.save()
                 }
                 
@@ -239,7 +240,7 @@ exports.uploadInvoiceToOrder = async (req, res) => {
                     })
                 }
                const currentTxnDeviation = parseInt(finalInvoiceAmount, 10) - parseInt(finalAmountPaid, 10)
-               const vendorData = await Vendor.findById(procHistories[0].vendorId)
+               const vendorData = await Vendor.findById(vendorId)
                vendorData.deviation = vendorData.deviation + currentTxnDeviation;
                vendorData.save();
                 res.status(200).json({
@@ -973,7 +974,7 @@ exports.getOrderIdDetails = async (req, res)=>{
             orderId: parseInt(id, 10),
             status: {$in: statusFilter}
         }}
-        const fields = ['orderedQuantity', 'currentPaidAmount', 'names', 'totalPrice', 'expectedDeliveryDate']
+        const fields = ['orderedQuantity', 'currentPaidAmount', 'names', 'totalPrice', 'expectedDeliveryDate', "_id"]
         const project = {}
         fields.forEach(ele=> project[ele]= 1)
         const projrctQuery = {$project: project}
