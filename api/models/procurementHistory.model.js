@@ -85,7 +85,6 @@ const ProcurementHistory = new mongoose.Schema({
     },
     orderId: {
         type: Number,
-        required: true
     },
     images: [{ type: String}]
 }, {
