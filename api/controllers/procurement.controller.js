@@ -929,7 +929,8 @@ exports.getVendorPlacedOrders = async (req, res)=>{
         const { id } = req.body
         const matchQuery = {'$match':{
             vendorId: id,
-            status: "PLACED"
+            status: "PLACED",
+            invoice: "",
         }}
         const group = {
             $group: {
