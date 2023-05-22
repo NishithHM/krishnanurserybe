@@ -939,8 +939,10 @@ exports.getVendorPlacedOrders = async (req, res)=>{
               },
             },
           }
-        const pipleline = [matchQuery, group]
-        const ordersData = await ProcurementHistory.aggregate(pipleline)
+        const pipeline = [matchQuery, group]
+        console.log("getVendorPlacedOrders-pipeline", JSON.stringify(pipeline))
+        loggers.info(`getVendorPlacedOrders-pipeline, ${JSON.stringify(pipeline)}`)
+        const ordersData = await ProcurementHistory.aggregate(pipeline)
         let data = []
         if(ordersData?.orders?.length > 0){
             data = [...ordersData?.orders]
