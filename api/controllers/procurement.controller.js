@@ -935,7 +935,7 @@ exports.getVendorPlacedOrders = async (req, res)=>{
             $group: {
               _id: null,
               orders: {
-                $addToSet: "$vendorId",
+                $addToSet: "$orderId",
               },
             },
           }
