@@ -967,7 +967,7 @@ exports.getOrderIdDetails = async (req, res)=>{
             orderId: parseInt(id, 10),
             status: "PLACED"
         }}
-        const fields = ['orderedQuantity', 'currentPaidAmount', 'names', 'totalPrice']
+        const fields = ['orderedQuantity', 'currentPaidAmount', 'names', 'totalPrice', 'expectedDeliveryDate']
         const project = {}
         fields.forEach(ele=> project[ele]= 1)
         const projrctQuery = {$project: project}
@@ -983,7 +983,7 @@ exports.getOrderIdDetails = async (req, res)=>{
             totalAmount += ele?.totalPrice
             advanceAmount += ele?.currentPaidAmount
         }
-        res.json({items:ordersData, totalAmount, advanceAmount})
+        res.json({items:ordersData, totalAmount, advanceAmount, expectedDeliveryDate: ordersData?.[0]?.expectedDeliveryDate})
     } catch (error) {
         console.log(error)
         loggers.info(`getOrderIdDetails-error, ${error}`)
