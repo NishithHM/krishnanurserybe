@@ -944,8 +944,8 @@ exports.getVendorPlacedOrders = async (req, res)=>{
         loggers.info(`getVendorPlacedOrders-pipeline, ${JSON.stringify(pipeline)}`)
         const ordersData = await ProcurementHistory.aggregate(pipeline)
         let data = []
-        if(ordersData?.orders?.length > 0){
-            data = [...ordersData?.orders]
+        if(ordersData?.[0]?.orders?.length > 0){
+            data = [...ordersData[0]?.orders]
             data.push(Math.random().toString().slice(2,11))
         }else{
             data = [Math.random().toString().slice(2,11)]
