@@ -71,7 +71,7 @@ router.get('/api/procurements/get-damages', [authWall(['admin', 'sales']), param
 router.get('/api/procurements/report-maintenance/:id', [authWall(['sales']), paramsToBody(['id'], 'params'), paramsToBody(['count'], 'query'), bodyValidator(updateMaintenanceProcurementSchema)], updateMaintenance)
 router.get('/api/procurements/:id', [authWall(['sales', 'procurement']), paramsToBody(['id'], 'params'), bodyValidator(getProcurementIdSchema)], getProcurementById)
 router.get('/api/procurements/vendor-orders/:id', [authWall(['procurement']), paramsToBody(['id'], 'params'), bodyValidator(getProcurementIdSchema)], getVendorPlacedOrders)
-router.get('/api/procurements/order/:id', [authWall(['procurement']), paramsToBody(['id'], 'params'), bodyValidator(getOrderIdSchema)], getOrderIdDetails)
+router.get('/api/procurements/order/:id', [authWall(['procurement']), paramsToBody(['id'], 'params'),  paramsToBody(['page'], 'query'), bodyValidator(getOrderIdSchema)], getOrderIdDetails)
 
 
 // vendors

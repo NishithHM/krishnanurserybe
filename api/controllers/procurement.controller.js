@@ -962,10 +962,16 @@ exports.getVendorPlacedOrders = async (req, res)=>{
 
 exports.getOrderIdDetails = async (req, res)=>{
     try {
-        const { id } = req.body
+        const { id, page} = req.body
+        let statusFilter = []
+        if(page==='orders'){
+            statusFilter = ['PLACED', 'VERIFIED']
+        }else if(page === 'placeOrder'){
+            statusFilter = ['PLACED']
+        }
         const matchQuery = {'$match':{
             orderId: parseInt(id, 10),
-            status: "PLACED"
+            status: {$in: statusFilter}
         }}
         const fields = ['orderedQuantity', 'currentPaidAmount', 'names', 'totalPrice', 'expectedDeliveryDate']
         const project = {}

@@ -146,4 +146,5 @@ exports.getDamagesSchema = Joi.object().keys({
 
 exports.getOrderIdSchema = Joi.object().keys({
     id: Joi.number(),
+    page: Joi.string().valid('placeOrder', 'orders')
 });
