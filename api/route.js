@@ -8,8 +8,8 @@ const { authWall, bodyValidator, paramsToBody } = require('./middlewares/auth.mi
 const { createUserSchema, loginUserSchema, deleteUserSchema, getUsersSchema } = require('./validators/user.validators')
 const { createCategorySchema, deleteCategorySchema, getCategorySchema } = require('./validators/categories.validators')
 const { createCategory, deleteCategoryById, getAllCategories } = require('./controllers/categories.controller')
-const { createProcurementSchema, updateProcurementSchema, getProcurementsSchema, getProcurementsHistorySchema, addVariantsSchema, setProcurementMinQuantitySchema, getProcurementsLowSchema } = require('./validators/procurement.validators')
-const { addNewProcurement, updateProcurement, getAllProcurements, getAllProcurementsHistory, addProcurementVariants, setMinimumQuantity, getLowProcurements } = require('./controllers/procurement.controller')
+const { requestProcurementSchema, getProcurementsSchema, getProcurementsHistorySchema, addVariantsSchema, setProcurementMinQuantitySchema, getProcurementsLowSchema, getOrderIdSchema, placeOrderSchema, rejectProcurementSchema, verifyProcurementSchema, addInvoiceProcurementSchema, getOrdersProcurementSchema, updateDeliveryProcurementSchema, updateDamageProcurementSchema, getDamagesSchema, updateMaintenanceProcurementSchema, getProcurementIdSchema } = require('./validators/procurement.validators')
+const { requestOrder, getAllProcurements, getAllProcurementsHistory, addProcurementVariants, setMinimumQuantity, getLowProcurements, placeOrder, rejectOrderRequest, verifyOrder, uploadInvoiceToOrder, getAllOrders, updateDeliveryDate, updateDamage, getDamageList, getProcurementById, updateMaintenance, getVendorPlacedOrders, getOrderIdDetails } = require('./controllers/procurement.controller')
 const { customerSchema, getCustomerSchema } = require('./validators/customer.validators')
 const { addToCartSchema, updateCartSchema, confirmCartSchema, getCustomerCartSchema, getBillingHistory } = require('./validators/billing.validators')
 
@@ -18,14 +18,18 @@ const { addToCart, updateCart, confirmCart, getCustomerCart, getAllBillingHistor
 
 
 
-const { getVendorsSchema } = require('./validators/vendor.validators')
-const { getVendorList } = require('./controllers/vendor.controller');
+const { getVendorSchema, getVendorByIdSchema } = require('./validators/vendor.validators')
+const { getVendorList, getVendorById } = require('./controllers/vendor.controller');
 const { testUpload, videoRender } = require('./controllers/test.contoller');
 const { downloadFile } = require('./utils');
+const { addPaymentScheme, getPaymentHistorySchema } = require('./validators/payment.validators');
+const { getBrokersSchema } = require('./validators/broker.validators');
+const { getBrokerList } = require('./controllers/brokers.controller');
+const { addPayment, getPaymentHistory } = require('./controllers/payment.controller');
 
 const fileStorageEngine = multer.diskStorage({
 	destination:(req,file,cb) =>{
-		cb(null,path.join(__dirname,'./uploads'))
+		cb(null,path.join(__dirname, './uploads'))
 
 	},
 	filename:(req,file,cb)=>{
@@ -46,20 +50,33 @@ router.put('/api/user/delete/:id', [authWall(['admin'])], paramsToBody(['id'], '
 
 // categories
 router.post('/api/category/create', [authWall(['admin']), bodyValidator(createCategorySchema)], createCategory)
-router.get('/api/category/getAll', [authWall(['admin', 'procurement']), paramsToBody(['pageNumber', 'search', 'isCount', 'sortBy', 'sortType'], 'query'), bodyValidator(getCategorySchema)], getAllCategories)
+router.get('/api/category/getAll', [paramsToBody(['pageNumber', 'search', 'isCount', 'sortBy', 'sortType'], 'query'), bodyValidator(getCategorySchema)], getAllCategories)
 router.put('/api/category/delete/:id', [authWall(['admin'])], paramsToBody(['id'], 'params'), bodyValidator(deleteCategorySchema), deleteCategoryById)
 
 // procurements
-router.post('/api/procurements/create', [authWall(['procurement']), uploadInvoice.array('invoice', 4), paramsToBody(['body'], 'formData'), bodyValidator(createProcurementSchema)], addNewProcurement)
-router.post('/api/procurements/update/:id', [authWall(['procurement']),  uploadInvoice.array('invoice', 4), paramsToBody(['body'], 'formData'), paramsToBody(['id'], 'params'), bodyValidator(updateProcurementSchema)], updateProcurement)
-router.get('/api/procurements/getAll', [authWall(['admin', 'procurement', 'sales', 'preSales']), paramsToBody(['pageNumber', 'search', 'isCount', 'sortBy', 'sortType'], 'query'), bodyValidator(getProcurementsSchema)], getAllProcurements)
+router.post('/api/procurements/request-order', [authWall(['sales']), bodyValidator(requestProcurementSchema)], requestOrder)
+router.post('/api/procurements/place-order', [authWall(['procurement']), bodyValidator(placeOrderSchema)], placeOrder)
+router.post('/api/procurements/reject-order', [authWall(['procurement', 'admin']), bodyValidator(rejectProcurementSchema)], rejectOrderRequest)
+router.post('/api/procurements/verify-order', [authWall(['sales']), uploadInvoice.array('images', 3), paramsToBody(['body'], 'formData'), bodyValidator(verifyProcurementSchema)], verifyOrder)
+router.post('/api/procurements/add-invoice/:id', [authWall(['procurement']), uploadInvoice.array('invoice', 1), paramsToBody(['body'], 'formData'), paramsToBody(['id'], 'params'), bodyValidator(addInvoiceProcurementSchema)], uploadInvoiceToOrder)
+router.post('/api/procurements/get-orders', [authWall(['procurement', 'sales', 'admin']), bodyValidator(getOrdersProcurementSchema)], getAllOrders)
+router.post('/api/procurements/update-delivery/:id', [authWall(['procurement']), bodyValidator(updateDeliveryProcurementSchema)], updateDeliveryDate)
+router.get('/api/procurements/getAll', [authWall(['admin', 'procurement', 'sales', 'preSales']), paramsToBody(['pageNumber', 'search', 'isCount', 'sortBy', 'sortType', 'isAll', 'isList'], 'query'), bodyValidator(getProcurementsSchema)], getAllProcurements)
 router.get('/api/procurements/getAllHistory', [authWall(['admin', 'procurement']), paramsToBody(['pageNumber', 'isCount', 'id', 'startDate', 'endDate', 'isAverage'], 'query'), bodyValidator(getProcurementsHistorySchema)], getAllProcurementsHistory)
 router.post('/api/procurements/variants/:id', [authWall(['admin']), paramsToBody(['id'], 'params'), bodyValidator(addVariantsSchema)], addProcurementVariants)
 router.post('/api/procurements/minimumQuantity/:id', [authWall(['admin']), paramsToBody(['id'], 'params'), bodyValidator(setProcurementMinQuantitySchema)], setMinimumQuantity)
 router.get('/api/procurements/low-quantity', [authWall(['procurement', 'admin']), paramsToBody(['pageNumber', 'isCount', 'sortBy', 'sortType', 'search'], 'query'), bodyValidator(getProcurementsLowSchema)], getLowProcurements)
+router.post('/api/procurements/report-damage/:id', [authWall(['sales']), uploadInvoice.array('images', 3), paramsToBody(['body'], 'formData'), paramsToBody(['id'], 'params'), bodyValidator(updateDamageProcurementSchema)], updateDamage)
+router.get('/api/procurements/get-damages', [authWall(['admin', 'sales']), paramsToBody(['pageNumber', 'isCount','startDate', 'endDate', 'search'], 'query'), bodyValidator(getDamagesSchema)], getDamageList)
+router.get('/api/procurements/report-maintenance/:id', [authWall(['sales']), paramsToBody(['id'], 'params'), paramsToBody(['count'], 'query'), bodyValidator(updateMaintenanceProcurementSchema)], updateMaintenance)
+router.get('/api/procurements/:id', [authWall(['sales', 'procurement']), paramsToBody(['id'], 'params'), bodyValidator(getProcurementIdSchema)], getProcurementById)
+router.get('/api/procurements/vendor-orders/:id', [authWall(['procurement']), paramsToBody(['id'], 'params'), bodyValidator(getProcurementIdSchema)], getVendorPlacedOrders)
+router.get('/api/procurements/order/:id', [authWall(['procurement']), paramsToBody(['id'], 'params'),  paramsToBody(['page'], 'query'), bodyValidator(getOrderIdSchema)], getOrderIdDetails)
+
 
 // vendors
-router.get('/api/vendors/getAll', [authWall(['procurement']), paramsToBody(['search'], 'query'), bodyValidator(getVendorsSchema)], getVendorList)
+router.get('/api/vendors/getAll', [authWall(['procurement', 'admin']), paramsToBody(['search'], 'query'), bodyValidator(getVendorSchema)], getVendorList)
+router.get('/api/vendors/:id', [authWall(['procurement', 'admin']), paramsToBody(['id'], 'params'), bodyValidator(getVendorByIdSchema)], getVendorById)
 
 //customers
 router.post('/api/customer/create', [bodyValidator(customerSchema)], customerRegister);
@@ -71,6 +88,14 @@ router.post('/api/billing/update-cart/:id', [authWall(['sales', 'preSales']),par
 router.post('/api/billing/confirm-cart/:id', [authWall(['sales']),paramsToBody(['id'], "params"), bodyValidator(confirmCartSchema)], confirmCart)
 router.get('/api/billing/get-cart/:id', [authWall(['sales', 'preSales']),paramsToBody(['id'], "params"), bodyValidator(getCustomerCartSchema)], getCustomerCart)
 router.get('/api/billing/history', [authWall(['admin', 'sales']),paramsToBody(['pageNumber', 'isCount','startDate', 'endDate', 'sortBy', 'sortType', 'search'], 'query'), bodyValidator(getBillingHistory)], getAllBillingHistory)
+
+
+// payments
+router.post('/api/payments/addPayment', [authWall(['sales', 'procurement', 'admin']), bodyValidator(addPaymentScheme)], addPayment)
+router.get('/api/payments/getAll', [authWall(['sales', 'procurement', 'admin']),paramsToBody(['pageNumber', 'isCount','startDate', 'endDate', 'sortBy', 'sortType', 'search'], 'query', 'type'), bodyValidator(getPaymentHistorySchema)], getPaymentHistory)
+
+// brokers
+router.get('/api/brokers/getAll', [authWall(['procurement', 'admin', 'sales']), paramsToBody(['search'], 'query'), bodyValidator(getBrokersSchema)], getBrokerList)
 
 // s3 test
 router.get('/api/download',[authWall(['admin','procurement', 'sales', 'preSales']), paramsToBody(['path'], "query")], downloadFile)

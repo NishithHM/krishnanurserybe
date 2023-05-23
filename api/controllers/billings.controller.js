@@ -18,8 +18,7 @@ exports.addToCart = async (req, res) => {
         }
         let customerRes
         if (!customerId) {
-            const customer = new Customer({ phoneNumber: parseInt(customerNumber, 10), dob: dayjs(customerDob, 'YYYY-MM-DD').toDate(), name: customerName })
-            customerRes = await customer.save()
+             customerRes = new Customer({ phoneNumber: parseInt(customerNumber, 10), dob: dayjs(customerDob, 'YYYY-MM-DD').toDate(), name: customerName })
         } else {
             customerRes = await Customer.findById(customerId);
         }
@@ -30,6 +29,9 @@ exports.addToCart = async (req, res) => {
                     const billing = new Billing({ customerName: customerRes.name, customerId: customerRes._id, customerNumber: customerRes.phoneNumber, soldBy, items: formattedItems, totalPrice, discount, status: "CART" })
                     const cartDetails = await billing.save()
                     res.status(200).send(cartDetails)
+                    if(!customerId){
+                        customerRes.save()
+                    }
                 } else {
                     res.status(400).send({ error: 'Unable to add empty cart' })
                 }
@@ -267,7 +269,7 @@ const validatePricesAndQuantityAndFormatItems = async (items) => {
                     'variantId': '$variants._id'
                 },
                 'val': {
-                    $first: { $mergeObjects: ["$$ROOT.variants", { remainingQuantity: "$$ROOT.remainingQuantity" }, { pNames: "$$ROOT.names" }] }
+                    $first: { $mergeObjects: ["$$ROOT.variants", { remainingQuantity: {$subtract:[ "$$ROOT.remainingQuantity", "$$ROOT.underMaintenanceQuantity" ]}, }, { pNames: "$$ROOT.names" }] }
                 }
             }
         }, {
@@ -319,7 +321,19 @@ const validatePricesAndQuantityAndFormatItems = async (items) => {
 }
 
 const validateRoundOff = (totalPrice, amount) => {
-    const maxRound = totalPrice * 0.1 > 500 ? 500 : totalPrice * 0.1
+    let maxRound = 0
+    if(totalPrice <= 1000){
+        maxRound = 50
+    }else if(totalPrice > 1000 && totalPrice <= 5000){
+        maxRound = 300
+    }else if(totalPrice > 5009 && totalPrice <= 10000){
+        maxRound = 500
+    }else if(totalPrice > 10000 && totalPrice <= 50000){
+        maxRound = 5000
+    }else if(totalPrice > 50000){
+        maxRound = 10000
+    }
+
     if (amount > maxRound) {
         return "Round off amount is higher, please reduce and try again later"
     }
@@ -331,6 +345,7 @@ const updateRemainingQuantity = async (object) => {
     for (const [key, value] of listValues) {
         const procurment = await Procurements.findById(key)
         procurment.remainingQuantity = procurment.remainingQuantity - value
+        procurment.soldQuantity = value
         await procurment.save()
         // update customer schema
         // new api to get cart items via customer id
@@ -369,15 +384,20 @@ const updateCustomerPurchaseHistory = async (billData) => {
 exports.getAllBillingHistory = async (req, res) => {
     const { pageNumber, isCount, id, startDate, endDate, sortBy, sortType, search } = req.body;
     try {
+        const initialMatch = {
+            status: "BILLED",
+        }
+
+        if(startDate && endDate){
+            initialMatch.createdAt = {
+                $gte: dayjs(startDate, 'YYYY-MM-DD').toDate(),
+                $lt: dayjs(endDate, 'YYYY-MM-DD').add(1, 'day').toDate()
+            }
+        }
+
         const match = [
             {
-                '$match': {
-                    status: "BILLED",
-                    createdAt: {
-                        $gte: dayjs(startDate, 'YYYY-MM-DD').toDate(),
-                        $lt: dayjs(endDate, 'YYYY-MM-DD').add(1, 'day').toDate()
-                    }
-                }
+                '$match': {...initialMatch}
             },
         ]
         const pagination = [{
@@ -406,10 +426,12 @@ exports.getAllBillingHistory = async (req, res) => {
             }]
         }
 
+        const numberSearch = /^\d+$/.test(search) ? parseInt(search) : search;
+
         const searchMatch = [
             {
                 '$match': {
-                   $or: [ {customerName: { $regex: search, $options: "i" }}, {invoiceId: { $regex: search, $options: "i" }}]
+                   $or: [ {customerName: { $regex: search, $options: "i" }}, {invoiceId: { $regex: search, $options: "i" }}, {customerNumber: numberSearch}]
                 }
             },
         ]

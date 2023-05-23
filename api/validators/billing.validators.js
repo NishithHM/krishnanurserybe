@@ -36,8 +36,8 @@ exports.getCustomerCartSchema = Joi.object().keys({
 exports.getBillingHistory = Joi.object().keys({
     pageNumber: Joi.number(),
     isCount: Joi.boolean(),
-    startDate : Joi.string().pattern(new RegExp(/\d{4}-\d{2}-\d{2}/)).required(),
-    endDate : Joi.string().pattern(new RegExp(/\d{4}-\d{2}-\d{2}/)).required(),
+    startDate : Joi.string().pattern(new RegExp(/\d{4}-\d{2}-\d{2}/)),
+    endDate : Joi.string().pattern(new RegExp(/\d{4}-\d{2}-\d{2}/)),
     sortBy: Joi.string().valid('updatedAt', 'totalPrice', 'createdAt'),
     sortType: Joi.number().valid(-1, 1).default(1),
     search: Joi.string().pattern(new RegExp(/[A-Za-z0-9]/)),

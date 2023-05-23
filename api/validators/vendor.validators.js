@@ -1,5 +1,9 @@
 const Joi = require('joi')
 
-exports.getVendorsSchema = Joi.object().keys({
-    search: Joi.string().min(3).required()
+exports.getVendorByIdSchema = Joi.object().keys({
+    id: Joi.string().required()
+});
+
+exports.getVendorSchema = Joi.object().keys({
+    search: Joi.string().pattern(new RegExp(/[A-Za-z0-9]/)),
 });

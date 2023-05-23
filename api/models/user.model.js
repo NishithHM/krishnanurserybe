@@ -16,14 +16,12 @@ const userSchema = new mongoose.Schema({
 				return `${props.value} is not 10 digit long`
 			}
 		},
-		unique: true
 	},
 	email:{
 		type:String,
 		trim: true,
 		lowercase: true,
 		immutable: true,
-		unique: true,
 		maxlength:30,
 	},
 	role:{
@@ -73,4 +71,13 @@ userSchema.methods.toJSON=function(){
 	return userObj;
 }
 
+userSchema.index({'phoneNumber': 1, isActive:1}, {unique: true})
+
+userSchema.on('index', function(err) {
+    if (err) {
+        console.error('User index error: %s', err);
+    } else {
+        console.info('User indexing complete');
+    }
+});
 module.exports = mongoose.model("user", userSchema)

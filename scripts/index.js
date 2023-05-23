@@ -8,6 +8,17 @@ const addInvoiceToProcHistory = async ()=>{
     console.log(res)
 }
 
+const addOrderIdToProcHistory = async ()=>{
+    const res = await ProcurementHistory.find({orderId: 762495504})
+    console.log(res.length)
+    
+    for(let i=0; i< res.length; i++){
+        const e = res[i]
+        console.log(e._id.toString())
+        await ProcurementHistory.findOneAndUpdate({_id: e._id},{$set:{orderId: Math.random().toString().slice(2,11)}})
+    }
+}
+
 const addInvoiceToProcurements = async ()=>{
     const res = await procurmentModel.find({});
     const bulk =  procurmentModel.collection.initializeOrderedBulkOp()
@@ -57,8 +68,9 @@ const startScripts =async()=>{
     
     await new Promise(res=> setTimeout(()=>res(1), 1000))
     console.log('db connected')
-    await addImagesToProcHistory()
-    await addImagesToProcurements()
+    // await addImagesToProcHistory()
+    // await addImagesToProcurements()
+    addOrderIdToProcHistory()
 }
 
 startScripts()

@@ -13,12 +13,10 @@ const ProcurementHistory = new mongoose.Schema({
         ka: {
             name: {
                 type: String,
-                required: true
             }
         }
     },
-
-    createdBy: {
+    requestedBy: {
         name: {
             type: String,
             lowercase: true,
@@ -27,32 +25,66 @@ const ProcurementHistory = new mongoose.Schema({
             type: mongoose.Schema.Types.ObjectId,
         }
     },
-    quantity: {
+    placedBy: {
+        name: {
+            type: String,
+            lowercase: true,
+        },
+        _id: {
+            type: mongoose.Schema.Types.ObjectId,
+        }
+    },
+    requestedQuantity: {
         type: Number,
         required: true
     },
     totalPrice: {
         type: Number,
-        required: true
+        default: 0
+    },
+    currentPaidAmount: {
+        type: Number,
+        default: 0
     },
     vendorName:{
         type: String,
-        required: true
+        default: ''
     },
     vendorContact:{
         type: String,
-        required: true
+        default: ''
     },
-    description:{
+    descriptionSales:{
+        type: String,
+        default: ''
+    },
+    descriptionProc:{
         type: String
     },
     vendorId:{
         type: String,
-        required: true
     },
     invoice:{
         type: String,
-        required: true,
+        default: ''
+    },
+    status:{
+        type: String,
+        enum: ['REQUESTED', 'PLACED', 'VERIFIED', 'REJECTED']
+    },
+    quantity: {
+        type: Number,
+        default: 0
+    },
+    orderedQuantity: {
+        type: Number,
+        default: 0
+    },
+    expectedDeliveryDate:{
+        type: Date
+    },
+    orderId: {
+        type: Number,
     },
     images: [{ type: String}]
 }, {

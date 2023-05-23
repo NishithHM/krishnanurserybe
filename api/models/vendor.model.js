@@ -5,17 +5,47 @@ const vendors = new mongoose.Schema({
 	name: {
         type: String,
         required: true,
-        unique: true,
     },
    contact:{
         type: String,
         required: true,
         unique: true,
    },
+   isDefault: {
+        type: Boolean,
+        default: false
+   },
+   deviation: {
+    type: Number,
+    default: 0
+   }
 }, {
 	timestamps: true
 })
 
+vendors.index({'contact': 1}, {unique: true})
 
+vendors.on('index', function(err) {
+    if (err) {
+        console.error('vendors index error: %s', err);
+    } else {
+        console.info('vendors indexing complete');
+    }
+});
+const vendorModel = mongoose.model("vendors", vendors)
 
-module.exports = mongoose.model("vendors", vendors)
+const createDefaults = async ()=>{
+    try{
+        const krishaVendor = await vendorModel.findOne({contact:'9999999999'})
+        if(!krishaVendor){
+            const defaultVendor = new vendorModel({name:'Sri Krishna Nursery', contact:'9999999999', isDefault: true})
+            defaultVendor.save()
+        }
+    }catch(e){
+        console.log('err')
+    }
+}
+
+createDefaults()
+
+module.exports = vendorModel
