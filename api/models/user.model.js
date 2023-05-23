@@ -22,7 +22,7 @@ const userSchema = new mongoose.Schema({
 		trim: true,
 		lowercase: true,
 		immutable: true,
-		maxlength:30,
+		maxlength:50,
 	},
 	role:{
 		type: String,
