@@ -982,8 +982,8 @@ exports.getOrderIdDetails = async (req, res)=>{
         fields.forEach(ele=> project[ele]= 1)
         const projrctQuery = {$project: project}
         const pipeline = [matchQuery, projrctQuery]
-        console.log("getOrderIdDetails-pipeline", pipeline)
-        loggers.info(`getOrderIdDetails-pipeline, ${pipeline}`)
+        console.log("getOrderIdDetails-pipeline", JSON.stringify(pipeline))
+        loggers.info(`getOrderIdDetails-pipeline, ${JSON.stringify(pipeline)}`)
         const ordersData = await ProcurementHistory.aggregate(pipeline)
         let totalAmount = 0
         let advanceAmount = 0
@@ -996,7 +996,7 @@ exports.getOrderIdDetails = async (req, res)=>{
         res.json({items:ordersData, totalAmount, advanceAmount, expectedDeliveryDate: ordersData?.[0]?.expectedDeliveryDate})
     } catch (error) {
         console.log(error)
-        loggers.info(`getOrderIdDetails-error, ${error}`)
+        loggers.info(`getOrderIdDetails-error, ${JSON.stringify(error)}`)
         const err = handleMongoError(error)
         res.status(500).send(err)
     }

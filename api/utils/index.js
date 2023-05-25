@@ -43,7 +43,7 @@ exports.uploadFile = async ({ file, path, key }) => {
     const s3 = new AWS.S3()
     const fileStream = fs.createReadStream(file.path)
     const uploadParams = {
-        Bucket: `coden-aws-bucket/${process.env.ENV}/${path}`,
+        Bucket: `${process.env.AWS_BUCKET_NAME}/${process.env.ENV}/${path}`,
         Key: key,
         Body: fileStream
     }
