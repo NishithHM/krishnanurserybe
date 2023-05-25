@@ -119,6 +119,9 @@ exports.placeOrder = async (req, res) => {
             let procId
             if (procurementId) {
                 procId = procurementId
+                const proc = await Procurement.findById(procurementId)
+                proc.categories = categories;
+                await proc.save()
             } else {
                 const procurement = new Procurement({ names, remainingQuantity: 0, categories })
                 const res = await procurement.save()
