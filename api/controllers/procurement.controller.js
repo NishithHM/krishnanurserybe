@@ -143,7 +143,7 @@ exports.placeOrder = async (req, res) => {
 
 exports.rejectOrderRequest = async (req, res) => {
     const { id, description } = req.body
-    const procHistory = await ProcurementHistory.findOne({ id: new mongoose.mongo.ObjectId(id), status: "REQUESTED" })
+    const procHistory = await ProcurementHistory.findOne({ _id: new mongoose.mongo.ObjectId(id), status: "REQUESTED" })
     if (procHistory) {
         procHistory.status = 'REJECTED'
         procHistory.descriptionProc = description
