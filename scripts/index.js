@@ -54,6 +54,14 @@ const addImagesToProcurements = async ()=>{
 
 }
 
+const clearS3 = ()=>{
+    const AWS = require('aws-sdk')
+    const s3 = new AWS.S3()
+    const params = {
+        Bucket: `coden-aws-bucket/dev/${path}`,
+      };
+}
+
 const dbCon = ()=>{
     const env = 'dev'
     mongoose.connect(`mongodb+srv://admin:admin123@cluster0.t2cxv.mongodb.net/nursery_mgmt_${env}?retryWrites=true&w=majority`, {
@@ -68,9 +76,7 @@ const startScripts =async()=>{
     
     await new Promise(res=> setTimeout(()=>res(1), 1000))
     console.log('db connected')
-    // await addImagesToProcHistory()
-    // await addImagesToProcurements()
-    addOrderIdToProcHistory()
+
 }
 
 startScripts()

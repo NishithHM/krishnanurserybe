@@ -26,6 +26,7 @@ const { addPaymentScheme, getPaymentHistorySchema } = require('./validators/paym
 const { getBrokersSchema } = require('./validators/broker.validators');
 const { getBrokerList } = require('./controllers/brokers.controller');
 const { addPayment, getPaymentHistory } = require('./controllers/payment.controller');
+const { dailyCron } = require('../crons/dailyCron');
 
 const fileStorageEngine = multer.diskStorage({
 	destination:(req,file,cb) =>{
@@ -39,6 +40,8 @@ const fileStorageEngine = multer.diskStorage({
 })
 const uploadInvoice = multer({storage:fileStorageEngine, limits:{fileSize: 5000000}});
 
+// cron
+dailyCron()
 
 
 // user
