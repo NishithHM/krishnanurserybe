@@ -10,6 +10,11 @@ const AgriVariants = new mongoose.Schema({
         required: true,
         lowercase: true
     },
+    isActive:{
+        type: Boolean,
+        required: true,
+        default: true
+    },
     options:{
         type:[{
             optionName:{
@@ -21,15 +26,6 @@ const AgriVariants = new mongoose.Schema({
                 lowercase: true
             }]
         }]
-    },
-    createdBy: {
-        name: {
-            type: String,
-            lowercase: true,
-        },
-        _id: {
-            type: mongoose.Schema.Types.ObjectId,
-        },
     },
 },{
     timestamps: true

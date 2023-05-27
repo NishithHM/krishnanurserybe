@@ -7,7 +7,7 @@ exports.addAgriVariant = async (req, res)=>{
     try {
         const {type, name, options} = req.body
         checkAndAddType('type', type)
-        const agriVariant = new AgriVariants({type, name, options})
+        const agriVariant = new AgriVariants({type, name, options, isActive: true})
         await agriVariant.save()
         options.map(({optionName, optionValues})=>{
             checkAndAddType(optionName, optionValues)
@@ -16,8 +16,29 @@ exports.addAgriVariant = async (req, res)=>{
             message:'Agri Variant added Succesfully'
         })
     } catch (error) {
-        loggers.info("checkAndAddType-error", JSON.stringify(error))
-        console.log(`checkAndAddType-error, ${error}`)
+        loggers.info("updateAgriVariant-error", JSON.stringify(error))
+        console.log(`updateAgriVariant-error, ${error}`)
+        const err = handleMongoError(error)
+        res.status(500).send(err)
+    }
+    
+}
+
+exports.updateAgriVariant = async (req, res)=>{
+    try {
+        const {options, id} = req.body
+        const agriVariant = await AgriVariants.findById(id)
+        agriVariant.options = options
+        await agriVariant.save()
+        options.map(({optionName, optionValues})=>{
+            checkAndAddType(optionName, optionValues)
+        })
+        res.send({
+            message:'Agri Variant updated Succesfully'
+        })
+    } catch (error) {
+        loggers.info("updateAgriVariant-error", JSON.stringify(error))
+        console.log(`updateAgriVariant-error, ${error}`)
         const err = handleMongoError(error)
         res.status(500).send(err)
     }
@@ -36,7 +57,7 @@ const checkAndAddType=async(optionName, optionVal)=>{
 exports.getAgriVariants=async(req, res)=>{
   try {
     const {search, pageNumber, isCount, type} = req.body
-    const match = {}
+    const match = {isActive: true}
     if(!isEmpty(type)){
         match.type = type.toLowerCase()
     }
@@ -117,4 +138,19 @@ exports.getTypesOptions = async(req, res)=>{
         res.status(500).send(err)
     }
     
+}
+
+exports.deleteAgriVariant = async (req, res)=>{
+    try {
+        const {id} = req.body
+        const val = AgriVariants.findByIdAndUpdate(id, {$set:{isActive: false}},{upsert: false})
+        res.send({
+            message:'Agri Variant deleted Succesfully'
+        }) 
+    } catch (error) {
+        loggers.info("deleteAgriVariant-error", JSON.stringify(error))
+        console.log("deleteAgriVariant-error", JSON.stringify(error))
+        const err = handleMongoError(error)
+        res.status(500).send(err)
+    }
 }
