@@ -27,6 +27,8 @@ const { getBrokersSchema } = require('./validators/broker.validators');
 const { getBrokerList } = require('./controllers/brokers.controller');
 const { addPayment, getPaymentHistory } = require('./controllers/payment.controller');
 const { dailyCron } = require('../crons/dailyCron');
+const { variantSchema, getAgriVariantSchema } = require('./validators/agriVariants.validator');
+const { addAgriVariant, getAgriVariants } = require('./controllers/agriVariants.controller');
 
 const fileStorageEngine = multer.diskStorage({
 	destination:(req,file,cb) =>{
@@ -100,6 +102,9 @@ router.get('/api/payments/getAll', [authWall(['sales', 'procurement', 'admin']),
 // brokers
 router.get('/api/brokers/getAll', [authWall(['procurement', 'admin', 'sales']), paramsToBody(['search'], 'query'), bodyValidator(getBrokersSchema)], getBrokerList)
 
+// agri variants
+router.post('/api/agri/variants', [authWall(['procurement']), bodyValidator(variantSchema)], addAgriVariant )
+router.get('/api/agri/variants', [authWall(['procurement', 'admin']),paramsToBody(['pageNumber', 'search', 'isCount', 'type'], 'query'), bodyValidator(getAgriVariantSchema)], getAgriVariants )
 // s3 test
 router.get('/api/download',[authWall(['admin','procurement', 'sales', 'preSales']), paramsToBody(['path'], "query")], downloadFile)
 // router.get('/video', videoRender)
