@@ -15,3 +15,7 @@ exports.getAgriVariantSchema = Joi.object().keys({
     isCount: Joi.boolean(),
     type: Joi.string()
 })
+
+exports.getAgriTypeOptions = Joi.object().keys({
+    type: Joi.string().required()
+})

@@ -2,17 +2,26 @@ const AgriVariants = require('../models/agriVariants.model')
 const AgriOptions = require('../models/agriOptions.model')
 const { isEmpty } = require('lodash')
 const loggers = require('../../loggers')
+
 exports.addAgriVariant = async (req, res)=>{
-    const {type, name, options} = req.body
-    checkAndAddType('type', type)
-    const agriVariant = new AgriVariants({type, name, options})
-    await agriVariant.save()
-    options.map(({optionName, optionValues})=>{
-        checkAndAddType(optionName, optionValues)
-    })
-    res.send({
-        message:'Agri Variant added Succesfully'
-    })
+    try {
+        const {type, name, options} = req.body
+        checkAndAddType('type', type)
+        const agriVariant = new AgriVariants({type, name, options})
+        await agriVariant.save()
+        options.map(({optionName, optionValues})=>{
+            checkAndAddType(optionName, optionValues)
+        })
+        res.send({
+            message:'Agri Variant added Succesfully'
+        })
+    } catch (error) {
+        loggers.info("checkAndAddType-error", JSON.stringify(error))
+        console.log(`checkAndAddType-error, ${error}`)
+        const err = handleMongoError(error)
+        res.status(500).send(err)
+    }
+    
 }
 
 const checkAndAddType=async(optionName, optionVal)=>{
@@ -64,5 +73,48 @@ exports.getAgriVariants=async(req, res)=>{
     res.json(orders)
   } catch (error) {
     loggers.info("getAgriVariants-error", JSON.stringify(error))
+    console.log("getAgriVariants-error", JSON.stringify(error))
+    const err = handleMongoError(error)
+    res.status(500).send(err)
   }
+}
+
+exports.getTypes = async(req, res)=>{
+    try {
+        const pipeline = [
+            {
+              $group:
+                {
+                  _id: null,
+                  names: {
+                    $addToSet: "$name",
+                  },
+                },
+            },
+          ]
+        const agriNames = await AgriOptions.aggregate(pipeline)
+        loggers.info("getTypes-pipeline", JSON.stringify(pipeline))
+        console.log("getTypes-pipeline", JSON.stringify(pipeline))
+        res.send(agriNames?.[0]?.names)  
+    } catch (error) {
+        loggers.info("getTypes-error", JSON.stringify(error))
+        console.log("getTypes-error", JSON.stringify(error))
+        const err = handleMongoError(error)
+        res.status(500).send(err)
+    }
+    
+}
+
+exports.getTypesOptions = async(req, res)=>{
+    const {type} = req.body
+    try {
+        const agriOptions = await AgriOptions.findOne({name: type})
+        res.send(agriOptions?.options)  
+    } catch (error) {
+        loggers.info("getTypes-error", JSON.stringify(error))
+        console.log("getTypes-error", JSON.stringify(error))
+        const err = handleMongoError(error)
+        res.status(500).send(err)
+    }
+    
 }
