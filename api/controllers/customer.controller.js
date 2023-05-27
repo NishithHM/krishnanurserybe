@@ -37,7 +37,7 @@ exports.customerRegister = async (req, res) => {
     console.log(error);
     loggers.info(`customerRegister-error, ${error}`)
     const err = handleMongoError(error)
-    res.status(500).send(err)
+    res.status(400).send(err)
   }
 };
 
