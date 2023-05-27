@@ -108,7 +108,7 @@ router.post('/api/agri/variants/:id', [authWall(['procurement']), paramsToBody([
 router.get('/api/agri/variants', [authWall(['procurement', 'admin']), paramsToBody(['pageNumber', 'search', 'isCount', 'type'], 'query'), bodyValidator(getAgriVariantSchema)], getAgriVariants )
 router.get('/api/agri/types', [authWall(['procurement', 'admin', 'sales'])], getTypes )
 router.get('/api/agri/type-options', [authWall(['procurement', 'admin', 'sales']), paramsToBody(['type'], 'query'), bodyValidator(getAgriVariantSchema)], getTypesOptions )
-router.get('/api/agri/delete-variant/:id', [authWall(['procurement', 'admin', 'sales']),paramsToBody(['id'], 'params'), bodyValidator(deleteAgriVariantSchema)], deleteAgriVariant )
+router.get('/api/agri/delete-variant/:id', [authWall(['procurement']),paramsToBody(['id'], 'params'), bodyValidator(deleteAgriVariantSchema)], deleteAgriVariant )
 
 // s3 test
 router.get('/api/download',[authWall(['admin','procurement', 'sales', 'preSales']), paramsToBody(['path'], "query")], downloadFile)
