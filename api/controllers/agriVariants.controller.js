@@ -47,7 +47,7 @@ exports.updateAgriVariant = async (req, res)=>{
 
 const checkAndAddType=async(optionName, optionVal)=>{
     try {
-        const typeData = await AgriOptions.findOneAndUpdate({name: optionName}, {$set:  {name: optionName}, $push:{options:optionVal}}, {upsert: true})
+        const typeData = await AgriOptions.findOneAndUpdate({name: optionName}, {$set:  {name: optionName}, $addToSet:{options:optionVal}}, {upsert: true})
         loggers.info("checkAndAddType-res", JSON.stringify(typeData))
     } catch (error) {
         loggers.info("checkAndAddType-error", JSON.stringify(error))
@@ -153,4 +153,18 @@ exports.deleteAgriVariant = async (req, res)=>{
         const err = handleMongoError(error)
         res.status(500).send(err)
     }
+}
+
+exports.getAgriVariant = async (req, res)=>{
+    try {
+        const {id} = req.body
+        const val = await AgriVariants.findById(id)
+        res.send(val)
+    } catch (error) {
+        loggers.info("getAgriVariant-error", JSON.stringify(error))
+        console.log("getAgriVariant-error", JSON.stringify(error))
+        const err = handleMongoError(error)
+        res.status(500).send(err)
+    }
+    
 }
