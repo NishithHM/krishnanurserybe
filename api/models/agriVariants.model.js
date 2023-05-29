@@ -8,7 +8,8 @@ const AgriVariants = new mongoose.Schema({
     name:{
         type: String,
         required: true,
-        lowercase: true
+        lowercase: true,
+        unique: true
     },
     isActive:{
         type: Boolean,

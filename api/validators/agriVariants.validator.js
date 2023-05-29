@@ -17,6 +17,10 @@ exports.editVariantSchema = Joi.object().keys({
     id: Joi.string().required()
 });
 
+exports.getVariantSchema = Joi.object().keys({
+    id: Joi.string().required()
+});
+
 exports.getAgriVariantSchema = Joi.object().keys({
     search: Joi.string().pattern(new RegExp(/[A-Za-z]/)),
     pageNumber: Joi.number(),
