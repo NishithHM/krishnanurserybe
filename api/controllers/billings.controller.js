@@ -33,7 +33,6 @@ exports.addToCart = async (req, res) => {
                     const billing = new Billing({ customerName: customerRes.name, customerId: customerRes._id, customerNumber: customerRes.phoneNumber, soldBy, items: formattedItems, totalPrice, discount, status: "CART", invoiceId })
                     const cartDetails = await billing.save()
                     res.status(200).send(cartDetails)
-                    Tracker.findOneAndUpdate({name:"invoiceId"}, {$inc:{number:1}}, {$upsert:false})
                     if(!customerId){
                         customerRes.save()
                     }
@@ -68,6 +67,12 @@ exports.updateCart = async (req, res) => {
                     billData.items = formattedItems;
                     billData.totalPrice = totalPrice;
                     billData.discount = discount;
+                    const invoiceCount = await Billing.countDocuments({invoiceId: billData.invoiceId})
+                    if(invoiceCount >1){
+                        const trackerVal = await Tracker.findOne({name:"invoiceId"})
+                        billData.invoiceId = `NUR_${trackerVal.number}`
+                        
+                    }
                     const cartDetails = await billData.save()
                     res.status(200).send(cartDetails)
                 } else {
@@ -122,6 +127,7 @@ exports.confirmCart = async (req, res) => {
                     updateRemainingQuantity(procurementQuantityMapping)
                     updateCustomerPurchaseHistory(billData)
                     await billData.save()
+                    Tracker.findOneAndUpdate({name:"invoiceId"}, {$inc:{number:1}}, {$upsert:false})
                     res.status(200).send(billData)
                 } else {
                     res.status(400).send({ error: errors.join(' ') })
