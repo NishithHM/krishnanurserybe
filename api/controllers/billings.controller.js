@@ -27,10 +27,8 @@ exports.addToCart = async (req, res) => {
             const { errors, formattedItems, totalPrice, discount } = await validatePricesAndQuantityAndFormatItems(items)
             if (isEmpty(errors)) {
                 if (formattedItems.length > 0) {
-                    const trackerVal = await Tracker.findOne({name:"invoiceId"})
-                    const invoiceId = `NUR_${trackerVal.number}`
-                    console.log(invoiceId)
-                    const billing = new Billing({ customerName: customerRes.name, customerId: customerRes._id, customerNumber: customerRes.phoneNumber, soldBy, items: formattedItems, totalPrice, discount, status: "CART", invoiceId })
+                   
+                    const billing = new Billing({ customerName: customerRes.name, customerId: customerRes._id, customerNumber: customerRes.phoneNumber, soldBy, items: formattedItems, totalPrice, discount, status: "CART" })
                     const cartDetails = await billing.save()
                     res.status(200).send(cartDetails)
                     if(!customerId){
@@ -67,11 +65,7 @@ exports.updateCart = async (req, res) => {
                     billData.items = formattedItems;
                     billData.totalPrice = totalPrice;
                     billData.discount = discount;
-                    const invoiceCount = await Billing.countDocuments({invoiceId: billData.invoiceId})
-                    if(invoiceCount >1){
-                        const trackerVal = await Tracker.findOne({name:"invoiceId"})
-                        billData.invoiceId = `NUR_${trackerVal.number}`
-                    }
+                    
                     const cartDetails = await billData.save()
                     res.status(200).send(cartDetails)
                 } else {
@@ -123,6 +117,8 @@ exports.confirmCart = async (req, res) => {
                     billData.roundOff = roundOff
                     billData.status = "BILLED"
                     billData.billedBy = billedBy
+                    const trackerVal = await Tracker.findOne({name:"invoiceId"})
+                    billData.invoiceId = `NUR_${trackerVal.number}`
                     updateRemainingQuantity(procurementQuantityMapping)
                     updateCustomerPurchaseHistory(billData)
                     await billData.save()
