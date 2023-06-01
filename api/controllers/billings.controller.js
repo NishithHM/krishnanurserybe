@@ -29,6 +29,7 @@ exports.addToCart = async (req, res) => {
                 if (formattedItems.length > 0) {
                     const trackerVal = await Tracker.findOne({name:"invoiceId"})
                     const invoiceId = `NUR_${trackerVal.number}`
+                    console.log(invoiceId)
                     const billing = new Billing({ customerName: customerRes.name, customerId: customerRes._id, customerNumber: customerRes.phoneNumber, soldBy, items: formattedItems, totalPrice, discount, status: "CART", invoiceId })
                     const cartDetails = await billing.save()
                     res.status(200).send(cartDetails)
@@ -118,7 +119,6 @@ exports.confirmCart = async (req, res) => {
                     billData.roundOff = roundOff
                     billData.status = "BILLED"
                     billData.billedBy = billedBy
-                    billData.invoiceId = invoiceId
                     updateRemainingQuantity(procurementQuantityMapping)
                     updateCustomerPurchaseHistory(billData)
                     await billData.save()
