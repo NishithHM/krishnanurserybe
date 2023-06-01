@@ -1,6 +1,8 @@
 const ProcurementHistory = require("../api/models/procurementHistory.model")
 const mongoose = require('mongoose')
 const procurmentModel = require("../api/models/procurment.model")
+const billingsModel = require("../api/models/billings.model")
+const Tracker = require("../api/models/tracker.model")
 
 
 const addInvoiceToProcHistory = async ()=>{
@@ -71,11 +73,23 @@ const dbCon = ()=>{
         .catch(err => console.log(err));
 }
 
+const addInvoiceIdToBillingHistory = async ()=>{
+    const bills = await billingsModel.find({status:'BILLED'})
+    console.log(bills)
+    for(let i=0; i< bills.length; i++){
+        const tracker = await Tracker.findOne({name:"invoiceId"})
+        const invoiceId = `NUR_${tracker.number}`
+        await billingsModel.findByIdAndUpdate(bills[i]._id, {$set:{invoiceId}}, {upsert: false})
+        await Tracker.findOneAndUpdate({name:'invoiceId'}, {$inc:{number:1}}, {$upsert:false})
+    }
+}
+
 const startScripts =async()=>{
     await dbCon()
     
     await new Promise(res=> setTimeout(()=>res(1), 1000))
     console.log('db connected')
+    addInvoiceIdToBillingHistory()
 
 }
 

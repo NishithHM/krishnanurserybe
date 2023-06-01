@@ -19,7 +19,7 @@ const deleteLoggers = async ()=>{
                     console.log(stat, ele)
                     if(stat){
                         const now = new Date().getTime();
-                        const endTime = new Date(stat.mtime).getTime() + 86400000 * 0
+                        const endTime = new Date(stat.mtime).getTime() + 86400000 * 7
                         if(now > endTime){
                             fs.unlink(pathVal, (err, del)=>{
                                 console.log(del)
