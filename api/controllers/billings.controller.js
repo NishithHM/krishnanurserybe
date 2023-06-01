@@ -71,7 +71,6 @@ exports.updateCart = async (req, res) => {
                     if(invoiceCount >1){
                         const trackerVal = await Tracker.findOne({name:"invoiceId"})
                         billData.invoiceId = `NUR_${trackerVal.number}`
-                        
                     }
                     const cartDetails = await billData.save()
                     res.status(200).send(cartDetails)
