@@ -8,6 +8,7 @@ const Billing = require('../models/billings.model');
 const { handleMongoError } = require('../utils');
 const loggers = require('../../loggers');
 const { uniqBy } = require('lodash');
+const Tracker = require('../models/tracker.model');
 
 exports.addToCart = async (req, res) => {
     try {
@@ -84,8 +85,10 @@ exports.updateCart = async (req, res) => {
 }
 
 exports.confirmCart = async (req, res) => {
-    const { id, roundOff = 0, invoiceId} = req.body;
+    const { id, roundOff = 0} = req.body;
     try {
+        const trackerVal = await Tracker.findOne({name:"invoiceId"})
+        const invoiceId = `NUR_${trackerVal.number}`
         const billData = await Billing.findOne({ _id: new mongoose.mongo.ObjectId(id), status: 'CART' })
         if (billData) {
             const roundOfError = validateRoundOff(billData.totalPrice, roundOff);
@@ -118,6 +121,7 @@ exports.confirmCart = async (req, res) => {
                     updateRemainingQuantity(procurementQuantityMapping)
                     updateCustomerPurchaseHistory(billData)
                     await billData.save()
+                    Tracker.findOneAndUpdate({name:"invoiceId"}, {$inc:{number:1}}, {$upsert:false})
                     res.status(200).send(billData)
                 } else {
                     res.status(400).send({ error: errors.join(' ') })
