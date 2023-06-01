@@ -74,8 +74,7 @@ const dbCon = ()=>{
 }
 
 const addInvoiceIdToBillingHistory = async ()=>{
-    const bills = await billingsModel.find({status:'BILLED'})
-    console.log(bills)
+    const bills = await billingsModel.find({status:{$ne:'BILLED'}})
     for(let i=0; i< bills.length; i++){
         const tracker = await Tracker.findOne({name:"invoiceId"})
         const invoiceId = `NUR_${tracker.number}`
@@ -89,7 +88,6 @@ const startScripts =async()=>{
     
     await new Promise(res=> setTimeout(()=>res(1), 1000))
     console.log('db connected')
-    addInvoiceIdToBillingHistory()
 
 }
 
