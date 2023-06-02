@@ -8,6 +8,7 @@ const Billing = require('../models/billings.model');
 const { handleMongoError } = require('../utils');
 const loggers = require('../../loggers');
 const { uniqBy } = require('lodash');
+const Tracker = require('../models/tracker.model');
 
 exports.addToCart = async (req, res) => {
     try {
@@ -26,6 +27,7 @@ exports.addToCart = async (req, res) => {
             const { errors, formattedItems, totalPrice, discount } = await validatePricesAndQuantityAndFormatItems(items)
             if (isEmpty(errors)) {
                 if (formattedItems.length > 0) {
+                   
                     const billing = new Billing({ customerName: customerRes.name, customerId: customerRes._id, customerNumber: customerRes.phoneNumber, soldBy, items: formattedItems, totalPrice, discount, status: "CART" })
                     const cartDetails = await billing.save()
                     res.status(200).send(cartDetails)
@@ -63,6 +65,7 @@ exports.updateCart = async (req, res) => {
                     billData.items = formattedItems;
                     billData.totalPrice = totalPrice;
                     billData.discount = discount;
+                    
                     const cartDetails = await billData.save()
                     res.status(200).send(cartDetails)
                 } else {
@@ -84,7 +87,7 @@ exports.updateCart = async (req, res) => {
 }
 
 exports.confirmCart = async (req, res) => {
-    const { id, roundOff = 0, invoiceId} = req.body;
+    const { id, roundOff = 0} = req.body;
     try {
         const billData = await Billing.findOne({ _id: new mongoose.mongo.ObjectId(id), status: 'CART' })
         if (billData) {
@@ -114,10 +117,12 @@ exports.confirmCart = async (req, res) => {
                     billData.roundOff = roundOff
                     billData.status = "BILLED"
                     billData.billedBy = billedBy
-                    billData.invoiceId = invoiceId
+                    const trackerVal = await Tracker.findOne({name:"invoiceId"})
+                    billData.invoiceId = `NUR_${trackerVal.number}`
                     updateRemainingQuantity(procurementQuantityMapping)
                     updateCustomerPurchaseHistory(billData)
                     await billData.save()
+                    await Tracker.findOneAndUpdate({name:"invoiceId"}, {$inc:{number:1}}, {$upsert:false})
                     res.status(200).send(billData)
                 } else {
                     res.status(400).send({ error: errors.join(' ') })
