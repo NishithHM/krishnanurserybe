@@ -122,7 +122,7 @@ exports.confirmCart = async (req, res) => {
                     updateRemainingQuantity(procurementQuantityMapping)
                     updateCustomerPurchaseHistory(billData)
                     await billData.save()
-                    Tracker.findOneAndUpdate({name:"invoiceId"}, {$inc:{number:1}}, {$upsert:false})
+                    await Tracker.findOneAndUpdate({name:"invoiceId"}, {$inc:{number:1}}, {$upsert:false})
                     res.status(200).send(billData)
                 } else {
                     res.status(400).send({ error: errors.join(' ') })
