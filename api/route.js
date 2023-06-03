@@ -29,6 +29,7 @@ const { addPayment, getPaymentHistory } = require('./controllers/payment.control
 const { dailyCron } = require('../crons/dailyCron');
 const { variantSchema, getAgriVariantSchema, deleteAgriVariantSchema, editVariantSchema, getVariantSchema } = require('./validators/agriVariants.validator');
 const { addAgriVariant, getAgriVariants, getTypes, getTypesOptions, deleteAgriVariant, updateAgriVariant, getAgriVariant } = require('./controllers/agriVariants.controller');
+const { requestAgriItemsSchema } = require('./validators/agriOrderMgmt.validator');
 
 const fileStorageEngine = multer.diskStorage({
 	destination:(req,file,cb) =>{
@@ -111,6 +112,8 @@ router.get('/api/agri/types', [authWall(['procurement', 'admin', 'sales'])], get
 router.get('/api/agri/type-options', [authWall(['procurement', 'admin', 'sales']), paramsToBody(['type'], 'query'), bodyValidator(getAgriVariantSchema)], getTypesOptions )
 router.get('/api/agri/delete-variant/:id', [authWall(['procurement']),paramsToBody(['id'], 'params'), bodyValidator(deleteAgriVariantSchema)], deleteAgriVariant )
 
+//agri order-mgmt
+// router.post('/api/agri/request-order', [authWall(['sales']), bodyValidator(requestAgriItemsSchema)])
 // s3 test
 router.get('/api/download',[authWall(['admin','procurement', 'sales', 'preSales']), paramsToBody(['path'], "query")], downloadFile)
 // router.get('/video', videoRender)
