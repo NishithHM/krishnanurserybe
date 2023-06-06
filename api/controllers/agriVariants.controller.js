@@ -2,6 +2,7 @@ const AgriVariants = require('../models/agriVariants.model')
 const AgriOptions = require('../models/agriOptions.model')
 const { isEmpty } = require('lodash')
 const loggers = require('../../loggers')
+const { handleMongoError } = require('../utils')
 
 exports.addAgriVariant = async (req, res)=>{
     try {
