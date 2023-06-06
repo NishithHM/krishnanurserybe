@@ -4,6 +4,8 @@ const procurmentModel = require("../api/models/procurment.model")
 const billingsModel = require("../api/models/billings.model")
 const Tracker = require("../api/models/tracker.model")
 
+var request = require('request');
+var fs = require('fs');
 
 const addInvoiceToProcHistory = async ()=>{
     const res = await ProcurementHistory.updateMany({}, {$set: {invoice: 'null'}}, {upsert: false})
@@ -83,10 +85,36 @@ const addInvoiceIdToBillingHistory = async ()=>{
     }
 }
 
+const testApi=()=>{
+    for(let i=0; i< 20; i++){
+        console.log('request', i)
+        var options = {
+            'method': 'POST',
+            'url': 'http://3.110.8.129:8000/api/upload-large',
+            'headers': {
+            },
+            formData: {
+              'invoice': {
+                'value': fs.createReadStream('/home/nishith/Downloads/videoplayback.mp4'),
+                'options': {
+                  'filename': 'videoplayback.mp4',
+                  'contentType': null
+                }
+              }
+            }
+          };
+          request(options, function (error, response) {
+            if (error) throw new Error(error);
+            console.log(response.body);
+          });
+    }
+}
+
 const startScripts =async()=>{
     await dbCon()
     
     await new Promise(res=> setTimeout(()=>res(1), 1000))
+    // testApi()
     console.log('db connected')
 
 }
