@@ -85,8 +85,9 @@ const addInvoiceIdToBillingHistory = async ()=>{
     }
 }
 
-const testApi=()=>{
+const testApi=async()=>{
     for(let i=0; i< 20; i++){
+        await new Promise((res)=> setTimeout(()=> res(), 1000))
         console.log('request', i)
         var options = {
             'method': 'POST',
@@ -104,7 +105,10 @@ const testApi=()=>{
             }
           };
           request(options, function (error, response) {
-            if (error) throw new Error(error);
+            if (error) {
+                JSON.stringify(error)
+                throw new Error(error);
+            }
             console.log(response.body);
           });
     }
