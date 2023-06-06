@@ -77,9 +77,11 @@ exports.downloadFile = async (req, res) =>{
 
 exports.uploadAwsTest = async (req, res) =>{
     try{
-        console.log(req.files[0])
-        // this.uploadFile({file:req.files[0], path: 'nursery/test', key:req.files[0]?.filename})
-        res.send(`nursery/test/${req.files[0]?.filename}`)
+        const AWS = require('aws-sdk')
+        const s3 = new AWS.S3()
+        //s3 presigned url
+        res.send(`nursery/test`)
+
     }catch(e){
         res.status(500)
     }
