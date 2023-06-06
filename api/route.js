@@ -21,7 +21,7 @@ const { addToCart, updateCart, confirmCart, getCustomerCart, getAllBillingHistor
 const { getVendorSchema, getVendorByIdSchema } = require('./validators/vendor.validators')
 const { getVendorList, getVendorById } = require('./controllers/vendor.controller');
 const { testUpload, videoRender } = require('./controllers/test.contoller');
-const { downloadFile } = require('./utils');
+const { downloadFile, uploadAwsTest } = require('./utils');
 const { addPaymentScheme, getPaymentHistorySchema } = require('./validators/payment.validators');
 const { getBrokersSchema } = require('./validators/broker.validators');
 const { getBrokerList } = require('./controllers/brokers.controller');
@@ -29,7 +29,8 @@ const { addPayment, getPaymentHistory } = require('./controllers/payment.control
 const { dailyCron } = require('../crons/dailyCron');
 const { variantSchema, getAgriVariantSchema, deleteAgriVariantSchema, editVariantSchema, getVariantSchema } = require('./validators/agriVariants.validator');
 const { addAgriVariant, getAgriVariants, getTypes, getTypesOptions, deleteAgriVariant, updateAgriVariant, getAgriVariant } = require('./controllers/agriVariants.controller');
-const { requestAgriItemsSchema } = require('./validators/agriOrderMgmt.validator');
+const { requestAgriItemsSchema, placeAgriItemsSchema } = require('./validators/agriOrderMgmt.validator');
+const { requestAgriOrder, placeAgriOrder } = require('./controllers/agriOrderMgmt.controller');
 
 const fileStorageEngine = multer.diskStorage({
 	destination:(req,file,cb) =>{
@@ -41,7 +42,7 @@ const fileStorageEngine = multer.diskStorage({
 
 	}
 })
-const uploadInvoice = multer({storage:fileStorageEngine, limits:{fileSize: 5000000}});
+const uploadInvoice = multer({storage:fileStorageEngine, limits:{fileSize: 1000*1024*1024}});
 
 // cron
 dailyCron()
@@ -106,15 +107,17 @@ router.get('/api/brokers/getAll', [authWall(['procurement', 'admin', 'sales']), 
 // agri variants
 router.post('/api/agri/variants', [authWall(['procurement']), bodyValidator(variantSchema)], addAgriVariant )
 router.post('/api/agri/variants/:id', [authWall(['procurement']), paramsToBody(['id'], 'params'), bodyValidator(editVariantSchema)], updateAgriVariant )
-router.get('/api/agri/variants/:id', [authWall(['procurement', 'admin']), paramsToBody(['id'], 'params'), bodyValidator(getVariantSchema)], getAgriVariant )
-router.get('/api/agri/variants', [authWall(['procurement', 'admin']), paramsToBody(['pageNumber', 'search', 'isCount', 'type'], 'query'), bodyValidator(getAgriVariantSchema)], getAgriVariants )
+router.get('/api/agri/variants/:id', [authWall(['procurement', 'admin', 'sales']), paramsToBody(['id'], 'params'), bodyValidator(getVariantSchema)], getAgriVariant )
+router.get('/api/agri/variants', [authWall(['procurement', 'admin', 'sales']), paramsToBody(['pageNumber', 'search', 'isCount', 'type'], 'query'), bodyValidator(getAgriVariantSchema)], getAgriVariants )
 router.get('/api/agri/types', [authWall(['procurement', 'admin', 'sales'])], getTypes )
 router.get('/api/agri/type-options', [authWall(['procurement', 'admin', 'sales']), paramsToBody(['type'], 'query'), bodyValidator(getAgriVariantSchema)], getTypesOptions )
 router.get('/api/agri/delete-variant/:id', [authWall(['procurement']),paramsToBody(['id'], 'params'), bodyValidator(deleteAgriVariantSchema)], deleteAgriVariant )
 
 //agri order-mgmt
-// router.post('/api/agri/request-order', [authWall(['sales']), bodyValidator(requestAgriItemsSchema)])
+router.post('/api/agri/request-order', [authWall(['sales']), bodyValidator(requestAgriItemsSchema)], requestAgriOrder)
+router.post('/api/agri/place-order', [authWall(['procurement']), bodyValidator(placeAgriItemsSchema)], placeAgriOrder)
 // s3 test
+router.post('/api/upload-large',[uploadInvoice.array('invoice', 1)], uploadAwsTest)
 router.get('/api/download',[authWall(['admin','procurement', 'sales', 'preSales']), paramsToBody(['path'], "query")], downloadFile)
 // router.get('/video', videoRender)
 module.exports = router

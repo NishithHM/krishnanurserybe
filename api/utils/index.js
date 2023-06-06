@@ -74,3 +74,14 @@ exports.downloadFile = async (req, res) =>{
         res.status(500)
     }
 }
+
+exports.uploadAwsTest = async (req, res) =>{
+    try{
+        console.log(req.files[0])
+        await this.uploadFile({file:req.files[0], path: 'nursery/test', key:req.files[0]?.filename})
+        res.send(`nursery/test/${req.files[0]?.filename}`)
+    }catch(e){
+        res.status(500)
+    }
+}
+

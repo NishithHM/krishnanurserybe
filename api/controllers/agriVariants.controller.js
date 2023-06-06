@@ -143,7 +143,7 @@ exports.getTypesOptions = async(req, res)=>{
 exports.deleteAgriVariant = async (req, res)=>{
     try {
         const {id} = req.body
-        const val = AgriVariants.findByIdAndUpdate(id, {$set:{isActive: false}},{upsert: false})
+        const val =await  AgriVariants.findByIdAndUpdate(id, {$set:{isActive: false}},{upsert: false})
         res.send({
             message:'Agri Variant deleted Succesfully'
         }) 
