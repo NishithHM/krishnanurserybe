@@ -29,8 +29,8 @@ const { addPayment, getPaymentHistory } = require('./controllers/payment.control
 const { dailyCron } = require('../crons/dailyCron');
 const { variantSchema, getAgriVariantSchema, deleteAgriVariantSchema, editVariantSchema, getVariantSchema } = require('./validators/agriVariants.validator');
 const { addAgriVariant, getAgriVariants, getTypes, getTypesOptions, deleteAgriVariant, updateAgriVariant, getAgriVariant } = require('./controllers/agriVariants.controller');
-const { requestAgriItemsSchema, placeAgriItemsSchema } = require('./validators/agriOrderMgmt.validator');
-const { requestAgriOrder, placeAgriOrder } = require('./controllers/agriOrderMgmt.controller');
+const { requestAgriItemsSchema, placeAgriItemsSchema, getAgriOrdersSchema } = require('./validators/agriOrderMgmt.validator');
+const { requestAgriOrder, placeAgriOrder, agriOrderList } = require('./controllers/agriOrderMgmt.controller');
 
 const fileStorageEngine = multer.diskStorage({
 	destination:(req,file,cb) =>{
@@ -113,9 +113,12 @@ router.get('/api/agri/types', [authWall(['procurement', 'admin', 'sales'])], get
 router.get('/api/agri/type-options', [authWall(['procurement', 'admin', 'sales']), paramsToBody(['type'], 'query'), bodyValidator(getAgriVariantSchema)], getTypesOptions )
 router.get('/api/agri/delete-variant/:id', [authWall(['procurement']),paramsToBody(['id'], 'params'), bodyValidator(deleteAgriVariantSchema)], deleteAgriVariant )
 
+
 //agri order-mgmt
 router.post('/api/agri/request-order', [authWall(['sales']), bodyValidator(requestAgriItemsSchema)], requestAgriOrder)
 router.post('/api/agri/place-order', [authWall(['procurement']), bodyValidator(placeAgriItemsSchema)], placeAgriOrder)
+router.post('/api/agri/order-list', [authWall(['procurement', 'sales', 'admin']), bodyValidator(getAgriOrdersSchema)], agriOrderList)
+
 // s3 test
 router.post('/api/upload-large',[uploadInvoice.array('invoice', 1)], uploadAwsTest)
 router.get('/api/download',[authWall(['admin','procurement', 'sales', 'preSales']), paramsToBody(['path'], "query")], downloadFile)
