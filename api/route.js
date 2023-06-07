@@ -120,7 +120,7 @@ router.post('/api/agri/place-order', [authWall(['procurement']), bodyValidator(p
 router.post('/api/agri/order-list', [authWall(['procurement', 'sales', 'admin']), bodyValidator(getAgriOrdersSchema)], agriOrderList)
 
 // s3 test
-router.post('/api/upload-large',[uploadInvoice.array('invoice', 1)], uploadAwsTest)
+router.post('/api/upload-large',[], uploadAwsTest)
 router.get('/api/download',[authWall(['admin','procurement', 'sales', 'preSales']), paramsToBody(['path'], "query")], downloadFile)
 // router.get('/video', videoRender)
 module.exports = router
