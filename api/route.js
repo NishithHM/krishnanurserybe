@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer')
 const path = require('path');
+const uuid = require('uuid')
 const { register, singIn, getAllUsers, deleteUserById } = require('./controllers/user.controller');
 const { authWall, bodyValidator, paramsToBody } = require('./middlewares/auth.middleware')
 const { createUserSchema, loginUserSchema, deleteUserSchema, getUsersSchema } = require('./validators/user.validators')
@@ -38,7 +39,7 @@ const fileStorageEngine = multer.diskStorage({
 
 	},
 	filename:(req,file,cb)=>{
-		cb(null, + path.extname(file.originalname))
+		cb(null,uuid.v4() + path.extname(file.originalname))
 
 	}
 })
