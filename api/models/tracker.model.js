@@ -14,6 +14,11 @@ const tracker = new mongoose.Schema({
 })
 
 const Tracker = mongoose.model("tracker", tracker)
+try {
 const initial = new Tracker({name:'invoiceId', number:00001})
 initial.save()
+     
+} catch (error) {
+     console.log(error)
+}
 module.exports = Tracker;
