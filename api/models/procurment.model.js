@@ -1,7 +1,5 @@
 const mongoose = require('mongoose')
-const arrayLimit=(val)=> {
-    return val.length <= 10;
-  }
+
 const Procurement = new mongoose.Schema({
     names: {
         en: {

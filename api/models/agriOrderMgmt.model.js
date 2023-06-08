@@ -87,6 +87,9 @@ const AgriOrders = new mongoose.Schema({
                 lowercase: true
             }
         }]
+    },
+    type:{
+        type: String
     }
 }, {
     timestamps: true
