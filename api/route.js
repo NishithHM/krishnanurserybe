@@ -29,8 +29,8 @@ const { addPayment, getPaymentHistory } = require('./controllers/payment.control
 const { dailyCron } = require('../crons/dailyCron');
 const { variantSchema, getAgriVariantSchema, deleteAgriVariantSchema, editVariantSchema, getVariantSchema } = require('./validators/agriVariants.validator');
 const { addAgriVariant, getAgriVariants, getTypes, getTypesOptions, deleteAgriVariant, updateAgriVariant, getAgriVariant } = require('./controllers/agriVariants.controller');
-const { requestAgriItemsSchema, placeAgriItemsSchema, getAgriOrdersSchema } = require('./validators/agriOrderMgmt.validator');
-const { requestAgriOrder, placeAgriOrder, agriOrderList } = require('./controllers/agriOrderMgmt.controller');
+const { requestAgriItemsSchema, placeAgriItemsSchema, getAgriOrdersSchema, verifyAgriOrderSchema } = require('./validators/agriOrderMgmt.validator');
+const { requestAgriOrder, placeAgriOrder, agriOrderList, verifyAgriOrder } = require('./controllers/agriOrderMgmt.controller');
 
 const fileStorageEngine = multer.diskStorage({
 	destination:(req,file,cb) =>{
@@ -38,7 +38,7 @@ const fileStorageEngine = multer.diskStorage({
 
 	},
 	filename:(req,file,cb)=>{
-		cb(null,Date.now() + path.extname(file.originalname))
+		cb(null, + path.extname(file.originalname))
 
 	}
 })
@@ -118,6 +118,7 @@ router.get('/api/agri/delete-variant/:id', [authWall(['procurement']),paramsToBo
 router.post('/api/agri/request-order', [authWall(['sales']), bodyValidator(requestAgriItemsSchema)], requestAgriOrder)
 router.post('/api/agri/place-order', [authWall(['procurement']), bodyValidator(placeAgriItemsSchema)], placeAgriOrder)
 router.post('/api/agri/order-list', [authWall(['procurement', 'sales', 'admin']), bodyValidator(getAgriOrdersSchema)], agriOrderList)
+router.post('/api/agri/verify-order/:id', [authWall(['sales']), uploadInvoice.array('images', 3), paramsToBody(['body'], 'formData'), paramsToBody(['id'], 'params'), bodyValidator(verifyAgriOrderSchema)], verifyAgriOrder)
 
 // s3 test
 router.post('/api/upload-large',[], uploadAwsTest)

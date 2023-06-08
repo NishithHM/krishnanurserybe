@@ -1,10 +1,12 @@
 // const lodash = require('lodash')
 const Vendor = require('../models/vendor.model')
 const AgriOrders = require("../models/agriOrderMgmt.model");
-const { handleMongoError } = require('../utils');
+const { handleMongoError, uploadFile } = require('../utils');
 const { isEmpty } = require('lodash');
 const loggers = require('../../loggers');
-
+const { default: mongoose } = require('mongoose');
+const AgriProcurementModel = require('../models/AgriProcurement.model');
+const uuid = require('uuid')
 exports.requestAgriOrder = async (req, res) => {
     try {
         const { orders, descrption } = req.body
@@ -17,7 +19,7 @@ exports.requestAgriOrder = async (req, res) => {
             let variantName = `${type}-${name}`;
             const variantAttributes = variant.map(v => v.optionValue)
             variantName = `${variantName}(${variantAttributes.join(' ')})`
-            const orderData = new AgriOrders({ names: variantName, requestedQuantity: totalQuantity, requestedBy, descriptionSales: descrption, variant, status: "REQUESTED" })
+            const orderData = new AgriOrders({ names: variantName, requestedQuantity: totalQuantity, requestedBy, descriptionSales: descrption, variant, status: "REQUESTED", type })
             return orderData.save()
         });
         await Promise.all(orderPromises)
@@ -83,7 +85,8 @@ exports.placeAgriOrder = async (req, res) => {
                         vendorId: vendorId || newVendorId,
                         orderId,
                         expectedDeliveryDate,
-                        totalPrice
+                        totalPrice,
+                        type
                     })
                 await orderData.save()
             }
@@ -188,6 +191,62 @@ exports.agriOrderList = async (req, res) => {
     } catch (error) {
         console.log(`agriOrderList-error, ${JSON.stringify(error)}`)
         loggers.info(`agriOrderList-error, ${JSON.stringify(error)}`)
+        const err = handleMongoError(error)
+        res.status(500).send(err)
+    }
+}
+
+exports.verifyAgriOrder = async (req, res)=>{
+    try {
+        const { id, quantity } = req.body
+        const keys = []
+        const paths = []
+        if (!isEmpty(req.files)) {
+            req.files.map(ele => {
+                const key = uuid.v4()
+                keys.push(key)
+                const [name, type] = ele?.filename ? ele.filename.split('.') : []
+                paths.push(`agri/procurements/${key}.${type}`)
+            })
+        } else {
+            res.status(422).json({
+                message: 'Agri Images are required'
+            })
+            return;
+        }
+        const order = await AgriOrders.findOne({_id: new mongoose.mongo.ObjectId(id), status:"PLACED"})
+        if(order){
+            order.status = "VERIFIED"
+            order.quantity = quantity
+            order.images = paths
+            const agriProc = await AgriProcurementModel.findOne({names:order.names})
+            if(!isEmpty(agriProc)){
+                agriProc.remainingQuantity = agriProc.remainingQuantity + quantity
+                agriProc.lastProcuredOn = new Date()
+                await agriProc.save()
+            }else{
+                const newAgriProc = new AgriProcurementModel({names: order.names, type: order.type, remainingQuantity: quantity, lastProcuredOn: new Date() }) 
+                await newAgriProc.save()
+            }
+            if (!isEmpty(req.files)) {
+                req.files.map((ele, index) => {
+                    const [name, type] = ele.filename ? ele.filename.split('.') : []
+                    uploadFile({ file: ele, path: 'agri/procurements', key: `${keys[index]}.${type}` })
+                })
+            }
+            await order.save()
+            res.status(200).json({
+                message: 'Successfully Verified'
+            })
+        }else{
+            res.status(404).json({
+                message: 'Order Not Found'
+            })
+        }
+    } catch (error) {
+        console.log(error)
+        console.log(`verifyAgriOrder-error, ${JSON.stringify(error)}`)
+        loggers.info(`verifyAgriOrder-error, ${JSON.stringify(error)}`)
         const err = handleMongoError(error)
         res.status(500).send(err)
     }

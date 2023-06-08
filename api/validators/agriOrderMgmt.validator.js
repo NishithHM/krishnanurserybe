@@ -45,3 +45,8 @@ exports.getAgriOrdersSchema = Joi.object().keys({
     status: Joi.array().items(Joi.string().valid('REJECTED', 'REQUESTED', 'PLACED', 'VERIFIED')),
     vendors: Joi.array().items(Joi.string()),
 });
+
+exports.verifyAgriOrderSchema = Joi.object().keys({
+    id: Joi.string().required(),
+    quantity: Joi.number().required()
+});
