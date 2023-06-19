@@ -157,6 +157,7 @@ exports.agriOrderList = async (req, res) => {
         "vendorId",
         "orderId",
         "variant",
+        "type"
       ],
       procurement: [
         "_id",
@@ -179,6 +180,7 @@ exports.agriOrderList = async (req, res) => {
         "vendorId",
         "orderId",
         "variant",
+        "type"
       ],
       sales: [
         "_id",
@@ -192,6 +194,7 @@ exports.agriOrderList = async (req, res) => {
         "status",
         "descriptionSales",
         "variant",
+        "type"
       ],
     };
     const role = req?.token?.role;
@@ -353,3 +356,121 @@ exports.verifyAgriOrder = async (req, res) => {
     res.status(500).send(err);
   }
 };
+
+exports.getAllAgriProcurements = async (req, res) => {
+  const fields = {
+      admin: ['_id', 'names', 'remainingQuantity', 'lastProcuredOn', 'procurementHistory', 'minimumQuantity', 'type', 'minPrice', 'maxPrice'],
+      procurement: ['_id', 'names', 'remainingQuantity', 'lastProcuredOn', 'procurementHistory', 'type', 'minimumQuantity'],
+  }
+  const { pageNumber, search, isCount, sortBy, sortType } = req.body;
+  try {
+      const match = [
+          {
+              '$match': {
+                  remainingQuantity: { $gte: 0 }
+              }
+          },
+      ]
+      const pagination = [{
+          '$skip': 10 * (pageNumber - 1)
+      }, {
+          '$limit': 10
+      }]
+      const searchMatch = [
+          {
+              '$match': {
+                  'names': { $regex: search, $options: "i" },
+              }
+          },
+      ]
+      const count = [
+          {
+              '$count': 'count'
+          },
+      ]
+    
+      const sortStage = [{
+          '$sort': {
+              [sortBy]: parseInt(sortType)
+          }
+      }]
+
+      const lookupProcHistory = [
+          {
+              $lookup: {
+                  from: "agri_orders",
+                  let: { names: "$names" },
+                  pipeline: [
+                      {
+                          $match: {
+                              $expr: {
+                                  $eq: [
+                                      "$$names",
+                                      "$names",
+                                  ],
+                              },
+                              status: "VERIFIED",
+                          },
+                      },
+                      {
+                          $sort: {
+                              createdAt: -1,
+                          },
+                      },
+                      {
+                          $limit: 10
+                      },
+                  ],
+                  as: "procurementHistory",
+              }
+          }
+      ]
+
+      const pipeline = []
+      pipeline.push(...match)
+      if (search) {
+          pipeline.push(...searchMatch)
+      }
+      if (sortBy && sortType) {
+          pipeline.push(...sortStage)
+      }
+      if (pageNumber) {
+          pipeline.push(...pagination)
+      }
+      if (isCount) {
+          pipeline.push(...count)
+      } else {
+          const role = req?.token?.role
+              pipeline.push(...lookupProcHistory)
+          let projectFields = fields[role];
+          if (projectFields) {
+              const project = {}
+              projectFields.forEach(f => project[f] = 1)
+              pipeline.push({ $project: project })
+          }
+      }
+
+      console.log("getAllAgriProcurements-pipeline", JSON.stringify(pipeline))
+      loggers.info(`getAllAgriProcurements-pipeline, ${JSON.stringify(pipeline)}`)
+      const procurements = await AgriProcurementModel.aggregate(pipeline)
+      if (count) {
+          res.json(procurements)
+      } else {
+          const procurementsWithAvg = procurements.map(procurement => {
+              const sum = procurement?.procurementHistory?.reduce((acc, ele) => {
+                  return acc + (ele.totalPrice / ele.quantity)
+              }, 0)
+              const averagePrice = (sum / procurement.procurementHistory.length).toFixed(2)
+              return { ...procurement, averagePrice }
+          })
+          res.json(procurementsWithAvg)
+      }
+
+  } catch (error) {
+      console.log(error)
+      loggers.info(`getAllProcurements-error, ${error}`)
+      const err = handleMongoError(error)
+      res.status(500).send(err)
+  }
+
+}
