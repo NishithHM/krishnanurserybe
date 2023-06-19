@@ -1,6 +1,8 @@
 const ProcurementHistory = require("../api/models/procurementHistory.model")
 const mongoose = require('mongoose')
 const procurmentModel = require("../api/models/procurment.model")
+const billingsModel = require("../api/models/billings.model")
+const Tracker = require("../api/models/tracker.model")
 
 var request = require('request');
 var fs = require('fs');
@@ -116,7 +118,6 @@ const startScripts =async()=>{
     await dbCon()
     
     await new Promise(res=> setTimeout(()=>res(1), 1000))
-    testApi()
     console.log('db connected')
 
 }
