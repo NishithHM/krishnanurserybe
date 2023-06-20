@@ -58,3 +58,12 @@ exports.getAgriProcurementsSchema = Joi.object().keys({
     sortBy: Joi.string().valid('lastProcuredOn', 'names'),
     sortType: Joi.number().valid(-1, 1).default(1),
 });
+
+exports.agriHistorySchema = Joi.object().keys({
+    pageNumber: Joi.number(),
+    isCount: Joi.boolean(),
+    name: Joi.string().required(),
+    startDate : Joi.string().pattern(new RegExp(/\d{4}-\d{2}-\d{2}/)).required(),
+    endDate : Joi.string().pattern(new RegExp(/\d{4}-\d{2}-\d{2}/)).required(),
+    isAverage: Joi.boolean()
+});

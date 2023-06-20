@@ -7,6 +7,7 @@ const loggers = require("../../loggers");
 const { default: mongoose } = require("mongoose");
 const AgriProcurementModel = require("../models/AgriProcurement.model");
 const uuid = require("uuid");
+const dayjs = require("dayjs");
 exports.requestAgriOrder = async (req, res) => {
   try {
     const { orders, descrption } = req.body;
@@ -468,7 +469,83 @@ exports.getAllAgriProcurements = async (req, res) => {
 
   } catch (error) {
       console.log(error)
-      loggers.info(`getAllProcurements-error, ${error}`)
+      loggers.info(`getAllAgriProcurements-error, ${error}`)
+      const err = handleMongoError(error)
+      res.status(500).send(err)
+  }
+
+}
+
+exports.getAllAgriProcurementsHistory = async (req, res) => {
+  const { pageNumber, isCount, name, startDate, endDate, isAverage } = req.body;
+  const mandatory = ['_id', 'createdAt', 'quantity', 'vendorName', 'vendorContact', 'totalPrice', 'invoice', 'images']
+  try {
+      const match = [
+          {
+              '$match': {
+                  names:name,
+                  createdAt: {
+                      $gte: dayjs(startDate, 'YYYY-MM-DD').toDate(),
+                      $lt: dayjs(endDate, 'YYYY-MM-DD').add(1, 'day').toDate()
+                  },
+                  status: 'VERIFIED'
+              }
+          },
+      ]
+      const pagination = [{
+          '$skip': 10 * (pageNumber - 1)
+      }, {
+          '$limit': 10
+      }]
+
+      const count = [
+          {
+              '$count': 'count'
+          },
+      ]
+
+      const sortStage = [{
+          '$sort': {
+              createdAt: -1
+          }
+      }]
+
+      const pipeline = []
+      pipeline.push(...match)
+      pipeline.push(...sortStage)
+
+      if (pageNumber) {
+          pipeline.push(...pagination)
+      }
+
+      if (isCount) {
+          pipeline.push(...count)
+      }
+
+      if (isAverage) {
+          const averagePriceStage = {
+              $group: {
+                  _id: "null",
+                  avg: {
+                      "$avg": { $divide: ["$totalPrice", "$quantity"] }
+                  }
+              }
+          }
+          pipeline.push(averagePriceStage)
+      }
+      if (!isCount && !isAverage) {
+          const project = {}
+          mandatory.forEach(f => project[f] = 1)
+          pipeline.push({ $project: project })
+      }
+
+      console.log("getAllAgriProcurementsHistory-pipeline", JSON.stringify(pipeline))
+      const procurements = await AgriOrders.aggregate(pipeline)
+      loggers.info(`getAllAgriProcurementsHistory-pipeline, ${JSON.stringify(pipeline)}`)
+      res.json(procurements)
+  } catch (error) {
+      console.log(error)
+      loggers.info(`getAllAgriProcurementsHistory-error, ${error}`)
       const err = handleMongoError(error)
       res.status(500).send(err)
   }
