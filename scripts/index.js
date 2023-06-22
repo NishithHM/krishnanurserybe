@@ -3,6 +3,7 @@ const mongoose = require('mongoose')
 const procurmentModel = require("../api/models/procurment.model")
 const billingsModel = require("../api/models/billings.model")
 const Tracker = require("../api/models/tracker.model")
+const Vendors = require("../api/models/vendor.model")
 
 var request = require('request');
 var fs = require('fs');
@@ -114,11 +115,18 @@ const testApi=async()=>{
     }
 }
 
+const vendorTypeChange =async()=>{
+    const res = await Vendors.updateMany({}, {$set: {type: 'NURSERY'}}, {upsert: false})
+    console.log(res)
+}
+
 const startScripts =async()=>{
     await dbCon()
     
     await new Promise(res=> setTimeout(()=>res(1), 1000))
     console.log('db connected')
+    await vendorTypeChange()
+
 
 }
 

@@ -83,7 +83,7 @@ router.get('/api/procurements/order/:id', [authWall(['procurement']), paramsToBo
 
 
 // vendors
-router.get('/api/vendors/getAll', [authWall(['procurement', 'admin']), paramsToBody(['search'], 'query'), bodyValidator(getVendorSchema)], getVendorList)
+router.get('/api/vendors/getAll', [authWall(['procurement', 'admin']), paramsToBody(['search', 'type'], 'query'), bodyValidator(getVendorSchema)], getVendorList)
 router.get('/api/vendors/:id', [authWall(['procurement', 'admin']), paramsToBody(['id'], 'params'), bodyValidator(getVendorByIdSchema)], getVendorById)
 
 //customers

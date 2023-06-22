@@ -18,6 +18,10 @@ const vendors = new mongoose.Schema({
    deviation: {
     type: Number,
     default: 0
+   },
+   type:{
+    type: String,
+    require: true
    }
 }, {
 	timestamps: true

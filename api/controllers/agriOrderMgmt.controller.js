@@ -60,6 +60,7 @@ exports.placeAgriOrder = async (req, res) => {
       const vendorData = new Vendor({
         contact: vendorContact,
         name: vendorName,
+        type: "AGRI"
       });
       newVendorId = vendorData._id;
       vendorData.save();
