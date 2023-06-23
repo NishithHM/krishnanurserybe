@@ -30,8 +30,8 @@ const { addPayment, getPaymentHistory } = require('./controllers/payment.control
 const { dailyCron } = require('../crons/dailyCron');
 const { variantSchema, getAgriVariantSchema, deleteAgriVariantSchema, editVariantSchema, getVariantSchema } = require('./validators/agriVariants.validator');
 const { addAgriVariant, getAgriVariants, getTypes, getTypesOptions, deleteAgriVariant, updateAgriVariant, getAgriVariant } = require('./controllers/agriVariants.controller');
-const { requestAgriItemsSchema, placeAgriItemsSchema, getAgriOrdersSchema, verifyAgriOrderSchema, getAgriProcurementsSchema, agriHistorySchema } = require('./validators/agriOrderMgmt.validator');
-const { requestAgriOrder, placeAgriOrder, agriOrderList, verifyAgriOrder, getAllAgriProcurements, getAllAgriProcurementsHistory } = require('./controllers/agriOrderMgmt.controller');
+const { requestAgriItemsSchema, placeAgriItemsSchema, getAgriOrdersSchema, verifyAgriOrderSchema, getAgriProcurementsSchema, agriHistorySchema, agriSetAmountsSchema } = require('./validators/agriOrderMgmt.validator');
+const { requestAgriOrder, placeAgriOrder, agriOrderList, verifyAgriOrder, getAllAgriProcurements, getAllAgriProcurementsHistory, agriSetAmounts } = require('./controllers/agriOrderMgmt.controller');
 
 const fileStorageEngine = multer.diskStorage({
 	destination:(req,file,cb) =>{
@@ -119,8 +119,10 @@ router.post('/api/agri/request-order', [authWall(['sales']), bodyValidator(reque
 router.post('/api/agri/place-order', [authWall(['procurement']), bodyValidator(placeAgriItemsSchema)], placeAgriOrder)
 router.post('/api/agri/order-list', [authWall(['procurement', 'sales', 'admin']), bodyValidator(getAgriOrdersSchema)], agriOrderList)
 router.post('/api/agri/verify-order/:id', [authWall(['sales']), uploadInvoice.array('images', 3), paramsToBody(['body'], 'formData'), paramsToBody(['id'], 'params'), bodyValidator(verifyAgriOrderSchema)], verifyAgriOrder)
-router.get('/api/agri/getAll', [authWall(['admin', 'procurement']), paramsToBody(['pageNumber', 'search', 'isCount', 'sortBy', 'sortType'], 'query'), bodyValidator(getAgriProcurementsSchema)], getAllAgriProcurements)
+router.get('/api/agri/getAll', [authWall(['admin', 'procurement']), paramsToBody(['pageNumber', 'search', 'isCount', 'sortBy', 'sortType', 'onlyLow'], 'query'), bodyValidator(getAgriProcurementsSchema)], getAllAgriProcurements)
 router.get('/api/agri/getAllHistory', [authWall(['admin', 'procurement']), paramsToBody(['pageNumber', 'isCount', 'name', 'startDate', 'endDate', 'isAverage'], 'query'), bodyValidator(agriHistorySchema)], getAllAgriProcurementsHistory)
+router.post('/api/agri/set-amounts/:id', [authWall(['admin']), paramsToBody(['id'], 'params'), bodyValidator(agriSetAmountsSchema)], agriSetAmounts)
+
 // s3 test
 router.post('/api/upload-large',[], uploadAwsTest)
 router.get('/api/download',[authWall(['admin','procurement', 'sales', 'preSales']), paramsToBody(['path'], "query")], downloadFile)
