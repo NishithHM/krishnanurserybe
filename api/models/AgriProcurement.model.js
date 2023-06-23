@@ -25,6 +25,10 @@ const AgriProcurment = new mongoose.Schema({
         type: Number,
         default: 0,
     },
+    minimumQuantity: {
+        type: Number,
+        default: 0,
+    },
 }, {
     timestamps: true
 })

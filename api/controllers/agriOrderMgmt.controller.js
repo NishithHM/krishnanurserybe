@@ -364,7 +364,8 @@ exports.getAllAgriProcurements = async (req, res) => {
       admin: ['_id', 'names', 'remainingQuantity', 'lastProcuredOn', 'procurementHistory', 'minimumQuantity', 'type', 'minPrice', 'maxPrice'],
       procurement: ['_id', 'names', 'remainingQuantity', 'lastProcuredOn', 'procurementHistory', 'type', 'minimumQuantity'],
   }
-  const { pageNumber, search, isCount, sortBy, sortType } = req.body;
+  const { pageNumber, search, isCount, sortBy, sortType, onlyLow } = req.body;
+  console.log(onlyLow)
   try {
       const match = [
           {
@@ -373,6 +374,14 @@ exports.getAllAgriProcurements = async (req, res) => {
               }
           },
       ]
+      
+      const lowMatch = [{
+        $match:{
+          "$expr": {
+            $lt: ["$remainingQuantity", "$minimumQuantity"]
+          }
+        }
+      }]
       const pagination = [{
           '$skip': 10 * (pageNumber - 1)
       }, {
@@ -438,6 +447,9 @@ exports.getAllAgriProcurements = async (req, res) => {
       }
       if (pageNumber) {
           pipeline.push(...pagination)
+      }
+      if(onlyLow){
+        pipeline.push(...lowMatch)
       }
       if (isCount) {
           pipeline.push(...count)
@@ -551,4 +563,32 @@ exports.getAllAgriProcurementsHistory = async (req, res) => {
       res.status(500).send(err)
   }
 
+}
+
+exports.agriSetAmounts = async (req, res)=>{
+  const {id, minimumQuantity, minPrice, maxPrice} = req.body
+
+  try {
+    if(minPrice > maxPrice){
+      res.status(400).json({
+        message: "min Price greater than max price",
+      });
+    }
+  
+    const agriProc = await AgriProcurementModel.findById(id);
+    agriProc.maxPrice= maxPrice;
+    agriProc.minPrice= minPrice
+    agriProc.minimumQuantity = minimumQuantity;
+    await agriProc.save()
+  
+    res.status(200).json({
+      message: "Saved Successfully",
+    });
+  } catch (error) {
+    console.log(error)
+      loggers.info(`getAllAgriProcurements-error, ${error}`)
+      const err = handleMongoError(error)
+      res.status(500).send(err)
+  }
+  
 }

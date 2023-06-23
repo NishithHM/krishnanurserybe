@@ -57,6 +57,7 @@ exports.getAgriProcurementsSchema = Joi.object().keys({
     isCount: Joi.boolean(),
     sortBy: Joi.string().valid('lastProcuredOn', 'names'),
     sortType: Joi.number().valid(-1, 1).default(1),
+    onlyLow: Joi.boolean().valid(true, false).default(false)
 });
 
 exports.agriHistorySchema = Joi.object().keys({
@@ -67,3 +68,9 @@ exports.agriHistorySchema = Joi.object().keys({
     endDate : Joi.string().pattern(new RegExp(/\d{4}-\d{2}-\d{2}/)).required(),
     isAverage: Joi.boolean()
 });
+
+exports.agriSetAmountsSchema = Joi.object().keys({
+    minimumQuantity: Joi.number().required(),
+    minPrice: Joi.number().required(),
+    maxPrice: Joi.number().required()
+})
