@@ -1,3 +1,4 @@
+const { isEmpty } = require('lodash')
 const mongoose = require('mongoose')
 const tracker = new mongoose.Schema({
 	name: {
@@ -14,6 +15,20 @@ const tracker = new mongoose.Schema({
 })
 
 const Tracker = mongoose.model("tracker", tracker)
-const initial = new Tracker({name:'invoiceId', number:00001})
-initial.save()
+
+
+const createDefaults =async ()=>{
+     const data = await Tracker.findOne({name:'invoiceId'})
+     if(isEmpty(data)){
+     try {
+          const initial = new Tracker({name:'invoiceId', number:00001})
+          initial.save()
+               
+          } catch (error) {
+               console.log(error)
+          }
+     }
+}
+
+createDefaults()
 module.exports = Tracker;

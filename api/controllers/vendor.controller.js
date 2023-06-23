@@ -3,9 +3,10 @@ const Vendor = require('../models/vendor.model')
 const { handleMongoError } = require('../utils')
 
 exports.getVendorList = async (req, res)=>{
-    const {search} = req.body
+    const {search, type} = req.body
     const query = {
-        'name': {$regex:search, $options:"i"}
+        'name': {$regex:search, $options:"i"},
+        type
      }
     try {
         const vendors = await Vendor.find(query)
