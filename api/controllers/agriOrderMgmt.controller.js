@@ -724,3 +724,21 @@ exports.getAgriVendorPlacedOrders = async (req, res)=>{
       res.status(500).send(err)
   }
 }
+
+exports.rejectAgriOrderRequest = async (req, res) => {
+  const { id, description } = req.body
+  const procHistory = await AgriOrders.findOne({ _id: new mongoose.mongo.ObjectId(id), status: "REQUESTED" })
+  if (procHistory) {
+      procHistory.status = 'REJECTED'
+      procHistory.descriptionProc = description
+      procHistory.save()
+      res.status(200).json({
+          message: 'Successfully Rejected'
+      })
+  } else {
+      res.status(400).json({
+          message: 'Unable to reject'
+      })
+  }
+
+}

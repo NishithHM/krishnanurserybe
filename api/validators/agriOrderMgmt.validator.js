@@ -91,3 +91,9 @@ exports.getAgriPlacedIdSchema = Joi.object().keys({
     id: Joi.string().required(),
 });
 
+exports.rejectAgriProcurementSchema = Joi.object().keys({
+    id: Joi.string().required(),
+    description: Joi.string().max(1000).required()
+});
+
+
