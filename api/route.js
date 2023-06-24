@@ -30,8 +30,8 @@ const { addPayment, getPaymentHistory } = require('./controllers/payment.control
 const { dailyCron } = require('../crons/dailyCron');
 const { variantSchema, getAgriVariantSchema, deleteAgriVariantSchema, editVariantSchema, getVariantSchema } = require('./validators/agriVariants.validator');
 const { addAgriVariant, getAgriVariants, getTypes, getTypesOptions, deleteAgriVariant, updateAgriVariant, getAgriVariant } = require('./controllers/agriVariants.controller');
-const { requestAgriItemsSchema, placeAgriItemsSchema, getAgriOrdersSchema, verifyAgriOrderSchema, getAgriProcurementsSchema, agriHistorySchema, agriSetAmountsSchema } = require('./validators/agriOrderMgmt.validator');
-const { requestAgriOrder, placeAgriOrder, agriOrderList, verifyAgriOrder, getAllAgriProcurements, getAllAgriProcurementsHistory, agriSetAmounts } = require('./controllers/agriOrderMgmt.controller');
+const { requestAgriItemsSchema, placeAgriItemsSchema, getAgriOrdersSchema, verifyAgriOrderSchema, getAgriProcurementsSchema, agriHistorySchema, agriSetAmountsSchema, addInvoiceAgriSchema, getAgriOrderIdSchema, getAgriPlacedIdSchema } = require('./validators/agriOrderMgmt.validator');
+const { requestAgriOrder, placeAgriOrder, agriOrderList, verifyAgriOrder, getAllAgriProcurements, getAllAgriProcurementsHistory, agriSetAmounts, uploadInvoiceToAgriOrder, getAgriOrderIdDetails, getAgriVendorPlacedOrders } = require('./controllers/agriOrderMgmt.controller');
 
 const fileStorageEngine = multer.diskStorage({
 	destination:(req,file,cb) =>{
@@ -122,6 +122,9 @@ router.post('/api/agri/verify-order/:id', [authWall(['sales']), uploadInvoice.ar
 router.get('/api/agri/getAll', [authWall(['admin', 'procurement']), paramsToBody(['pageNumber', 'search', 'isCount', 'sortBy', 'sortType', 'onlyLow'], 'query'), bodyValidator(getAgriProcurementsSchema)], getAllAgriProcurements)
 router.get('/api/agri/getAllHistory', [authWall(['admin', 'procurement']), paramsToBody(['pageNumber', 'isCount', 'name', 'startDate', 'endDate', 'isAverage'], 'query'), bodyValidator(agriHistorySchema)], getAllAgriProcurementsHistory)
 router.post('/api/agri/set-amounts/:id', [authWall(['admin']), paramsToBody(['id'], 'params'), bodyValidator(agriSetAmountsSchema)], agriSetAmounts)
+router.post('/api/agri/add-invoice/:id', [authWall(['procurement']), uploadInvoice.array('invoice', 1), paramsToBody(['body'], 'formData'), paramsToBody(['id'], 'params'), bodyValidator(addInvoiceAgriSchema)], uploadInvoiceToAgriOrder)
+router.get('/api/agri/order/:id', [authWall(['procurement']), paramsToBody(['id'], 'params'),  paramsToBody(['page'], 'query'), bodyValidator(getAgriOrderIdSchema)], getAgriOrderIdDetails)
+router.get('/api/agri/vendor-orders/:id', [authWall(['procurement']), paramsToBody(['id'], 'params'), bodyValidator(getAgriPlacedIdSchema)], getAgriVendorPlacedOrders)
 
 // s3 test
 router.post('/api/upload-large',[], uploadAwsTest)

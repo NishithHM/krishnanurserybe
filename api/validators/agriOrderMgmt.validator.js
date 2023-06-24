@@ -75,3 +75,19 @@ exports.agriSetAmountsSchema = Joi.object().keys({
     maxPrice: Joi.number().required(),
     id: Joi.string().required()
 })
+
+exports.addInvoiceAgriSchema = Joi.object().keys({
+    id: Joi.string().required(),
+    orderData: Joi.object(),
+    finalAmountPaid: Joi.number().required()
+});
+
+exports.getAgriOrderIdSchema = Joi.object().keys({
+    id: Joi.number(),
+    page: Joi.string().valid('placeOrder', 'orders')
+});
+
+exports.getAgriPlacedIdSchema = Joi.object().keys({
+    id: Joi.string().required(),
+});
+
