@@ -72,5 +72,6 @@ exports.agriHistorySchema = Joi.object().keys({
 exports.agriSetAmountsSchema = Joi.object().keys({
     minimumQuantity: Joi.number().required(),
     minPrice: Joi.number().required(),
-    maxPrice: Joi.number().required()
+    maxPrice: Joi.number().required(),
+    id: Joi.number().required()
 })
