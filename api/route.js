@@ -125,7 +125,7 @@ router.post('/api/agri/set-amounts/:id', [authWall(['admin']), paramsToBody(['id
 router.post('/api/agri/add-invoice/:id', [authWall(['procurement']), uploadInvoice.array('invoice', 1), paramsToBody(['body'], 'formData'), paramsToBody(['id'], 'params'), bodyValidator(addInvoiceAgriSchema)], uploadInvoiceToAgriOrder)
 router.get('/api/agri/order/:id', [authWall(['procurement']), paramsToBody(['id'], 'params'),  paramsToBody(['page'], 'query'), bodyValidator(getAgriOrderIdSchema)], getAgriOrderIdDetails)
 router.get('/api/agri/vendor-orders/:id', [authWall(['procurement']), paramsToBody(['id'], 'params'), bodyValidator(getAgriPlacedIdSchema)], getAgriVendorPlacedOrders)
-router.get('/api/agri/reject-order/:id', [authWall(['procurement']),  paramsToBody(['id'], 'params'), bodyValidator(rejectAgriProcurementSchema)], rejectAgriOrderRequest)
+router.post('/api/agri/reject-order/:id', [authWall(['procurement']),  paramsToBody(['id'], 'params'), bodyValidator(rejectAgriProcurementSchema)], rejectAgriOrderRequest)
 
 // s3 test
 router.post('/api/upload-large',[], uploadAwsTest)
