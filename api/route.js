@@ -106,13 +106,13 @@ router.get('/api/payments/getAll', [authWall(['sales', 'procurement', 'admin']),
 router.get('/api/brokers/getAll', [authWall(['procurement', 'admin', 'sales']), paramsToBody(['search'], 'query'), bodyValidator(getBrokersSchema)], getBrokerList)
 
 // agri variants
-router.post('/api/agri/variants', [authWall(['procurement']), bodyValidator(variantSchema)], addAgriVariant )
-router.post('/api/agri/variants/:id', [authWall(['procurement']), paramsToBody(['id'], 'params'), bodyValidator(editVariantSchema)], updateAgriVariant )
+router.post('/api/agri/variants', [authWall(['procurement', 'admin']), bodyValidator(variantSchema)], addAgriVariant )
+router.post('/api/agri/variants/:id', [authWall(['procurement', 'admin']), paramsToBody(['id'], 'params'), bodyValidator(editVariantSchema)], updateAgriVariant )
 router.get('/api/agri/variants/:id', [authWall(['procurement', 'admin', 'sales']), paramsToBody(['id'], 'params'), bodyValidator(getVariantSchema)], getAgriVariant )
 router.get('/api/agri/variants', [authWall(['procurement', 'admin', 'sales']), paramsToBody(['pageNumber', 'search', 'isCount', 'type'], 'query'), bodyValidator(getAgriVariantSchema)], getAgriVariants )
 router.get('/api/agri/types', [authWall(['procurement', 'admin', 'sales'])], getTypes )
 router.get('/api/agri/type-options', [authWall(['procurement', 'admin', 'sales']), paramsToBody(['type'], 'query'), bodyValidator(getAgriVariantSchema)], getTypesOptions )
-router.get('/api/agri/delete-variant/:id', [authWall(['procurement']),paramsToBody(['id'], 'params'), bodyValidator(deleteAgriVariantSchema)], deleteAgriVariant )
+router.get('/api/agri/delete-variant/:id', [authWall(['procurement', 'admin']),paramsToBody(['id'], 'params'), bodyValidator(deleteAgriVariantSchema)], deleteAgriVariant )
 
 //agri order-mgmt
 router.post('/api/agri/request-order', [authWall(['sales']), bodyValidator(requestAgriItemsSchema)], requestAgriOrder)
