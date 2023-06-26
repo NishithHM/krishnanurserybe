@@ -85,8 +85,10 @@ exports.placeAgriOrder = async (req, res) => {
           (data.expectedDeliveryDate = dayjs(
             expectedDeliveryDate,
             "YYYY-MM-DD"
-          )),
-            (data.currentPaidAmount = currentPaidAmount);
+          ))
+          if(i===0){
+            data.currentPaidAmount = currentPaidAmount;
+          }
           data.totalPrice = totalPrice;
           await data.save();
         }
