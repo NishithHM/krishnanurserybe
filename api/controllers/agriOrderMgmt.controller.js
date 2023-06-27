@@ -112,6 +112,7 @@ exports.placeAgriOrder = async (req, res) => {
           expectedDeliveryDate,
           totalPrice,
           type,
+          currentPaidAmount: i === 0 ? currentPaidAmount : 0
         });
         await orderData.save();
       }
