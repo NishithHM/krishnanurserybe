@@ -69,7 +69,7 @@ exports.placeOrder = async (req, res) => {
     }
     let newVendorId
     if (!vendorId) {
-        const vendorData = new Vendor({ contact: vendorContact, name: vendorName })
+        const vendorData = new Vendor({ contact: vendorContact, name: vendorName, type:"NURSERY" })
         newVendorId = vendorData._id
         vendorData.save()
     }
