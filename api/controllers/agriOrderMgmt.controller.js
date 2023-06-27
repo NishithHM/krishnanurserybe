@@ -63,7 +63,7 @@ exports.placeAgriOrder = async (req, res) => {
         type: "AGRI"
       });
       newVendorId = vendorData._id;
-      vendorData.save();
+     await vendorData.save();
     }
     const placedBy = {
       _id: req?.token?.id,
