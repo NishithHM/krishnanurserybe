@@ -1,7 +1,7 @@
 const Joi = require('joi')
 
 exports.variantSchema = Joi.object().keys({
-    name: Joi.string().pattern(new RegExp(/[A-Za-z]/)).required(),
+    name: Joi.string().pattern(new RegExp(/[A-Za-z0-9]/)).required(),
     type: Joi.string().required(),
     options: Joi.array().items(Joi.object().keys({
         optionName: Joi.string().required(),
@@ -22,7 +22,7 @@ exports.getVariantSchema = Joi.object().keys({
 });
 
 exports.getAgriVariantSchema = Joi.object().keys({
-    search: Joi.string().pattern(new RegExp(/[A-Za-z]/)),
+    search: Joi.string().pattern(new RegExp(/[A-Za-z0-9]/)),
     pageNumber: Joi.number(),
     isCount: Joi.boolean(),
     type: Joi.string()
