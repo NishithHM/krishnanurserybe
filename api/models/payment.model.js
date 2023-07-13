@@ -1,28 +1,32 @@
-const mongoose = require('mongoose')
-const payments = new mongoose.Schema({
+const mongoose = require("mongoose");
+const payments = new mongoose.Schema(
+  {
     name: {
-        type: String,
-        required: true,
+      type: String,
+      required: true,
     },
     contact: {
-        type: String,
+      type: String,
     },
     invoiceId: {
-        type: String,
+      type: String,
+      unique: true,
     },
     amount: {
-        type: Number,
+      type: Number,
     },
-    type:{
-        type: String,
-        enum: ['BROKER', 'SALARY', 'OTHERS']
+    type: {
+      type: String,
+      enum: ["BROKER", "SALARY", "OTHERS"],
     },
-    brokerId:{
-        type: String,
-        default: null
-    }
-}, {
-    timestamps: true
-})
+    brokerId: {
+      type: String,
+      default: null,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
 
-module.exports = mongoose.model("payments", payments)
+module.exports = mongoose.model("payments", payments);
