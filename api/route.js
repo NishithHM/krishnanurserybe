@@ -32,6 +32,8 @@ const { variantSchema, getAgriVariantSchema, deleteAgriVariantSchema, editVarian
 const { addAgriVariant, getAgriVariants, getTypes, getTypesOptions, deleteAgriVariant, updateAgriVariant, getAgriVariant } = require('./controllers/agriVariants.controller');
 const { requestAgriItemsSchema, placeAgriItemsSchema, getAgriOrdersSchema, verifyAgriOrderSchema, getAgriProcurementsSchema, agriHistorySchema, agriSetAmountsSchema, addInvoiceAgriSchema, getAgriOrderIdSchema, getAgriPlacedIdSchema, rejectAgriProcurementSchema } = require('./validators/agriOrderMgmt.validator');
 const { requestAgriOrder, placeAgriOrder, agriOrderList, verifyAgriOrder, getAllAgriProcurements, getAllAgriProcurementsHistory, agriSetAmounts, uploadInvoiceToAgriOrder, getAgriOrderIdDetails, getAgriVendorPlacedOrders, rejectAgriOrderRequest } = require('./controllers/agriOrderMgmt.controller');
+const { getAgriItemDetials, getAgriItemDetails } = require('./controllers/agriBilling.controller');
+const { getAgriBillingDataSchema } = require('./validators/agriBilling.validator');
 
 const fileStorageEngine = multer.diskStorage({
 	destination:(req,file,cb) =>{
@@ -127,6 +129,8 @@ router.get('/api/agri/order/:id', [authWall(['procurement']), paramsToBody(['id'
 router.get('/api/agri/vendor-orders/:id', [authWall(['procurement']), paramsToBody(['id'], 'params'), bodyValidator(getAgriPlacedIdSchema)], getAgriVendorPlacedOrders)
 router.post('/api/agri/reject-order/:id', [authWall(['procurement']),  paramsToBody(['id'], 'params'), bodyValidator(rejectAgriProcurementSchema)], rejectAgriOrderRequest)
 
+//agri billing
+router.post('/api/agri/product-details', [authWall(['sales']), bodyValidator(getAgriBillingDataSchema)], getAgriItemDetails)
 // s3 test
 router.post('/api/upload-large',[], uploadAwsTest)
 router.get('/api/download',[authWall(['admin','procurement', 'sales', 'preSales']), paramsToBody(['path'], "query")], downloadFile)

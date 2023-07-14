@@ -8,11 +8,17 @@ exports.addAgriVariant = async (req, res)=>{
     try {
         const {type, name, options} = req.body
         checkAndAddType('type', type)
-        const agriVariant = new AgriVariants({type, name, options, isActive: true})
-        await agriVariant.save()
-        options.map(({optionName, optionValues})=>{
-            checkAndAddType(optionName, optionValues)
+        const optionsWithDefault =  options.map(({optionName, optionValues})=>{
+            const newOptions = [...optionValues]
+            if(!optionValues.includes('default')){
+                newOptions.push('default')
+            }
+            checkAndAddType(optionName, newOptions)
+            return {optionName: optionName, optionValues: newOptions}
+            
         })
+        const agriVariant = new AgriVariants({type, name, options: optionsWithDefault, isActive: true})
+        await agriVariant.save()
         res.send({
             message:'Agri Variant added Succesfully'
         })
@@ -29,11 +35,17 @@ exports.updateAgriVariant = async (req, res)=>{
     try {
         const {options, id} = req.body
         const agriVariant = await AgriVariants.findById(id)
-        agriVariant.options = options
-        await agriVariant.save()
-        options.map(({optionName, optionValues})=>{
-            checkAndAddType(optionName, optionValues)
+        const optionsWithDefault =  options.map(({optionName, optionValues})=>{
+            const newOptions = [...optionValues]
+            if(!optionValues.includes('default')){
+                newOptions.push('default')
+            }
+            checkAndAddType(optionName, newOptions)
+            return {optionName: optionName, optionValues: newOptions}
+            
         })
+        agriVariant.options = optionsWithDefault
+        await agriVariant.save()
         res.send({
             message:'Agri Variant updated Succesfully'
         })
