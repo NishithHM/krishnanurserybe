@@ -32,8 +32,8 @@ const { variantSchema, getAgriVariantSchema, deleteAgriVariantSchema, editVarian
 const { addAgriVariant, getAgriVariants, getTypes, getTypesOptions, deleteAgriVariant, updateAgriVariant, getAgriVariant } = require('./controllers/agriVariants.controller');
 const { requestAgriItemsSchema, placeAgriItemsSchema, getAgriOrdersSchema, verifyAgriOrderSchema, getAgriProcurementsSchema, agriHistorySchema, agriSetAmountsSchema, addInvoiceAgriSchema, getAgriOrderIdSchema, getAgriPlacedIdSchema, rejectAgriProcurementSchema } = require('./validators/agriOrderMgmt.validator');
 const { requestAgriOrder, placeAgriOrder, agriOrderList, verifyAgriOrder, getAllAgriProcurements, getAllAgriProcurementsHistory, agriSetAmounts, uploadInvoiceToAgriOrder, getAgriOrderIdDetails, getAgriVendorPlacedOrders, rejectAgriOrderRequest } = require('./controllers/agriOrderMgmt.controller');
-const { getAgriItemDetials, getAgriItemDetails } = require('./controllers/agriBilling.controller');
-const { getAgriBillingDataSchema } = require('./validators/agriBilling.validator');
+const { getAgriItemDetials, getAgriItemDetails, agriAddToCart, updateAgriCart, confirmAgriCart } = require('./controllers/agriBilling.controller');
+const { getAgriBillingDataSchema, agriAddToCartSchema, updateAgriCartSchema, confirmAgriCartSchema } = require('./validators/agriBilling.validator');
 
 const fileStorageEngine = multer.diskStorage({
 	destination:(req,file,cb) =>{
@@ -131,6 +131,9 @@ router.post('/api/agri/reject-order/:id', [authWall(['procurement']),  paramsToB
 
 //agri billing
 router.post('/api/agri/product-details', [authWall(['sales']), bodyValidator(getAgriBillingDataSchema)], getAgriItemDetails)
+router.post('/api/agri/billing/addToCart', [authWall(['sales']), bodyValidator(agriAddToCartSchema)], agriAddToCart)
+router.post('/api/agri/billing/update-cart/:id', [authWall(['sales']), paramsToBody(['id'], "params"), bodyValidator(updateAgriCartSchema)], updateAgriCart)
+router.post('/api/agri/billing/confirm-cart/:id', [authWall(['sales']),paramsToBody(['id'], "params"), bodyValidator(confirmAgriCartSchema)], confirmAgriCart)
 // s3 test
 router.post('/api/upload-large',[], uploadAwsTest)
 router.get('/api/download',[authWall(['admin','procurement', 'sales', 'preSales']), paramsToBody(['path'], "query")], downloadFile)
