@@ -134,6 +134,7 @@ router.post('/api/agri/product-details', [authWall(['sales']), bodyValidator(get
 router.post('/api/agri/billing/addToCart', [authWall(['sales']), bodyValidator(agriAddToCartSchema)], agriAddToCart)
 router.post('/api/agri/billing/update-cart/:id', [authWall(['sales']), paramsToBody(['id'], "params"), bodyValidator(updateAgriCartSchema)], updateAgriCart)
 router.post('/api/agri/billing/confirm-cart/:id', [authWall(['sales']),paramsToBody(['id'], "params"), bodyValidator(confirmAgriCartSchema)], confirmAgriCart)
+router.get('/api/agri/billing/get-cart/:id', [authWall(['sales', 'preSales']),paramsToBody(['id'], "params"), bodyValidator(getCustomerCartSchema)], getCustomerCart)
 // s3 test
 router.post('/api/upload-large',[], uploadAwsTest)
 router.get('/api/download',[authWall(['admin','procurement', 'sales', 'preSales']), paramsToBody(['path'], "query")], downloadFile)

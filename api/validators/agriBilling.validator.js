@@ -25,7 +25,6 @@ exports.updateAgriCartSchema = Joi.object().keys({
     id: Joi.string().required(),
     items: Joi.array().items(Joi.object().keys({
         procurementId: Joi.string().required(),
-        variantId: Joi.string().required(),
         quantity: Joi.number().min(0).required(),
         price: Joi.number().min(0).required(),
     })),
