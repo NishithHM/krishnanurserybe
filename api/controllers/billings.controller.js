@@ -28,7 +28,7 @@ exports.addToCart = async (req, res) => {
             if (isEmpty(errors)) {
                 if (formattedItems.length > 0) {
                    
-                    const billing = new Billing({ customerName: customerRes.name, customerId: customerRes._id, customerNumber: customerRes.phoneNumber, soldBy, items: formattedItems, totalPrice, discount, status: "CART" })
+                    const billing = new Billing({ customerName: customerRes.name, customerId: customerRes._id, customerNumber: customerRes.phoneNumber, soldBy, items: formattedItems, totalPrice, discount, status: "CART", type:'NURSERY'  })
                     const cartDetails = await billing.save()
                     res.status(200).send(cartDetails)
                     if(!customerId){

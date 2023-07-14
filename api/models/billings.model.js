@@ -108,6 +108,10 @@ const BillingHistory = new mongoose.Schema({
     invoiceId: {
         type: String,
         default: ''
+    },
+    type:{
+        type: String,
+        enum: ['AGRI', 'NURSERY']
     }
 }, {
     timestamps: true
