@@ -5,7 +5,7 @@ const { handleMongoError } = require("../utils");
 const Billing = require("../models/billings.model");
 const { default: mongoose } = require("mongoose");
 const Tracker = require("../models/tracker.model");
-const billingsModel = require("../models/billings.model");
+const loggers = require("../../loggers");
 
 
 exports.getAgriItemDetails = async (req, res) => {
@@ -139,12 +139,12 @@ exports.confirmAgriCart = async (req, res) => {
                       billData.roundOff = roundOff
                       billData.status = "BILLED"
                       billData.billedBy = billedBy
-                      const trackerVal = await Tracker.findOne({name:"invoiceId"})
+                      const trackerVal = await Tracker.findOne({name:"agriInvoiceId"})
                       billData.invoiceId = `AGR_${trackerVal.number}`
                       updateRemainingQuantity(procurementQuantityMapping)
                       updateCustomerPurchaseHistory(billData)
                       await billData.save()
-                      await Tracker.findOneAndUpdate({name:"invoiceId"}, {$inc:{number:1}}, {$upsert:false})
+                      await Tracker.findOneAndUpdate({name:"agriInvoiceId"}, {$inc:{number:1}}, {$upsert:false})
                       res.status(200).send(billData)
                   } else {
                       res.status(400).send({ error: errors.join(' ') })
@@ -169,8 +169,8 @@ exports.confirmAgriCart = async (req, res) => {
 exports.getAgriCart = async (req, res)=>{
     const { id } = req.body;
     try {
-        const data = Billing.findOne({customerId: mongoose.mongo.ObjectId(id), status:'BILLED'})
-        res.status(200).sned(data) 
+        const data = await Billing.findOne({customerId: new mongoose.mongo.ObjectId(id), status:'BILLED'})
+        res.status(200).send(data) 
     } catch (error) {
         loggers.info(`getAgriCart-error, ${error}`)
         console.log('getAgriCart-error', error)

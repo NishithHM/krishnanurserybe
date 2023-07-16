@@ -28,6 +28,17 @@ const createDefaults =async ()=>{
                console.log(error)
           }
      }
+
+     const dataAgri = await Tracker.findOne({name:'agriInvoiceId'})
+     if(isEmpty(dataAgri)){
+     try {
+          const initial = new Tracker({name:'agriInvoiceId', number:00001})
+          initial.save()
+               
+          } catch (error) {
+               console.log(error)
+          }
+     }
 }
 
 createDefaults()
