@@ -387,10 +387,11 @@ const updateCustomerPurchaseHistory = async (billData) => {
 }
 
 exports.getAllBillingHistory = async (req, res) => {
-    const { pageNumber, isCount, id, startDate, endDate, sortBy, sortType, search } = req.body;
+    const { pageNumber, isCount, id, startDate, endDate, sortBy, sortType, search, type } = req.body;
     try {
         const initialMatch = {
             status: "BILLED",
+            type
         }
 
         if(startDate && endDate){

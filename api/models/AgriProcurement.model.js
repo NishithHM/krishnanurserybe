@@ -29,6 +29,18 @@ const AgriProcurment = new mongoose.Schema({
         type: Number,
         default: 0,
     },
+    variant:{
+        type:[{
+            optionName:{
+                type:String,
+                lowercase: true
+            },
+            optionValue:{
+                type: String,
+                lowercase: true
+            }
+        }]
+    }
 }, {
     timestamps: true
 })

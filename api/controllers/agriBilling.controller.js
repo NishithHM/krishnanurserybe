@@ -5,6 +5,7 @@ const { handleMongoError } = require("../utils");
 const Billing = require("../models/billings.model");
 const { default: mongoose } = require("mongoose");
 const Tracker = require("../models/tracker.model");
+const billingsModel = require("../models/billings.model");
 
 
 exports.getAgriItemDetails = async (req, res) => {
@@ -165,6 +166,20 @@ exports.confirmAgriCart = async (req, res) => {
       }
 }
 
+exports.getAgriCart = async (req, res)=>{
+    const { id } = req.body;
+    try {
+        const data = Billing.findOne({customerId: mongoose.mongo.ObjectId(id), status:'BILLED'})
+        res.status(200).sned(data) 
+    } catch (error) {
+        loggers.info(`getAgriCart-error, ${error}`)
+        console.log('getAgriCart-error', error)
+        const err = handleMongoError(error)
+        res.status(500).send(err)
+    }
+    
+}
+
 const validateRoundOff = (totalPrice, amount) => {
       let maxRound = 0
       if(totalPrice <= 1000){
@@ -244,9 +259,10 @@ const validatePricesAndQuantityAndFormatItems =async (items)=>{
             minPrice,
             maxPrice,
             remainingQuantity,
+            variant
         } = element
 
-        const { procurementId: itemProcurmentId, variantId: itemVariantId, quantity, price } = items.find((ele) => ele.procurementId === resultProcurementId.toString()) || {}
+        const { procurementId: itemProcurmentId, quantity, price} = items.find((ele) => ele.procurementId === resultProcurementId.toString()) || {}
         if (price > maxPrice) {
             errors.push(`"${procurementNames}" should be less than "${maxPrice}"`)
         }
@@ -256,7 +272,7 @@ const validatePricesAndQuantityAndFormatItems =async (items)=>{
         if (quantity > remainingQuantity) {
             errors.push(`Ooops!! stock of "${procurementNames}" is low, maximum order can be "${remainingQuantity}"`)
         }
-        formattedItems.push({ procurementId: itemProcurmentId, procurementName: {en:{name:procurementNames}}, quantity, mrp: maxPrice, rate: price })
+        formattedItems.push({ procurementId: itemProcurmentId, procurementName: {en:{name:procurementNames}}, quantity, mrp: maxPrice, rate: price, variant })
         totalPrice = totalPrice + price * quantity;
         discount = discount + (maxPrice - price) * quantity;
     }

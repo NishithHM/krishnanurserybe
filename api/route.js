@@ -32,7 +32,7 @@ const { variantSchema, getAgriVariantSchema, deleteAgriVariantSchema, editVarian
 const { addAgriVariant, getAgriVariants, getTypes, getTypesOptions, deleteAgriVariant, updateAgriVariant, getAgriVariant } = require('./controllers/agriVariants.controller');
 const { requestAgriItemsSchema, placeAgriItemsSchema, getAgriOrdersSchema, verifyAgriOrderSchema, getAgriProcurementsSchema, agriHistorySchema, agriSetAmountsSchema, addInvoiceAgriSchema, getAgriOrderIdSchema, getAgriPlacedIdSchema, rejectAgriProcurementSchema } = require('./validators/agriOrderMgmt.validator');
 const { requestAgriOrder, placeAgriOrder, agriOrderList, verifyAgriOrder, getAllAgriProcurements, getAllAgriProcurementsHistory, agriSetAmounts, uploadInvoiceToAgriOrder, getAgriOrderIdDetails, getAgriVendorPlacedOrders, rejectAgriOrderRequest } = require('./controllers/agriOrderMgmt.controller');
-const { getAgriItemDetials, getAgriItemDetails, agriAddToCart, updateAgriCart, confirmAgriCart } = require('./controllers/agriBilling.controller');
+const { getAgriItemDetials, getAgriItemDetails, agriAddToCart, updateAgriCart, confirmAgriCart, getAgriCart } = require('./controllers/agriBilling.controller');
 const { getAgriBillingDataSchema, agriAddToCartSchema, updateAgriCartSchema, confirmAgriCartSchema } = require('./validators/agriBilling.validator');
 
 const fileStorageEngine = multer.diskStorage({
@@ -97,7 +97,7 @@ router.post('/api/billing/addToCart', [authWall(['sales', 'preSales']), bodyVali
 router.post('/api/billing/update-cart/:id', [authWall(['sales', 'preSales']),paramsToBody(['id'], "params"), bodyValidator(updateCartSchema)], updateCart)
 router.post('/api/billing/confirm-cart/:id', [authWall(['sales']),paramsToBody(['id'], "params"), bodyValidator(confirmCartSchema)], confirmCart)
 router.get('/api/billing/get-cart/:id', [authWall(['sales', 'preSales']),paramsToBody(['id'], "params"), bodyValidator(getCustomerCartSchema)], getCustomerCart)
-router.get('/api/billing/history', [authWall(['admin', 'sales']),paramsToBody(['pageNumber', 'isCount','startDate', 'endDate', 'sortBy', 'sortType', 'search'], 'query'), bodyValidator(getBillingHistory)], getAllBillingHistory)
+router.get('/api/billing/history', [authWall(['admin', 'sales']),paramsToBody(['pageNumber', 'isCount','startDate', 'endDate', 'sortBy', 'sortType', 'search', 'type'], 'query'), bodyValidator(getBillingHistory)], getAllBillingHistory)
 
 
 // payments
@@ -134,7 +134,7 @@ router.post('/api/agri/product-details', [authWall(['sales']), bodyValidator(get
 router.post('/api/agri/billing/addToCart', [authWall(['sales']), bodyValidator(agriAddToCartSchema)], agriAddToCart)
 router.post('/api/agri/billing/update-cart/:id', [authWall(['sales']), paramsToBody(['id'], "params"), bodyValidator(updateAgriCartSchema)], updateAgriCart)
 router.post('/api/agri/billing/confirm-cart/:id', [authWall(['sales']),paramsToBody(['id'], "params"), bodyValidator(confirmAgriCartSchema)], confirmAgriCart)
-router.get('/api/agri/billing/get-cart/:id', [authWall(['sales', 'preSales']),paramsToBody(['id'], "params"), bodyValidator(getCustomerCartSchema)], getCustomerCart)
+router.get('/api/agri/billing/get-cart/:id', [authWall(['sales', 'preSales']),paramsToBody(['id'], "params"), bodyValidator(getCustomerCartSchema)], getAgriCart)
 // s3 test
 router.post('/api/upload-large',[], uploadAwsTest)
 router.get('/api/download',[authWall(['admin','procurement', 'sales', 'preSales']), paramsToBody(['path'], "query")], downloadFile)

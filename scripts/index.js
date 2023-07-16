@@ -120,14 +120,17 @@ const vendorTypeChange =async()=>{
     console.log(res)
 }
 
+const billingTypeChane = async()=>{
+    const res = await billingsModel.updateMany({}, {$set: {type: 'NURSERY'}}, {upsert: false})
+    console.log(res)
+}
+
 const startScripts =async()=>{
     await dbCon()
     
     await new Promise(res=> setTimeout(()=>res(1), 1000))
     console.log('db connected')
-    await vendorTypeChange()
-
-
+    billingTypeChane()
 }
 
 startScripts()
