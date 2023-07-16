@@ -328,6 +328,7 @@ exports.verifyAgriOrder = async (req, res) => {
           type: order.type,
           remainingQuantity: quantity,
           lastProcuredOn: new Date(),
+          variant: order.variant
         });
         await newAgriProc.save();
       }
