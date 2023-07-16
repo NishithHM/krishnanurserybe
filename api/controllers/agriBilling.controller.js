@@ -169,7 +169,7 @@ exports.confirmAgriCart = async (req, res) => {
 exports.getAgriCart = async (req, res)=>{
     const { id } = req.body;
     try {
-        const data = await Billing.findOne({customerId: new mongoose.mongo.ObjectId(id), status:'BILLED'})
+        const data = await Billing.findOne({customerId: new mongoose.mongo.ObjectId(id), status:'CART', type:"AGRI"})
         res.status(200).send(data) 
     } catch (error) {
         loggers.info(`getAgriCart-error, ${error}`)
