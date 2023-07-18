@@ -6,6 +6,7 @@ const Billing = require("../models/billings.model");
 const { default: mongoose } = require("mongoose");
 const Tracker = require("../models/tracker.model");
 const loggers = require("../../loggers");
+const dayjs = require("dayjs");
 
 
 exports.getAgriItemDetails = async (req, res) => {
@@ -49,6 +50,7 @@ exports.agriAddToCart = async (req, res)=>{
             }
             if (!isEmpty(customerRes)) {
                 const { errors, formattedItems, totalPrice, discount } = await validatePricesAndQuantityAndFormatItems(items)
+                console.log(formattedItems)
                 if (isEmpty(errors)) {
                     if (formattedItems.length > 0) {
                        
@@ -70,9 +72,9 @@ exports.agriAddToCart = async (req, res)=>{
                 res.status(400).send({ error: 'Unable to find the customer, please try again' })
             }
         } catch (error) {
+            console.log('addToCart-error', JSON.stringify(error))
             const err = handleMongoError(error)
             loggers.info(`addToCart-error, ${error}`)
-            console.log('addToCart-error', error)
             res.status(500).send(err)
         }
 }
@@ -243,18 +245,19 @@ const validateRoundOff = (totalPrice, amount) => {
 const validatePricesAndQuantityAndFormatItems =async (items)=>{
       const procurements = uniq(items.map(ele => new mongoose.mongo.ObjectId(ele.procurementId)))
       const errors = []
-
+      console.log(procurements)
       if(items.length > procurements.length){
             errors.push('Duplicate Item found please check')
             return {errors}
       }
       const agriProcs = await AgriProcurementModel.find({_id:{$in: procurements}})
+      console.log(agriProcs)
       const formattedItems = []
     let totalPrice = 0;
     let discount = 0
     for (const element of agriProcs) {
         const {
-            procurementId: resultProcurementId,
+            _id: resultProcurementId,
             names: procurementNames,
             minPrice,
             maxPrice,
@@ -275,6 +278,7 @@ const validatePricesAndQuantityAndFormatItems =async (items)=>{
         formattedItems.push({ procurementId: itemProcurmentId, procurementName: {en:{name:procurementNames}}, quantity, mrp: maxPrice, rate: price, variant })
         totalPrice = totalPrice + price * quantity;
         discount = discount + (maxPrice - price) * quantity;
+        
     }
 
     return { errors, formattedItems, totalPrice, discount }
