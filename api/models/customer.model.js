@@ -63,21 +63,7 @@ const customerSchema = new mongoose.Schema({
                 }
             },
             variant: {
-                variantId: {
-                    type: mongoose.Schema.Types.ObjectId,
-                    required: true
-                },
-                en: {
-                    name: {
-                        type: String,
-                        required: true,
-                    }
-                },
-                ka: {
-                    name: {
-                        type: String,
-                    }
-                }
+                type: mongoose.Schema.Types.Mixed,
             },
             quantity: {
                 type: Number,
