@@ -52,6 +52,14 @@ const BillingHistory = new mongoose.Schema({
             rate: {
                 type: Number,
                 required: true,
+            },
+            type: {
+                type: String,
+                required: true,
+            },
+            typeName: {
+                type: String,
+                required: true,
             }
         }],
     },

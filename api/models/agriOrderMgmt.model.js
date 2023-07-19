@@ -90,6 +90,9 @@ const AgriOrders = new mongoose.Schema({
     },
     type:{
         type: String
+    },
+    typeName:{
+        type: String
     }
 }, {
     timestamps: true
