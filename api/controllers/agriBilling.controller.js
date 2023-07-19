@@ -245,7 +245,6 @@ const validateRoundOff = (totalPrice, amount) => {
 const validatePricesAndQuantityAndFormatItems =async (items)=>{
       const procurements = uniq(items.map(ele => new mongoose.mongo.ObjectId(ele.procurementId)))
       const errors = []
-      console.log(procurements)
       if(items.length > procurements.length){
             errors.push('Duplicate Item found please check')
             return {errors}
@@ -262,7 +261,9 @@ const validatePricesAndQuantityAndFormatItems =async (items)=>{
             minPrice,
             maxPrice,
             remainingQuantity,
-            variant
+            variant,
+            type,
+            typeName
         } = element
 
         const { procurementId: itemProcurmentId, quantity, price} = items.find((ele) => ele.procurementId === resultProcurementId.toString()) || {}
@@ -275,7 +276,7 @@ const validatePricesAndQuantityAndFormatItems =async (items)=>{
         if (quantity > remainingQuantity) {
             errors.push(`Ooops!! stock of "${procurementNames}" is low, maximum order can be "${remainingQuantity}"`)
         }
-        formattedItems.push({ procurementId: itemProcurmentId, procurementName: {en:{name:procurementNames}}, quantity, mrp: maxPrice, rate: price, variant })
+        formattedItems.push({ procurementId: itemProcurmentId, procurementName: {en:{name:procurementNames}}, quantity, mrp: maxPrice, rate: price, variant, type, typeName})
         totalPrice = totalPrice + price * quantity;
         discount = discount + (maxPrice - price) * quantity;
         

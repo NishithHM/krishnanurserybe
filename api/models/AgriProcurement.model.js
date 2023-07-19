@@ -40,6 +40,9 @@ const AgriProcurment = new mongoose.Schema({
                 lowercase: true
             }
         }]
+    },
+    typeName:{
+        type: String
     }
 }, {
     timestamps: true
