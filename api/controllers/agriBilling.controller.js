@@ -205,7 +205,7 @@ const validateRoundOff = (totalPrice, amount) => {
   const updateRemainingQuantity = async (object) => {
       const listValues = Object.entries(object);
       for (const [key, value] of listValues) {
-          const procurment = await Procurements.findById(key)
+          const procurment = await AgriProcurementModel.findById(key)
           procurment.remainingQuantity = procurment.remainingQuantity - value
           procurment.soldQuantity = value
           await procurment.save()
