@@ -59,7 +59,6 @@ const BillingHistory = new mongoose.Schema({
             },
             typeName: {
                 type: String,
-                required: true,
             }
         }],
     },
