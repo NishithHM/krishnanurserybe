@@ -168,7 +168,7 @@ exports.getCustomerCart = async (req, res) => {
                     'from': 'procurements',
                     'let': {
                         'pId': '$items.procurementId',
-                        'vId': {$toObjectId:"$items.variant.variantId"}
+                        'vId': "$items.variant.variantId"
                     },
                     'pipeline': [
                         {
@@ -314,7 +314,7 @@ const validatePricesAndQuantityAndFormatItems = async (items) => {
         if (quantity > remainingQuantity) {
             errors.push(`Ooops!! stock of "${procurementNames?.en?.name}" is low, maximum order can be "${remainingQuantity}"`)
         }
-        formattedItems.push({ procurementId: itemProcurmentId, procurementName: procurementNames, variant: { variantId: itemVariantId, ...resultVariantNames }, quantity, mrp: maxPrice, rate: price })
+        formattedItems.push({ procurementId: itemProcurmentId, procurementName: procurementNames, variant: { variantId: resultVariantId, ...resultVariantNames }, quantity, mrp: maxPrice, rate: price })
         totalPrice = totalPrice + price * quantity;
         discount = discount + (maxPrice - price) * quantity;
     }
