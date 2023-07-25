@@ -15,6 +15,8 @@ exports.getAgriItemDetails = async (req, res) => {
             let variantName = `${type}-${name}`;
             const variantAttributes = variant.map((v) => v.optionValue);
             variantName = `${variantName}(${variantAttributes.join(" ")})`;
+            const regex = /default/ig;
+            variantName.replace(regex, '')
             const agriProc = await AgriProcurementModel.findOne({ type, names: variantName }, { maxPrice: 1, minPrice: 1, remainingQuantity: 1 })
             if (isEmpty(agriProc)) {
                   res.status(404).json({
