@@ -151,7 +151,8 @@ exports.getCustomerCart = async (req, res) => {
             {
                 '$match': {
                     'customerId': new mongoose.mongo.ObjectId(id),
-                    'status': 'CART'
+                    'status': 'CART',
+                    type:"NURSERY"
                 },
             }, {
                 '$sort': {
