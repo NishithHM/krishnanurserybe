@@ -125,13 +125,33 @@ const billingTypeChane = async()=>{
     console.log(res)
 }
 
+const billingDateChane = async()=>{
+    const res = await billingsModel.updateMany({}, [
+        {
+          $set: {
+            billedDate: "$createdAt"
+          }
+        }
+      ]);
+    console.log(res)
+}
+
+
+const removeBillingAgri = async (async)=>{
+    const res = await billingsModel.deleteMany({type:"AGRI"})
+    console.log(res)
+}
+
 const startScripts =async()=>{
     await dbCon()
     
     await new Promise(res=> setTimeout(()=>res(1), 1000))
     // testApi()
     console.log('db connected')
-    billingTypeChane()
+
+
+    // testApi()
+    console.log('db connected')
 }
 
 startScripts()
