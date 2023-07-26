@@ -120,9 +120,9 @@ exports.confirmCart = async (req, res) => {
                     billData.billedDate = new Date()
                     const trackerVal = await Tracker.findOne({name:"invoiceId"})
                     billData.invoiceId = `NUR_${trackerVal.number}`
-                    updateRemainingQuantity(procurementQuantityMapping)
-                    updateCustomerPurchaseHistory(billData)
                     await billData.save()
+                    await updateRemainingQuantity(procurementQuantityMapping)
+                    await updateCustomerPurchaseHistory(billData)
                     await Tracker.findOneAndUpdate({name:"invoiceId"}, {$inc:{number:1}}, {$upsert:false})
                     res.status(200).send(billData)
                 } else {
