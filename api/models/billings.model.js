@@ -108,7 +108,11 @@ const BillingHistory = new mongoose.Schema({
     invoiceId: {
         type: String,
         default: ''
-    }
+    },
+    billedDate: {
+        type: Date,
+        default: ''
+    },
 }, {
     timestamps: true
 })

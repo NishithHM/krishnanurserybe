@@ -117,6 +117,7 @@ exports.confirmCart = async (req, res) => {
                     billData.roundOff = roundOff
                     billData.status = "BILLED"
                     billData.billedBy = billedBy
+                    billData.billedDate = new Date()
                     const trackerVal = await Tracker.findOne({name:"invoiceId"})
                     billData.invoiceId = `NUR_${trackerVal.number}`
                     updateRemainingQuantity(procurementQuantityMapping)
