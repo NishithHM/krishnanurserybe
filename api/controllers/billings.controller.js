@@ -395,7 +395,7 @@ exports.getAllBillingHistory = async (req, res) => {
         }
 
         if(startDate && endDate){
-            initialMatch.createdAt = {
+            initialMatch.billedDate = {
                 $gte: dayjs(startDate, 'YYYY-MM-DD').toDate(),
                 $lt: dayjs(endDate, 'YYYY-MM-DD').add(1, 'day').toDate()
             }
