@@ -148,10 +148,6 @@ const startScripts =async()=>{
     await new Promise(res=> setTimeout(()=>res(1), 1000))
     // testApi()
     console.log('db connected')
-
-
-    // testApi()
-    console.log('db connected')
 }
 
 startScripts()
