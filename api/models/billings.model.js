@@ -104,7 +104,11 @@ const BillingHistory = new mongoose.Schema({
     type:{
         type: String,
         enum: ['AGRI', 'NURSERY']
-    }
+    },
+    billedDate: {
+        type: Date,
+        default: ''
+    },
 }, {
     timestamps: true
 })

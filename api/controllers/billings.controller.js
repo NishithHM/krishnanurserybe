@@ -117,11 +117,12 @@ exports.confirmCart = async (req, res) => {
                     billData.roundOff = roundOff
                     billData.status = "BILLED"
                     billData.billedBy = billedBy
+                    billData.billedDate = new Date()
                     const trackerVal = await Tracker.findOne({name:"invoiceId"})
                     billData.invoiceId = `NUR_${trackerVal.number}`
-                    updateRemainingQuantity(procurementQuantityMapping)
-                    updateCustomerPurchaseHistory(billData)
                     await billData.save()
+                    await updateRemainingQuantity(procurementQuantityMapping)
+                    await updateCustomerPurchaseHistory(billData)
                     await Tracker.findOneAndUpdate({name:"invoiceId"}, {$inc:{number:1}}, {$upsert:false})
                     res.status(200).send(billData)
                 } else {
@@ -396,7 +397,7 @@ exports.getAllBillingHistory = async (req, res) => {
         }
 
         if(startDate && endDate){
-            initialMatch.createdAt = {
+            initialMatch.billedDate = {
                 $gte: dayjs(startDate, 'YYYY-MM-DD').toDate(),
                 $lt: dayjs(endDate, 'YYYY-MM-DD').add(1, 'day').toDate()
             }
