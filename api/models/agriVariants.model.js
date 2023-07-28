@@ -30,5 +30,5 @@ const AgriVariants = new mongoose.Schema({
 },{
     timestamps: true
 })
-AgriVariants.index({'name': 1, 'isActive': 1}, {unique: true})
+AgriVariants.index({'name': 1, 'isActive': 1, type: 1}, {unique: true})
 module.exports = mongoose.model("agri_vairants", AgriVariants);

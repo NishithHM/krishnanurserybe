@@ -146,6 +146,7 @@ const startScripts =async()=>{
     await dbCon()
     
     await new Promise(res=> setTimeout(()=>res(1), 1000))
+    // testApi()
     console.log('db connected')
 }
 
