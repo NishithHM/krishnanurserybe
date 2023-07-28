@@ -13,10 +13,14 @@ exports.getAgriItemDetails = async (req, res) => {
       try {
             const { variant, type, name } = req.body
             let variantName = `${type}-${name}`;
-            const variantAttributes = variant.map((v) => v.optionValue);
+            const variantAttributes = []
+            variant.map((v) => {
+                if(v.optionValue !== 'default'){
+                    variantAttributes.push(v.optionValue)
+                }
+            });
             variantName = `${variantName}(${variantAttributes.join(" ")})`;
-            const regex = /default/ig;
-            variantName.replace(regex, '')
+            console.log(variantName)
             const agriProc = await AgriProcurementModel.findOne({ type, names: variantName, minimumQuantity:{$gt:1}, minPrice:{$gt:1} ,maxPrice:{$gt:1} }, { maxPrice: 1, minPrice: 1, remainingQuantity: 1 })
             if (isEmpty(agriProc)) {
                   res.status(404).json({
@@ -145,9 +149,10 @@ exports.confirmAgriCart = async (req, res) => {
                       billData.billedBy = billedBy
                       const trackerVal = await Tracker.findOne({name:"agriInvoiceId"})
                       billData.invoiceId = `AGR_${trackerVal.number}`
-                      updateRemainingQuantity(procurementQuantityMapping)
-                      updateCustomerPurchaseHistory(billData)
+                      billData.billedDate = new Date()
                       await billData.save()
+                      await updateRemainingQuantity(procurementQuantityMapping)
+                      await updateCustomerPurchaseHistory(billData)
                       await Tracker.findOneAndUpdate({name:"agriInvoiceId"}, {$inc:{number:1}}, {$upsert:false})
                       res.status(200).send(billData)
                   } else {
