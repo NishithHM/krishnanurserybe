@@ -147,12 +147,6 @@ const startScripts =async()=>{
     
     await new Promise(res=> setTimeout(()=>res(1), 1000))
     console.log('db connected')
-    await vendorTypeChange()
-
-
-    // testApi()
-    await billingDateChane()
-    console.log('db connected')
 }
 
 startScripts()

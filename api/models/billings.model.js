@@ -39,21 +39,7 @@ const BillingHistory = new mongoose.Schema({
                 }
             },
             variant: {
-                variantId: {
-                    type: mongoose.Schema.Types.ObjectId,
-                    required: true
-                },
-                en: {
-                    name: {
-                        type: String,
-                        required: true,
-                    }
-                },
-                ka: {
-                    name: {
-                        type: String,
-                    }
-                }
+                type: mongoose.Schema.Types.Mixed,
             },
             quantity: {
                 type: Number,
@@ -66,6 +52,12 @@ const BillingHistory = new mongoose.Schema({
             rate: {
                 type: Number,
                 required: true,
+            },
+            type: {
+                type: String,
+            },
+            typeName: {
+                type: String,
             }
         }],
     },
@@ -108,6 +100,10 @@ const BillingHistory = new mongoose.Schema({
     invoiceId: {
         type: String,
         default: ''
+    },
+    type:{
+        type: String,
+        enum: ['AGRI', 'NURSERY']
     },
     billedDate: {
         type: Date,

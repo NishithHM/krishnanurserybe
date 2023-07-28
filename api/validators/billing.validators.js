@@ -40,4 +40,5 @@ exports.getBillingHistory = Joi.object().keys({
     sortBy: Joi.string().valid('updatedAt', 'totalPrice', 'billedDate'),
     sortType: Joi.number().valid(-1, 1).default(1),
     search: Joi.string().pattern(new RegExp(/[A-Za-z0-9]/)),
+    type: Joi.string().valid('NURSERY', 'AGRI')
 });

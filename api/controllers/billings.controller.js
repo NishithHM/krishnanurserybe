@@ -28,7 +28,7 @@ exports.addToCart = async (req, res) => {
             if (isEmpty(errors)) {
                 if (formattedItems.length > 0) {
                    
-                    const billing = new Billing({ customerName: customerRes.name, customerId: customerRes._id, customerNumber: customerRes.phoneNumber, soldBy, items: formattedItems, totalPrice, discount, status: "CART" })
+                    const billing = new Billing({ customerName: customerRes.name, customerId: customerRes._id, customerNumber: customerRes.phoneNumber, soldBy, items: formattedItems, totalPrice, discount, status: "CART", type:'NURSERY'  })
                     const cartDetails = await billing.save()
                     res.status(200).send(cartDetails)
                     if(!customerId){
@@ -152,7 +152,8 @@ exports.getCustomerCart = async (req, res) => {
             {
                 '$match': {
                     'customerId': new mongoose.mongo.ObjectId(id),
-                    'status': 'CART'
+                    'status': 'CART',
+                    type:"NURSERY"
                 },
             }, {
                 '$sort': {
@@ -169,7 +170,7 @@ exports.getCustomerCart = async (req, res) => {
                     'from': 'procurements',
                     'let': {
                         'pId': '$items.procurementId',
-                        'vId': '$items.variant.variantId'
+                        'vId': "$items.variant.variantId"
                     },
                     'pipeline': [
                         {
@@ -227,7 +228,7 @@ exports.getCustomerCart = async (req, res) => {
             }
         ]
         loggers.info(`getCustomerCart-pipeline, ${JSON.stringify(pipeline)}`)
-        console.log('getCustomerCart-pipeline', pipeline)
+        console.log('getCustomerCart-pipeline', JSON.stringify(pipeline))
         const results = await Billing.aggregate(pipeline)
         res.status(200).send(results[0])
     } catch (error) {
@@ -315,7 +316,7 @@ const validatePricesAndQuantityAndFormatItems = async (items) => {
         if (quantity > remainingQuantity) {
             errors.push(`Ooops!! stock of "${procurementNames?.en?.name}" is low, maximum order can be "${remainingQuantity}"`)
         }
-        formattedItems.push({ procurementId: itemProcurmentId, procurementName: procurementNames, variant: { variantId: itemVariantId, ...resultVariantNames }, quantity, mrp: maxPrice, rate: price })
+        formattedItems.push({ procurementId: itemProcurmentId, procurementName: procurementNames, variant: { variantId: resultVariantId, ...resultVariantNames }, quantity, mrp: maxPrice, rate: price })
         totalPrice = totalPrice + price * quantity;
         discount = discount + (maxPrice - price) * quantity;
     }
@@ -388,10 +389,11 @@ const updateCustomerPurchaseHistory = async (billData) => {
 }
 
 exports.getAllBillingHistory = async (req, res) => {
-    const { pageNumber, isCount, id, startDate, endDate, sortBy, sortType, search } = req.body;
+    const { pageNumber, isCount, id, startDate, endDate, sortBy, sortType, search, type } = req.body;
     try {
         const initialMatch = {
             status: "BILLED",
+            type
         }
 
         if(startDate && endDate){

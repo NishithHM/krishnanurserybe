@@ -28,6 +28,7 @@ exports.requestAgriOrder = async (req, res) => {
         variant,
         status: "REQUESTED",
         type,
+        typeName: name
       });
       return orderData.save();
     });
@@ -331,6 +332,8 @@ exports.verifyAgriOrder = async (req, res) => {
           type: order.type,
           remainingQuantity: quantity,
           lastProcuredOn: new Date(),
+          variant: order.variant,
+          typeName: order.typeName
         });
         await newAgriProc.save();
       }
