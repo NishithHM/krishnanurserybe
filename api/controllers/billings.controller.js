@@ -4,7 +4,7 @@ const isEmpty = require('lodash/isEmpty')
 const mongoose = require('mongoose');
 const dayjs = require('dayjs');
 const Procurements = require('../models/procurment.model')
-const Billing = require('../models/billings.model');
+const Billing = require('./billings.model');
 const { handleMongoError } = require('../utils');
 const loggers = require('../../loggers');
 const { uniqBy } = require('lodash');
@@ -91,6 +91,7 @@ exports.confirmCart = async (req, res) => {
     try {
         const billData = await Billing.findOne({ _id: new mongoose.mongo.ObjectId(id), status: 'CART' })
         if (billData) {
+            loggers.info("fetched-bill-data",id)
             const roundOfError = validateRoundOff(billData.totalPrice, roundOff);
             if (isEmpty(roundOfError)) {
                 const procurementQuantityMapping = {}
@@ -119,11 +120,14 @@ exports.confirmCart = async (req, res) => {
                     billData.billedBy = billedBy
                     billData.billedDate = new Date()
                     const trackerVal = await Tracker.findOne({name:"invoiceId"})
+                    loggers.info("fetched-bill-tracker", trackerVal.number, id)
                     billData.invoiceId = `NUR_${trackerVal.number}`
                     await billData.save()
                     await updateRemainingQuantity(procurementQuantityMapping)
                     await updateCustomerPurchaseHistory(billData)
                     await Tracker.findOneAndUpdate({name:"invoiceId"}, {$inc:{number:1}}, {$upsert:false})
+                    const trackerValNew = await Tracker.findOne({name:"invoiceId"})
+                    loggers.info("fetched-bill-tracker-new", trackerValNew.number, id)
                     res.status(200).send(billData)
                 } else {
                     res.status(400).send({ error: errors.join(' ') })
