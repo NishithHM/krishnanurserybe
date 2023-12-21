@@ -125,7 +125,8 @@ exports.confirmCart = async (req, res) => {
                     await billData.save()
                     await updateRemainingQuantity(procurementQuantityMapping)
                     await updateCustomerPurchaseHistory(billData)
-                    await Tracker.findOneAndUpdate({name:"invoiceId"}, {$inc:{number:1}}, {$upsert:false})
+                    trackerVal.number = trackerVal.number + 1
+                    await trackerVal.save()
                     const trackerValNew = await Tracker.findOne({name:"invoiceId"})
                     loggers.info("fetched-bill-tracker-new", JSON.stringify({ttracker:trackerValNew.number, id}))
                     res.status(200).send(billData)
