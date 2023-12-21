@@ -120,14 +120,14 @@ exports.confirmCart = async (req, res) => {
                     billData.billedBy = billedBy
                     billData.billedDate = new Date()
                     const trackerVal = await Tracker.findOne({name:"invoiceId"})
-                    loggers.info("fetched-bill-tracker", trackerVal.number, id)
+                    loggers.info("fetched-bill-tracker", JSON.stringify({tracker:trackerVal.number, id}))
                     billData.invoiceId = `NUR_${trackerVal.number}`
                     await billData.save()
                     await updateRemainingQuantity(procurementQuantityMapping)
                     await updateCustomerPurchaseHistory(billData)
                     await Tracker.findOneAndUpdate({name:"invoiceId"}, {$inc:{number:1}}, {$upsert:false})
                     const trackerValNew = await Tracker.findOne({name:"invoiceId"})
-                    loggers.info("fetched-bill-tracker-new", trackerValNew.number, id)
+                    loggers.info("fetched-bill-tracker-new", JSON.stringify({ttracker:trackerValNew.number, id}))
                     res.status(200).send(billData)
                 } else {
                     res.status(400).send({ error: errors.join(' ') })
