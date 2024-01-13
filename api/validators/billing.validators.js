@@ -11,6 +11,7 @@ exports.addToCartSchema = Joi.object().keys({
         quantity: Joi.number().min(0).required(),
         price: Joi.number().min(0).required(),
     })),
+    isWholeSale: Joi.boolean().default(false),
 });
 
 exports.updateCartSchema = Joi.object().keys({
@@ -21,6 +22,7 @@ exports.updateCartSchema = Joi.object().keys({
         quantity: Joi.number().min(0).required(),
         price: Joi.number().min(0).required(),
     })),
+    isWholeSale: Joi.boolean().default(false),
 });
 
 exports.confirmCartSchema = Joi.object().keys({
@@ -29,6 +31,10 @@ exports.confirmCartSchema = Joi.object().keys({
 });
 
 exports.getCustomerCartSchema = Joi.object().keys({
+    id: Joi.string().required(),
+});
+
+exports.getBillApproveSchema = Joi.object().keys({
     id: Joi.string().required(),
 });
 

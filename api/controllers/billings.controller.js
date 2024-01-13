@@ -12,7 +12,7 @@ const Tracker = require('../models/tracker.model');
 
 exports.addToCart = async (req, res) => {
     try {
-        const { customerNumber, customerName, customerDob, items, customerId } = req.body;
+        const { customerNumber, customerName, customerDob, items, customerId, isWholeSale } = req.body;
         const soldBy = {
             _id: req?.token?.id,
             name: req?.token?.name
@@ -24,11 +24,11 @@ exports.addToCart = async (req, res) => {
             customerRes = await Customer.findById(customerId);
         }
         if (!isEmpty(customerRes)) {
-            const { errors, formattedItems, totalPrice, discount } = await validatePricesAndQuantityAndFormatItems(items)
+            const { errors, formattedItems, totalPrice, discount } = await validatePricesAndQuantityAndFormatItems(items, isWholeSale)
             if (isEmpty(errors)) {
                 if (formattedItems.length > 0) {
                    
-                    const billing = new Billing({ customerName: customerRes.name, customerId: customerRes._id, customerNumber: customerRes.phoneNumber, soldBy, items: formattedItems, totalPrice, discount, status: "CART", type:'NURSERY'  })
+                    const billing = new Billing({ customerName: customerRes.name, customerId: customerRes._id, customerNumber: customerRes.phoneNumber, soldBy, items: formattedItems, totalPrice, discount, status: "CART", type:'NURSERY' , isWholeSale, isApproved: false })
                     const cartDetails = await billing.save()
                     res.status(200).send(cartDetails)
                     if(!customerId){
@@ -56,16 +56,17 @@ exports.addToCart = async (req, res) => {
 
 exports.updateCart = async (req, res) => {
     try {
-        const { items, id } = req.body;
+        const { items, id , isWholeSale} = req.body;
         const billData = await Billing.findById(id)
         if (billData) {
-            const { errors, formattedItems, totalPrice, discount } = await validatePricesAndQuantityAndFormatItems(items)
+            const { errors, formattedItems, totalPrice, discount } = await validatePricesAndQuantityAndFormatItems(items, isWholeSale)
             if (isEmpty(errors)) {
                 if (formattedItems.length > 0) {
                     billData.items = formattedItems;
                     billData.totalPrice = totalPrice;
                     billData.discount = discount;
-                    
+                    billData.isWholeSale = isWholeSale
+                    billData.isApproved = false
                     const cartDetails = await billData.save()
                     res.status(200).send(cartDetails)
                 } else {
@@ -93,50 +94,55 @@ exports.confirmCart = async (req, res) => {
         if (billData) {
             loggers.info("fetched-bill-data",id)
             const roundOfError = validateRoundOff(billData.totalPrice, roundOff);
-            if (isEmpty(roundOfError)) {
-                const procurementQuantityMapping = {}
-                const itemList = billData?.items?.map(ele => {
-                    if (procurementQuantityMapping[ele.procurementId.toString()]) {
-                        procurementQuantityMapping[ele.procurementId.toString()] = procurementQuantityMapping[ele.procurementId.toString()] + ele.quantity
+            if(billData.isApproved){
+                if (isEmpty(roundOfError)) {
+                    const procurementQuantityMapping = {}
+                    const itemList = billData?.items?.map(ele => {
+                        if (procurementQuantityMapping[ele.procurementId.toString()]) {
+                            procurementQuantityMapping[ele.procurementId.toString()] = procurementQuantityMapping[ele.procurementId.toString()] + ele.quantity
+                        } else {
+                            procurementQuantityMapping[ele.procurementId.toString()] = ele.quantity
+                        }
+                        return {
+                            "procurementId": ele.procurementId.toString(),
+                            "variantId": ele.variant.variantId.toString(),
+                            "quantity": ele.quantity,
+                            "price": ele.rate
+                        }
+                    })
+                    const isWholeSale = billData.isWholeSale
+                    const { errors } = await validatePricesAndQuantityAndFormatItems(itemList, isWholeSale)
+                    if (isEmpty(errors)) {
+                        const billedBy = {
+                            _id: req?.token?.id,
+                            name: req?.token?.name
+                        }
+                        billData.totalPrice = billData.totalPrice - roundOff
+                        billData.roundOff = roundOff
+                        billData.status = "BILLED"
+                        billData.billedBy = billedBy
+                        billData.billedDate = new Date()
+                        const trackerVal = await Tracker.findOne({name:"invoiceId"})
+                        loggers.info("fetched-bill-tracker", JSON.stringify({tracker:trackerVal.number, id}))
+                        billData.invoiceId = `NUR_${trackerVal.number}`
+                        await billData.save()
+                        await updateRemainingQuantity(procurementQuantityMapping)
+                        await updateCustomerPurchaseHistory(billData)
+                        trackerVal.number = trackerVal.number + 1
+                        await trackerVal.save()
+                        const trackerValNew = await Tracker.findOne({name:"invoiceId"})
+                        loggers.info("fetched-bill-tracker-new", JSON.stringify({ttracker:trackerValNew.number, id}))
+                        res.status(200).send(billData)
                     } else {
-                        procurementQuantityMapping[ele.procurementId.toString()] = ele.quantity
+                        res.status(400).send({ error: errors.join(' ') })
                     }
-                    return {
-                        "procurementId": ele.procurementId.toString(),
-                        "variantId": ele.variant.variantId.toString(),
-                        "quantity": ele.quantity,
-                        "price": ele.rate
-                    }
-                })
-                const { errors } = await validatePricesAndQuantityAndFormatItems(itemList)
-                if (isEmpty(errors)) {
-                    const billedBy = {
-                        _id: req?.token?.id,
-                        name: req?.token?.name
-                    }
-                    billData.totalPrice = billData.totalPrice - roundOff
-                    billData.roundOff = roundOff
-                    billData.status = "BILLED"
-                    billData.billedBy = billedBy
-                    billData.billedDate = new Date()
-                    const trackerVal = await Tracker.findOne({name:"invoiceId"})
-                    loggers.info("fetched-bill-tracker", JSON.stringify({tracker:trackerVal.number, id}))
-                    billData.invoiceId = `NUR_${trackerVal.number}`
-                    await billData.save()
-                    await updateRemainingQuantity(procurementQuantityMapping)
-                    await updateCustomerPurchaseHistory(billData)
-                    trackerVal.number = trackerVal.number + 1
-                    await trackerVal.save()
-                    const trackerValNew = await Tracker.findOne({name:"invoiceId"})
-                    loggers.info("fetched-bill-tracker-new", JSON.stringify({ttracker:trackerValNew.number, id}))
-                    res.status(200).send(billData)
+
+
                 } else {
-                    res.status(400).send({ error: errors.join(' ') })
+                    res.status(400).send({ error: roundOfError })
                 }
-
-
-            } else {
-                res.status(400).send({ error: roundOfError })
+            }else{
+                res.status(400).send("Bill not approved by admin. Please try again")
             }
         } else {
             res.status(400).send("Unable to find the cart items, try again")
@@ -228,7 +234,22 @@ exports.getCustomerCart = async (req, res) => {
                     '_id': '$_id',
                     'items': {
                         '$push': '$items'
-                    }
+                    },
+                    'isApproved':{
+                        $last:"$isApproved"
+                      },
+                    'isWholeSale':{
+                         $last:"$isWholeSale"
+                    },
+                    totalPrice:{
+                        $last:"$totalPrice"
+                      },
+                      discount:{
+                        $last:"$discount"
+                      },
+                      roundOff:{
+                        $last:"$roundOff"
+                      } 
                 }
             }
         ]
@@ -245,7 +266,7 @@ exports.getCustomerCart = async (req, res) => {
 
 }
 
-const validatePricesAndQuantityAndFormatItems = async (items) => {
+const validatePricesAndQuantityAndFormatItems = async (items, isWholeSale) => {
     const procurements = uniq(items.map(ele => new mongoose.mongo.ObjectId(ele.procurementId)))
     const variants = uniq(items.map(ele => new mongoose.mongo.ObjectId(ele.variantId)))
     const itemsProcurmentAndVariants = items.map(ele=> ele.variantId+ele.procurementId)
@@ -315,7 +336,7 @@ const validatePricesAndQuantityAndFormatItems = async (items) => {
         if (price > maxPrice) {
             errors.push(`"${procurementNames?.en?.name}" of variant "${resultVariantNames?.en?.name}" should be less than "${maxPrice}"`)
         }
-        if (price < minPrice) {
+        if (price < minPrice && !isWholeSale) {
             errors.push(`"${procurementNames?.en?.name}" of variant "${resultVariantNames?.en?.name}" price is invalid, increase price and try again`)
         }
         if (quantity > remainingQuantity) {
@@ -397,7 +418,7 @@ exports.getAllBillingHistory = async (req, res) => {
     const { pageNumber, isCount, id, startDate, endDate, sortBy, sortType, search, type } = req.body;
     try {
         const initialMatch = {
-            status: "BILLED",
+            $or:[{status: "BILLED"}, {status:"CART", isApproved: false}],
             type
         }
 
@@ -428,6 +449,7 @@ exports.getAllBillingHistory = async (req, res) => {
         if (sortBy) {
             sortStage = [{
                 '$sort': {
+                    status: -1,
                     [sortBy]: parseInt(sortType)
                 }
             }]
@@ -474,6 +496,20 @@ exports.getAllBillingHistory = async (req, res) => {
         res.status(500).send(err)
     }
 
+}
+
+exports.approveBill = async (req, res)=>{
+    const {id} = req.body
+    const approvedBy = {
+        _id: req?.token?.id,
+        name: req?.token?.name
+    }
+    const billData = await Billing.findOne({ _id: new mongoose.mongo.ObjectId(id), status: 'CART' })
+    billData.isApproved = true
+    billData.approvedBy = approvedBy
+    billData.approvedOn = new Date()
+    await billData.save()
+    res.json(billData.toJSON())
 }
 
 

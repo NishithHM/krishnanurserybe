@@ -109,6 +109,28 @@ const BillingHistory = new mongoose.Schema({
         type: Date,
         default: ''
     },
+    isWholeSale: {
+        type: Boolean,
+        default: false
+    },
+    isApproved:{
+        type: Boolean,
+        default: false
+    },
+    approvedBy: {
+        name: {
+            type: String,
+            lowercase: true,
+        },
+        _id: {
+            type: mongoose.Schema.Types.ObjectId,
+        },
+        required: false
+    },
+    approvedOn: {
+        type: Date,
+        default: null
+    },
 }, {
     timestamps: true
 })
