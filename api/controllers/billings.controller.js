@@ -417,10 +417,16 @@ const updateCustomerPurchaseHistory = async (billData) => {
 exports.getAllBillingHistory = async (req, res) => {
     const { pageNumber, isCount, id, startDate, endDate, sortBy, sortType, search, type } = req.body;
     try {
-        const initialMatch = {
-            $or:[{status: "BILLED"}, {status:"CART", isApproved: false}],
+        let initialMatch = {
+            status: "BILLED",
             type
         }
+        if (req.token?.role === "admin") {
+             initialMatch = {
+                $or:[{status: "BILLED"}, {status:"CART", isApproved: false, isWholeSale: true}],
+                type
+            }
+          }
 
         if(startDate && endDate){
             initialMatch.billedDate = {
