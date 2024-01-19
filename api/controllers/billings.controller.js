@@ -94,7 +94,7 @@ exports.confirmCart = async (req, res) => {
         if (billData) {
             loggers.info("fetched-bill-data",id)
             const roundOfError = validateRoundOff(billData.totalPrice, roundOff);
-            if(billData.isApproved){
+            if(billData.isApproved || !billData.isWholeSale){
                 if (isEmpty(roundOfError)) {
                     const procurementQuantityMapping = {}
                     const itemList = billData?.items?.map(ele => {
