@@ -34,6 +34,8 @@ const { requestAgriItemsSchema, placeAgriItemsSchema, getAgriOrdersSchema, verif
 const { requestAgriOrder, placeAgriOrder, agriOrderList, verifyAgriOrder, getAllAgriProcurements, getAllAgriProcurementsHistory, agriSetAmounts, uploadInvoiceToAgriOrder, getAgriOrderIdDetails, getAgriVendorPlacedOrders, rejectAgriOrderRequest } = require('./controllers/agriOrderMgmt.controller');
 const { getAgriItemDetials, getAgriItemDetails, agriAddToCart, updateAgriCart, confirmAgriCart, getAgriCart } = require('./controllers/agriBilling.controller');
 const { getAgriBillingDataSchema, agriAddToCartSchema, updateAgriCartSchema, confirmAgriCartSchema } = require('./validators/agriBilling.validator');
+const { metaDataValidator } = require('./validators/dashboard.validator');
+const { dahboardMetaData } = require('./controllers/dashboard.controller');
 
 const fileStorageEngine = multer.diskStorage({
 	destination:(req,file,cb) =>{
@@ -139,5 +141,9 @@ router.get('/api/agri/billing/get-cart/:id', [authWall(['sales', 'preSales']),pa
 // s3 test
 router.post('/api/upload-large',[], uploadAwsTest)
 router.get('/api/download',[authWall(['admin','procurement', 'sales', 'preSales']), paramsToBody(['path'], "query")], downloadFile)
+
+// dashboard 
+router.post('/api/dashboard/meta-data', [authWall(['admin']), bodyValidator(metaDataValidator)], dahboardMetaData)
+
 // router.get('/video', videoRender)
 module.exports = router

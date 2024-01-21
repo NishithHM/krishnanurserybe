@@ -201,6 +201,7 @@ exports.caluclateMetaData = async (currentDate) => {
         damages: {
           $first: "$damages.damages",
         },
+        categories:1,
         bill_data: 1,
       },
     },
@@ -309,7 +310,7 @@ exports.caluclateMetaData = async (currentDate) => {
   const paymentData = await paymentModel.aggregate(paymentPipeline)
   if(paymentData[0]?.amount){
     delete paymentData._id
-    const metaData = new MetaData({ ...paymentData, type:'PAYMENT', date:currentDate})
+    const metaData = new MetaData({ ...paymentData[0], type:'PAYMENT', date:currentDate})
     await metaData.save()
   }
 }
