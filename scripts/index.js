@@ -7,6 +7,8 @@ const Vendors = require("../api/models/vendor.model")
 
 var request = require('request');
 var fs = require('fs');
+const dayjs = require("dayjs")
+const { caluclateMetaData } = require("../crons/dailyCron")
 
 const addInvoiceToProcHistory = async ()=>{
     const res = await ProcurementHistory.updateMany({}, {$set: {invoice: 'null'}}, {upsert: false})
@@ -142,12 +144,28 @@ const removeBillingAgri = async (async)=>{
     console.log(res)
 }
 
+const caluclateMetaDataAll = async()=>{
+    const dates = []
+    let minDate = dayjs('2023-01-01', 'YYYY-MM-DD').toDate()
+    const maxDate = dayjs().toDate()
+    while(minDate<maxDate){
+        dates.push(minDate)
+        minDate = dayjs(minDate).add(1, 'day').toDate()
+    }
+    console.log(dates.length)
+    for(let i=0; i<dates.length; i++){
+        await caluclateMetaData(dates[i])
+        console.log('added-date', dates[i], i)
+    }
+}
+
 const startScripts =async()=>{
     await dbCon()
     
     await new Promise(res=> setTimeout(()=>res(1), 1000))
     // testApi()
     console.log('db connected')
+    // caluclateMetaDataAll()
 }
 
 startScripts()

@@ -1,32 +1,315 @@
 const cron = require('node-cron')
 const fs = require('fs')
 const path = require('path');
-exports.dailyCron =()=>{
-    cron.schedule("0 0 0 * * *", ()=>{
-        deleteLoggers()
-    })
+const dayjs = require('dayjs');
+const loggers = require('../loggers');
+const Procurment = require('../api/models/procurment.model');
+const MetaData = require('../api/models/metaData.model');
+const { default: mongoose } = require('mongoose');
+const paymentModel = require('../api/models/payment.model');
+exports.dailyCron = () => {
+  cron.schedule("0 0 0 * * *", () => {
+    deleteLoggers()
+    this.caluclateMetaData(dayjs().date())
+  })
 }
 
-const deleteLoggers = async ()=>{
-    fs.readdir(path.join(__dirname,'../loggers'), (err, files)=>{
-        console.log(err)
-        files.forEach(ele=>{
-            console.log(ele)
-            const pathVal = path.join(__dirname,`../loggers/${ele}`)
-            if(ele.includes('application')){
-                fs.stat( pathVal , (err, stat)=>{
-                    console.log(err)
-                    console.log(stat, ele)
-                    if(stat){
-                        const now = new Date().getTime();
-                        const endTime = new Date(stat.mtime).getTime() + 86400000 * 7 * 10
-                        if(now > endTime){
-                            fs.unlink(pathVal, (err, del)=>{
-                                console.log(del)
-                            })
-                        }}
-                })
-        }
+const deleteLoggers = async () => {
+  fs.readdir(path.join(__dirname, '../loggers'), (err, files) => {
+    console.log(err)
+    files.forEach(ele => {
+      console.log(ele)
+      const pathVal = path.join(__dirname, `../loggers/${ele}`)
+      if (ele.includes('application')) {
+        fs.stat(pathVal, (err, stat) => {
+          console.log(err)
+          console.log(stat, ele)
+          if (stat) {
+            const now = new Date().getTime();
+            const endTime = new Date(stat.mtime).getTime() + 86400000 * 7 * 10
+            if (now > endTime) {
+              fs.unlink(pathVal, (err, del) => {
+                console.log(del)
+              })
+            }
+          }
         })
+      }
     })
+  })
+}
+
+exports.caluclateMetaData = async (currentDate) => {
+  const prevDate = dayjs(currentDate).subtract(1, 'days').startOf('day').toDate()
+  loggers.info('caluclating-meta-data', currentDate, prevDate)
+  console.log('caluclating-meta-data', currentDate, prevDate)
+  const procurmentPipeline = [
+    {
+      $lookup: {
+        from: "procurement_histories",
+        let: {
+          id: "$_id",
+        },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $eq: ["$$id", "$procurementId"],
+              },
+              updatedAt: {
+                $gte: prevDate,
+                $lt: currentDate,
+              },
+              status: "VERIFIED",
+              quantity: {
+                $gt: 0,
+              },
+            },
+          },
+          {
+            $group: {
+              _id: "$procurementId",
+              quantity: {
+                $sum: "$requestedQuantity",
+              },
+              totalPrice: {
+                $sum: "$totalPrice",
+              },
+            },
+          },
+
+        ],
+        as: "proc_history",
+      },
+    },
+    {
+      $lookup: {
+        from: "billing_histories",
+        let: {
+          id: "$_id",
+        },
+        pipeline: [
+          {
+            $match: {
+              updatedAt: {
+                $gte: prevDate,
+                $lt: currentDate,
+              },
+              status: "BILLED",
+              type: "NURSERY",
+              customerId: {
+                $ne: mongoose.mongo.ObjectId(
+                  "651aebbc9208921fc8f10be3"
+                ),
+              },
+            },
+          },
+          {
+            $unwind:
+            {
+              path: "$items",
+            },
+          },
+          {
+            $match:
+            {
+              $expr: {
+                $eq: [
+                  "$items.procurementId",
+                  "$$id",
+                ],
+              },
+            },
+          },
+          {
+            $group: {
+              _id: "$items.variant",
+              saleAmount: {
+                $sum: {
+                  $multiply: [
+                    "$items.rate",
+                    "$items.quantity",
+                  ],
+                },
+              },
+              quantity: {
+                $sum: "$items.quantity",
+              },
+            },
+          },
+          {
+            $project: {
+              variant: "$_id",
+              quantity: 1,
+              saleAmount: 1,
+              salePerQuantity: {
+                $divide: [
+                  "$saleAmount",
+                  {
+                    $cond: {
+                      if: { $eq: ["$quantity", 0] },
+                      then: 1,
+                      else: "$quantity",
+                    }
+                  }
+                ],
+              },
+            },
+          },
+        ],
+        as: "bill_data",
+      },
+    },
+    {
+      $lookup: {
+        from: "damage_histories",
+        let: {
+          id: "$_id",
+        },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $eq: ["$$id", "$procurementId"],
+              },
+              updatedAt: {
+                $gte: prevDate,
+                $lt: currentDate,
+              },
+            },
+          },
+          {
+            $group: {
+              _id: "$procurementId",
+              damages: {
+                $sum: "$damagedQuantity",
+              },
+            },
+          },
+        ],
+        as: "damages",
+      },
+    },
+    {
+      $project: {
+        names: 1,
+        remainingQuantity: 1,
+        underMaintenanceQuantity: 1,
+        procurements: {
+          $first: "$proc_history",
+        },
+        damages: {
+          $first: "$damages.damages",
+        },
+        bill_data: 1,
+      },
+    },
+    {
+      $match: {
+        $or: [
+          {
+            "bill_data.0": {
+              $exists: true,
+            },
+          },
+          {
+            damages: {
+              $gt: 0,
+            },
+          },
+          {
+            "procurements.quantity": {
+              $exists: true,
+            },
+          },
+        ],
+      },
+    },
+    {
+      $addFields: {
+        sales: {
+          $reduce: {
+            input: "$bill_data",
+            initialValue: {
+              totalSales: 0,
+              totalQuantity: 0,
+            },
+            in: {
+              totalSales: {
+                $add: [
+                  "$$value.totalSales",
+                  "$$this.saleAmount",
+                ],
+              },
+              totalQuantity: {
+                $add: [
+                  "$$value.totalQuantity",
+                  "$$this.quantity",
+                ],
+              },
+            },
+          },
+        },
+      },
+    },
+    {
+      $addFields: {
+        profit: {
+          $subtract: [
+            "$sales.totalSales",
+            "$procurements.totalPrice",
+          ],
+        },
+        type: "NURSERY",
+        date: prevDate
+      },
+    },
+    {
+      $addFields: {
+        profit:
+        {
+          $cond: {
+            if: { $eq: ["$profit", null] },
+            then: 0,
+            else: "$profit",
+          }
+        },
+      },
+    },
+  ]
+  const plantData = await Procurment.aggregate(procurmentPipeline)
+  console.log(plantData.length)
+  for (let i = 0; i < plantData.length; i++) {
+    const dateDate = plantData[i]
+    dateDate.procurementId = dateDate._id
+    delete dateDate._id
+    const metaData = new MetaData({ ...dateDate })
+    await metaData.save()
+    await new Promise((res) => setTimeout(() => res(), 300))
+  }
+  const paymentPipeline = [
+    {
+      $match:{
+        updatedAt: {
+          $gte: prevDate,
+          $lt: currentDate,
+        },
+      }
+    },
+    {
+      $group:
+        {
+          _id: null,
+          amount: {
+            $sum: "$amount",
+          },
+        },
+    },
+  ]
+  const paymentData = await paymentModel.aggregate(paymentPipeline)
+  if(paymentData[0]?.amount){
+    delete paymentData._id
+    const metaData = new MetaData({ ...paymentData, type:'PAYMENT', date:currentDate})
+    await metaData.save()
+  }
 }
