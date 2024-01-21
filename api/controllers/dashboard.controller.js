@@ -7,7 +7,7 @@ exports.dahboardMetaData = async (req, res) => {
     const { startDate, endDate, categories, plants } = req.body
     const sDate = dayjs(startDate, 'YYYY-MM').startOf('month').toDate()
     const eDate = dayjs(endDate, 'YYYY-MM').endOf('month').toDate()
-    let plantIds, categoryIds
+    let plantIds=[], categoryIds=[]
     const otherMetaMatch = {}, otherProcMatch = {}
     if(plants?.length){
        plantIds = plants.map(ele=> mongoose.mongo.ObjectId(ele))
@@ -213,14 +213,43 @@ exports.dahboardMetaData = async (req, res) => {
     const metaData = await metaDataModel.aggregate(pipelineMeta)
     const plantsData = await metaDataModel.aggregate(pipelinePlants)
     const metaPayments = await metaDataModel.aggregate(pipelinePayments)
+    const roundOffPipeline = [
+        {
+            $match: {
+              date: { $gte: sDate, $lt: eDate },
+                  type:"ROUNDOFF",
+                  ...otherMetaMatch
+            },
+          },
+        {
+          $group:
+            /**
+             * _id: The id of the group.
+             * fieldN: The first field name.
+             */
+            {
+              _id: null,
+              roundOff: {
+                $sum: "$totalRoundOff",
+              },
+            },
+        },
+      ]
     let variants =[]
     if(plantIds?.length===1){
         variants = await metaDataModel.aggregate(pipelineVairants)
 
     }
+    let roundOffs=[]
+    if(plantIds?.length===0 && categoryIds.length===0){
+         roundOffs = await metaDataModel.aggregate(roundOffPipeline)
+    }
+    console.log(JSON.stringify(roundOffPipeline))
     const quantity = await procurmentModel.aggregate(quantityPipeline)
     console.log(metaData)
-    const resp = {...metaData[0], ...metaPayments[0], ...quantity[0], plants: plantsData, variants}
+    const resp = {...metaData[0], ...metaPayments[0], ...quantity[0], ...roundOffs[0], plants: plantsData, variants}
+    resp.sales = resp.sales - resp.roundOff
+    resp.profit = resp.profit - resp.roundOff
     res.json(resp)
 }
 
@@ -228,7 +257,7 @@ exports.dahboardMetaGraph = async (req, res) => {
     const { startDate, endDate, categories, plants } = req.body
     const sDate = dayjs(startDate, 'YYYY-MM').startOf('month').toDate()
     const eDate = dayjs(endDate, 'YYYY-MM').endOf('month').toDate()
-    let plantIds, categoryIds
+    let plantIds=[], categoryIds=[]
     const otherMetaMatch = {}
     if(plants?.length){
        plantIds = plants.map(ele=> mongoose.mongo.ObjectId(ele))
@@ -282,6 +311,9 @@ exports.dahboardMetaGraph = async (req, res) => {
             investment: {
               $sum: "$procurements.totalPrice",
             },
+            roundOff:{
+                $sum:"$totalRoundOff"
+            }
           },
         },
         {
@@ -303,12 +335,17 @@ exports.dahboardMetaGraph = async (req, res) => {
                 ],
               },
               profit: {
-                $subtract: ["$totalSales", "$investment"],
+                $subtract: plantIds.length ===0 && categoryIds.length===0 ? [{$subtract:["$totalSales", "$roundOff"]}, "$investment"]: ["$totalSales", "$investment"],
               },
+              totalSales:{
+                $subtract: plantIds.length ===0 && categoryIds.length===0 ? ["$totalSales", "$roundOff"]: ["$totalSales", 0],
+              }
             },
             
         },
       ]
+    
+    console.log(JSON.stringify(pipeline))  
     
     const metaData = await metaDataModel.aggregate(pipeline)
     
