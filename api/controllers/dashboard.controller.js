@@ -2,6 +2,7 @@ const dayjs = require("dayjs")
 const metaDataModel = require("../models/metaData.model")
 const procurmentModel = require("../models/procurment.model")
 const { default: mongoose } = require("mongoose")
+const _  = require('lodash')
 
 exports.dahboardMetaData = async (req, res) => {
     const { startDate, endDate, categories, plants } = req.body
@@ -248,8 +249,9 @@ exports.dahboardMetaData = async (req, res) => {
     const quantity = await procurmentModel.aggregate(quantityPipeline)
     console.log(metaData)
     const resp = {...metaData[0], ...metaPayments[0], ...quantity[0], ...roundOffs[0], plants: plantsData, variants}
-    resp.sales = resp.sales - resp.roundOff
-    resp.profit = resp.profit - resp.roundOff
+    console.log(resp)
+    resp.sales = resp.sales - _.get(resp, "roundOff", 0)
+    resp.profit = resp.profit - _.get(resp, "roundOff", 0)
     res.json(resp)
 }
 
