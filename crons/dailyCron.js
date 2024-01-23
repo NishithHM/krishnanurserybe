@@ -11,6 +11,7 @@ const billingsModel = require('../api/models/billings.model');
 exports.dailyCron = () => {
   cron.schedule("0/1 * * * *", () => {
     // deleteLoggers()
+    console.log('running cron')
     this.caluclateMetaData(dayjs().date())
   })
 }
