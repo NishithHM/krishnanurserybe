@@ -9,7 +9,7 @@ const { default: mongoose } = require('mongoose');
 const paymentModel = require('../api/models/payment.model');
 const billingsModel = require('../api/models/billings.model');
 exports.dailyCron = () => {
-  cron.schedule("* * * * *", () => {
+  cron.schedule("0 0 * * *", () => {
     deleteLoggers()
     console.log('running')
     this.caluclateMetaData(dayjs().startOf('day').add(330,'minutes').toDate())
