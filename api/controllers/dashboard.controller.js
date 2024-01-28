@@ -15,7 +15,7 @@ exports.dahboardMetaData = async (req, res) => {
     otherMetaMatch.procurementId = { $in: plantIds }
     otherProcMatch._id = { $in: plantIds }
   } else if (categories?.length) {
-    categoryIds = categories.map(ele => mongoose.mongo.ObjectId(ele))
+    categoryIds = categories.map(ele => ele)
     otherMetaMatch["categories._id"] = { $in: categoryIds }
     otherProcMatch["categories._id"] = { $in: categoryIds }
   }
