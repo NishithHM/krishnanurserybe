@@ -2,355 +2,438 @@ const dayjs = require("dayjs")
 const metaDataModel = require("../models/metaData.model")
 const procurmentModel = require("../models/procurment.model")
 const { default: mongoose } = require("mongoose")
-const _  = require('lodash')
+const _ = require('lodash')
 
 exports.dahboardMetaData = async (req, res) => {
-    const { startDate, endDate, categories, plants } = req.body
-    const sDate = dayjs(startDate, 'YYYY-MM').startOf('month').toDate()
-    const eDate = dayjs(endDate, 'YYYY-MM').endOf('month').toDate()
-    let plantIds=[], categoryIds=[]
-    const otherMetaMatch = {}, otherProcMatch = {}
-    if(plants?.length){
-       plantIds = plants.map(ele=> mongoose.mongo.ObjectId(ele))
-       otherMetaMatch.procurementId= {$in:plantIds}
-       otherProcMatch._id = {$in:plantIds}
-    }else if(categories?.length){
-        categoryIds = categories.map(ele=> mongoose.mongo.ObjectId(ele))
-        otherMetaMatch["categories._id"]= {$in:categoryIds}
-        otherProcMatch["categories._id"]= {$in:categoryIds}
-    }
-    
-    const pipelineMeta = [
-        {
-            $match: {
-                date: { $gte: sDate, $lt: eDate },
-                type:"NURSERY",
-                ...otherMetaMatch
-            },
-        },
-        {
-            $group: {
-                _id: null,
-                sales: {
-                    $sum: "$sales.totalSales",
-                },
-                investment: {
-                    $sum: "$procurements.totalPrice",
-                },
-                damages: {
-                    $sum: "$damages",
-                },
-            },
-        },
-        {
-            $addFields: {
-              profit: {
-                $subtract: ["$sales", "$investment"],
-              },
-            }
-        }
-    ]
-    const pipelinePlants = [
-        {
-            $match: {
-                date: { $gte: sDate, $lt: eDate },
-                type:"NURSERY",
-                ...otherMetaMatch
-            },
-            
-        },
-        {
-            $group: {
-              _id: "$procurementId",
-              sales: {
-                $sum: "$sales.totalSales",
-              },
-              investment: {
-                $sum: "$procurements.totalPrice",
-              },
-              damages: {
-                $sum: "$damages",
-              },
-            },
-          },
-          {
-            $addFields: {
-              profit: {
-                $subtract: ["$sales", "$investment"],
-              },
-              profitPercentage: {
-                $multiply: [
-                  100,
-                  {
-                    $divide: [
-                      {
-                        $subtract: [
-                          "$sales",
-                          "$investment",
-                        ],
-                      },
-                      {
-                        $cond: {
-                          if: { $eq: ["$investment", 0] },
-                          then: 1,
-                          else: "$investment",
-                        }
-                    }
-                    ],
-                  },
-                ],
-              },
-            },
-          },
-          {
-            $sort:
-              /**
-               * Provide any number of field/order pairs.
-               */
-              {
-                sales: -1,
-              },
-          },
-          {
-            $limit:
-              /**
-               * Provide the number of documents to limit.
-               */
-              10,
-          },
-        
-    ]
+  const { startDate, endDate, categories, plants } = req.body
+  const sDate = dayjs(startDate, 'YYYY-MM').startOf('month').toDate()
+  const eDate = dayjs(endDate, 'YYYY-MM').endOf('month').toDate()
+  let plantIds = [], categoryIds = []
+  const otherMetaMatch = {}, otherProcMatch = {}
+  if (plants?.length) {
+    plantIds = plants.map(ele => mongoose.mongo.ObjectId(ele))
+    otherMetaMatch.procurementId = { $in: plantIds }
+    otherProcMatch._id = { $in: plantIds }
+  } else if (categories?.length) {
+    categoryIds = categories.map(ele => mongoose.mongo.ObjectId(ele))
+    otherMetaMatch["categories._id"] = { $in: categoryIds }
+    otherProcMatch["categories._id"] = { $in: categoryIds }
+  }
 
-    const pipelineVairants = [
-        {
-          $match: {
-            date: { $gte: sDate, $lt: eDate },
-                type:"NURSERY",
-                ...otherMetaMatch
-          },
+  const pipelineMeta = [
+    {
+      $match: {
+        date: { $gte: sDate, $lt: eDate },
+        type: "NURSERY",
+        ...otherMetaMatch
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        sales: {
+          $sum: "$sales.totalSales",
         },
-        {
-          $unwind:
-            /**
-             * path: Path to the array field.
-             * includeArrayIndex: Optional name for index.
-             * preserveNullAndEmptyArrays: Optional
-             *   toggle to unwind null and empty values.
-             */
-            {
-              path: "$bill_data",
-            },
+        investment: {
+          $sum: "$procurements.totalPrice",
         },
-        {
-          $sort:
-            /**
-             * Provide any number of field/order pairs.
-             */
-            {
-              "bill_data.quantity": -1,
-            },
+        damages: {
+          $sum: "$damages",
         },
-        {
-          $group: {
-            _id: "$bill_data._id",
-            quantity: {
-              $sum: "$bill_data.quantity",
-            },
-            saleAmount: {
-              $sum: "$bill_data.saleAmount",
-            },
-          },
+      },
+    },
+    {
+      $addFields: {
+        profit: {
+          $subtract: ["$sales", "$investment"],
         },
-        {
-          $limit:
-            /**
-             * Provide the number of documents to limit.
-             */
-            10,
-        },
-      ]
-    console.log(JSON.stringify(pipelineMeta))
-    const pipelinePayments = [
-        {
-            $match: {
-                date: { $gte: sDate, $lt: eDate },
-                type:"PAYMENT",
-                ...otherMetaMatch
-            },
-        },
-        {
-            $group: {
-                _id: null,
-                payments: {
-                    $sum: "$amount",
-                },
-            },
-        },
-    ]
-    const quantityPipeline = [
-        {
-          $match:{
-             ...otherProcMatch
-          }
-        },
-        {
-          $group:
-            /**
-             * _id: The id of the group.
-             * fieldN: The first field name.
-             */
-            {
-              _id: null,
-              remainingQuantity: {
-                $sum: "$remainingQuantity",
-              },
-              underMaintenanceQuantity: {
-                $sum: "$underMaintenanceQuantity",
-              },
-            },
-        },
-      ]
-    console.log(JSON.stringify(pipelinePayments))
-    const metaData = await metaDataModel.aggregate(pipelineMeta)
-    const plantsData = await metaDataModel.aggregate(pipelinePlants)
-    const metaPayments = await metaDataModel.aggregate(pipelinePayments)
-    const roundOffPipeline = [
-        {
-            $match: {
-              date: { $gte: sDate, $lt: eDate },
-                  type:"ROUNDOFF",
-                  ...otherMetaMatch
-            },
-          },
-        {
-          $group:
-            /**
-             * _id: The id of the group.
-             * fieldN: The first field name.
-             */
-            {
-              _id: null,
-              roundOff: {
-                $sum: "$totalRoundOff",
-              },
-            },
-        },
-      ]
-    let variants =[]
-    if(plantIds?.length===1){
-        variants = await metaDataModel.aggregate(pipelineVairants)
+      }
+    }
+  ]
+  const pipelinePlants = [
+    {
+      $match: {
+        date: { $gte: sDate, $lt: eDate },
+        type: "NURSERY",
+        ...otherMetaMatch
+      },
 
-    }
-    let roundOffs=[]
-    if(plantIds?.length===0 && categoryIds.length===0){
-         roundOffs = await metaDataModel.aggregate(roundOffPipeline)
-    }
-    console.log(JSON.stringify(roundOffPipeline))
-    const quantity = await procurmentModel.aggregate(quantityPipeline)
-    console.log(metaData)
-    const resp = {...metaData[0], ...metaPayments[0], ...quantity[0], ...roundOffs[0], plants: plantsData, variants}
-    console.log(resp)
-    resp.sales = resp.sales - _.get(resp, "roundOff", 0)
-    resp.profit = resp.profit - _.get(resp, "roundOff", 0)
-    res.json(resp)
+    },
+    {
+      $sort:
+      /**
+       * Provide any number of field/order pairs.
+       */
+      {
+        date: 1,
+      },
+    },
+    {
+      $group: {
+        _id: "$procurementId",
+        sales: {
+          $sum: "$sales.totalSales",
+        },
+        investment: {
+          $sum: "$procurements.totalPrice",
+        },
+        damages: {
+          $sum: "$damages",
+        },
+        names: {
+          $first: "$names",
+        },
+        underMaintenanceQuantity: {
+          $last: "$underMaintenanceQuantity",
+        },
+        remainingQuantity: {
+          $last: "$remainingQuantity",
+        },
+      },
+    },
+    {
+      $addFields: {
+        profit: {
+          $subtract: ["$sales", "$investment"],
+        },
+        profitPercentage: {
+          $multiply: [
+            100,
+            {
+              $divide: [
+                {
+                  $subtract: [
+                    "$sales",
+                    "$investment",
+                  ],
+                },
+                {
+                  $cond: {
+                    if: { $eq: ["$investment", 0] },
+                    then: 1,
+                    else: "$investment",
+                  }
+                }
+              ],
+            },
+          ],
+        },
+      },
+    },
+    {
+      $sort:
+      /**
+       * Provide any number of field/order pairs.
+       */
+      {
+        sales: -1,
+      },
+    },
+    {
+      $limit:
+        /**
+         * Provide the number of documents to limit.
+         */
+        10,
+    },
+
+  ]
+
+  const pipelineVairants = [
+    {
+      $match: {
+        date: { $gte: sDate, $lt: eDate },
+        type: "NURSERY",
+        ...otherMetaMatch
+      },
+    },
+    {
+      $unwind:
+      /**
+       * path: Path to the array field.
+       * includeArrayIndex: Optional name for index.
+       * preserveNullAndEmptyArrays: Optional
+       *   toggle to unwind null and empty values.
+       */
+      {
+        path: "$bill_data",
+      },
+    },
+    {
+      $sort:
+      /**
+       * Provide any number of field/order pairs.
+       */
+      {
+        "bill_data.quantity": -1,
+      },
+    },
+    {
+      $group: {
+        _id: "$bill_data._id",
+        quantity: {
+          $sum: "$bill_data.quantity",
+        },
+        saleAmount: {
+          $sum: "$bill_data.saleAmount",
+        },
+      },
+    },
+    {
+      $limit:
+        /**
+         * Provide the number of documents to limit.
+         */
+        10,
+    },
+  ]
+  console.log(JSON.stringify(pipelineMeta))
+  const pipelinePayments = [
+    {
+      $match: {
+        date: { $gte: sDate, $lt: eDate },
+        type: "PAYMENT",
+        ...otherMetaMatch
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        payments: {
+          $sum: "$amount",
+        },
+      },
+    },
+  ]
+  const quantityPipeline = [
+    {
+      $match: {
+        ...otherProcMatch
+      }
+    },
+    {
+      $group:
+      /**
+       * _id: The id of the group.
+       * fieldN: The first field name.
+       */
+      {
+        _id: null,
+        remainingQuantity: {
+          $sum: "$remainingQuantity",
+        },
+        underMaintenanceQuantity: {
+          $sum: "$underMaintenanceQuantity",
+        },
+      },
+    },
+  ]
+  console.log(JSON.stringify(pipelinePayments))
+  const metaData = await metaDataModel.aggregate(pipelineMeta)
+  const plantsData = await metaDataModel.aggregate(pipelinePlants)
+  const metaPayments = await metaDataModel.aggregate(pipelinePayments)
+  const roundOffPipeline = [
+    {
+      $match: {
+        date: { $gte: sDate, $lt: eDate },
+        type: "ROUNDOFF",
+        ...otherMetaMatch
+      },
+    },
+    {
+      $group:
+      /**
+       * _id: The id of the group.
+       * fieldN: The first field name.
+       */
+      {
+        _id: null,
+        roundOff: {
+          $sum: "$totalRoundOff",
+        },
+      },
+    },
+  ]
+  let variants = []
+  if (plantIds?.length === 1) {
+    console.log('pipeline-variants', JSON.stringify(pipelineVairants))
+    variants = await metaDataModel.aggregate(pipelineVairants)
+
+  }
+  let roundOffs = []
+  if (plantIds?.length === 0 && categoryIds.length === 0) {
+    roundOffs = await metaDataModel.aggregate(roundOffPipeline)
+  }
+  console.log(JSON.stringify(roundOffPipeline))
+  const quantity = await procurmentModel.aggregate(quantityPipeline)
+  console.log(metaData)
+  
+  const timeData = await caluclateGraphs(startDate, endDate, categories, plants)
+  console.log(timeData)
+  const percentages = caluclatePercentagesAll(timeData, startDate, endDate)
+  const resp = { ...metaData[0], ...metaPayments[0], ...quantity[0], ...roundOffs[0], plants: plantsData, variants, ...percentages }
+  resp.sales = resp.sales - _.get(resp, "roundOff", 0)
+  resp.profit = resp.profit - _.get(resp, "roundOff", 0)
+  // console.log(resp)
+
+  res.json(resp)
 }
 
 exports.dahboardMetaGraph = async (req, res) => {
-    const { startDate, endDate, categories, plants } = req.body
-    const sDate = dayjs(startDate, 'YYYY-MM').startOf('month').toDate()
-    const eDate = dayjs(endDate, 'YYYY-MM').endOf('month').toDate()
-    let plantIds=[], categoryIds=[]
-    const otherMetaMatch = {}
-    if(plants?.length){
-       plantIds = plants.map(ele=> mongoose.mongo.ObjectId(ele))
-       otherMetaMatch.procurementId= {$in:plantIds}
-    }else if(categories?.length){
-        categoryIds = categories.map(ele=> mongoose.mongo.ObjectId(ele))
-        otherMetaMatch["categories._id"]= {$in:categoryIds}
+  const { startDate, endDate, categories, plants } = req.body
+  const data = await caluclateGraphs(startDate, endDate, categories, plants)
+  res.json(data)
+}
+
+const caluclateGraphs = async (startDate, endDate, categories, plants) => {
+  const sDate = dayjs(startDate, 'YYYY-MM').startOf('month').toDate()
+  const eDate = dayjs(endDate, 'YYYY-MM').endOf('month').toDate()
+  let plantIds = [], categoryIds = []
+  const otherMetaMatch = {}
+  if (plants?.length) {
+    plantIds = plants.map(ele => mongoose.mongo.ObjectId(ele))
+    otherMetaMatch.procurementId = { $in: plantIds }
+  } else if (categories?.length) {
+    categoryIds = categories.map(ele => mongoose.mongo.ObjectId(ele))
+    otherMetaMatch["categories._id"] = { $in: categoryIds }
+  }
+
+  const pipeline = [
+    {
+      $match: {
+        date: { $gte: sDate, $lt: eDate },
+        ...otherMetaMatch
+      },
+    },
+    {
+      $sort:
+      /**
+       * Provide any number of field/order pairs.
+       */
+      {
+        date: 1,
+      },
+    },
+    {
+      $group: {
+        _id: {
+          year: {
+            $year: "$date",
+          },
+          month: {
+            $month: "$date",
+          },
+        },
+        payments: {
+          $sum: "$amount",
+        },
+        totalSales: {
+          $sum: "$sales.totalSales",
+        },
+        saleQuantity: {
+          $sum: "$sales.totalQuantity",
+        },
+        remainingQuantity: {
+          $last: "$remainingQuantity",
+        },
+        underMaintenanceQuantity: {
+          $last: "$underMaintenanceQuantity",
+        },
+        investment: {
+          $sum: "$procurements.totalPrice",
+        },
+        roundOff: {
+          $sum: "$totalRoundOff"
+        }
+      },
+    },
+    {
+      $addFields:
+      /**
+       * newField: The new field name.
+       * expression: The new field expression.
+       */
+      {
+        month: {
+          $concat: [
+            {
+              $toString: "$_id.year",
+            },
+            "/",
+            {
+              $toString: "$_id.month",
+            },
+          ],
+        },
+        profit: {
+          $subtract: plantIds.length === 0 && categoryIds.length === 0 ? [{ $subtract: ["$totalSales", "$roundOff"] }, "$investment"] : ["$totalSales", "$investment"],
+        },
+        totalSales: {
+          $subtract: plantIds.length === 0 && categoryIds.length === 0 ? ["$totalSales", "$roundOff"] : ["$totalSales", 0],
+        }
+      },
+
+    },
+  ]
+
+  console.log(JSON.stringify(pipeline))
+
+  const metaData = await metaDataModel.aggregate(pipeline)
+
+  return fillMonths(metaData, startDate, endDate)
+  // return metaData
+
+}
+
+const fillMonths = (metaData, startDate, endDate) => {
+  const monhts = []
+  let sDate = dayjs(startDate, 'YYYY-MM').startOf('month')
+  const eDate = dayjs(endDate, 'YYYY-MM').endOf('month')
+  while (eDate.toDate() > sDate.toDate()) {
+    monhts.push(sDate.format('YYYY/M'))
+    sDate = sDate.add(1, 'month')
+  }
+  const initVal = {
+    "payments": 0,
+    "totalSales": 0,
+    "saleQuantity": 0,
+    "remainingQuantity": 0,
+    "underMaintenanceQuantity": 0,
+    "investment": 0,
+    "roundOff": 0,
+    "profit": 0
+  }
+  const finalMeta = monhts.map(ele => {
+    const month = metaData.filter(data => data.month === ele)
+    if (_.isEmpty(month)) {
+      return { ...initVal, month: ele }
+    } else {
+      return month[0]
     }
-    
-    const pipeline = [
-        {
-          $match: {
-            date: { $gte: sDate, $lt: eDate },
-                ...otherMetaMatch
-          },
-        },
-        {
-          $sort:
-            /**
-             * Provide any number of field/order pairs.
-             */
-            {
-              date: 1,
-            },
-        },
-        {
-          $group: {
-            _id: {
-              year: {
-                $year: "$date",
-              },
-              month: {
-                $month: "$date",
-              },
-            },
-            payments: {
-              $sum: "$amount",
-            },
-            totalSales: {
-              $sum: "$sales.totalSales",
-            },
-            saleQuantity: {
-              $sum: "$sales.totalQuantity",
-            },
-            remainingQuantity: {
-              $last: "$remainingQuantity",
-            },
-            underMaintenanceQuantity: {
-              $last: "$underMaintenanceQuantity",
-            },
-            investment: {
-              $sum: "$procurements.totalPrice",
-            },
-            roundOff:{
-                $sum:"$totalRoundOff"
-            }
-          },
-        },
-        {
-          $addFields:
-            /**
-             * newField: The new field name.
-             * expression: The new field expression.
-             */
-            {
-              month: {
-                $concat: [
-                  {
-                    $toString: "$_id.year",
-                  },
-                  "/",
-                  {
-                    $toString: "$_id.month",
-                  },
-                ],
-              },
-              profit: {
-                $subtract: plantIds.length ===0 && categoryIds.length===0 ? [{$subtract:["$totalSales", "$roundOff"]}, "$investment"]: ["$totalSales", "$investment"],
-              },
-              totalSales:{
-                $subtract: plantIds.length ===0 && categoryIds.length===0 ? ["$totalSales", "$roundOff"]: ["$totalSales", 0],
-              }
-            },
-            
-        },
-      ]
-    
-    console.log(JSON.stringify(pipeline))  
-    
-    const metaData = await metaDataModel.aggregate(pipeline)
-    
-    console.log(metaData)
-    res.json(metaData)
+  })
+  return finalMeta;
+}
+
+
+const caluclatePercentagesAll = (data, startDate, endDate) => {
+  const keys = ['payments', 'totalSales', 'saleQuantity', 'investment', 'profit']
+  const sDate = dayjs(startDate, 'YYYY-MM').startOf('month')
+  const eDate = dayjs(endDate, 'YYYY-MM').endOf('month')
+  const percentages ={}
+  keys.map(ele=>{
+    const percentage = caluclatePercentageEach(data, ele, eDate.diff(sDate, 'months'))
+    percentages[ele+'%'] = percentage
+  })
+  return percentages
+  
+}
+
+const caluclatePercentageEach = (data, key, duration) => {
+  let values = data.reduce((acc, val) => acc + val[key], 0)
+  const current =  _.last(data)[key]
+  values = values - current
+  const avg = values/duration ===0 ? 1 : values/duration
+  console.log(avg,key, values, duration,'test')
+  const percentage = ((current-avg) * 100)/avg
+  return percentage
 }
