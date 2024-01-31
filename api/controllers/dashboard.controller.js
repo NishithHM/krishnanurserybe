@@ -271,9 +271,14 @@ exports.dahboardMetaData = async (req, res) => {
   const timeData = await caluclateGraphs(startDate, endDate, categories, plants)
   console.log(timeData)
   const percentages = caluclatePercentagesAll(timeData, startDate, endDate)
-  const resp = { ...metaData[0], ...metaPayments[0], ...quantity[0], ...roundOffs[0], plants: plantsData, variants, ...percentages }
+  let payments = {payments:0}
+  if(!_.isEmpty(metaPayments)){
+    payments = metaPayments[0]
+  }
+  const resp = { ...metaData[0], ...payments, ...quantity[0], ...roundOffs[0], plants: plantsData, variants, ...percentages }
   resp.sales = resp.sales - _.get(resp, "roundOff", 0)
   resp.profit = resp.profit - _.get(resp, "roundOff", 0)
+  resp.inventory = resp.underMaintenanceQuantity + resp.remainingQuantity
   // console.log(resp)
 
   res.json(resp)
@@ -327,7 +332,7 @@ const caluclateGraphs = async (startDate, endDate, categories, plants) => {
         payments: {
           $sum: "$amount",
         },
-        totalSales: {
+        sales: {
           $sum: "$sales.totalSales",
         },
         saleQuantity: {
@@ -366,10 +371,13 @@ const caluclateGraphs = async (startDate, endDate, categories, plants) => {
           ],
         },
         profit: {
-          $subtract: plantIds.length === 0 && categoryIds.length === 0 ? [{ $subtract: ["$totalSales", "$roundOff"] }, "$investment"] : ["$totalSales", "$investment"],
+          $subtract: plantIds.length === 0 && categoryIds.length === 0 ? [{ $subtract: ["$sales", "$roundOff"] }, "$investment"] : ["$totalSales", "$investment"],
         },
-        totalSales: {
-          $subtract: plantIds.length === 0 && categoryIds.length === 0 ? ["$totalSales", "$roundOff"] : ["$totalSales", 0],
+        sales: {
+          $subtract: plantIds.length === 0 && categoryIds.length === 0 ? ["$sales", "$roundOff"] : ["$sales", 0],
+        },
+        inventory:{
+          $add:["$underMaintenanceQuantity", "$remainingQuantity"]
         }
       },
 
@@ -395,13 +403,14 @@ const fillMonths = (metaData, startDate, endDate) => {
   }
   const initVal = {
     "payments": 0,
-    "totalSales": 0,
+    "sales": 0,
     "saleQuantity": 0,
     "remainingQuantity": 0,
     "underMaintenanceQuantity": 0,
     "investment": 0,
     "roundOff": 0,
-    "profit": 0
+    "profit": 0,
+    "inventory": 0
   }
   const finalMeta = monhts.map(ele => {
     const month = metaData.filter(data => data.month === ele)

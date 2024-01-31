@@ -9,9 +9,10 @@ const { default: mongoose } = require('mongoose');
 const paymentModel = require('../api/models/payment.model');
 const billingsModel = require('../api/models/billings.model');
 exports.dailyCron = () => {
-  cron.schedule("0 0 0 * * *", () => {
+  cron.schedule("0 0 * * *", () => {
     deleteLoggers()
-    this.caluclateMetaData(dayjs().date())
+    console.log('running')
+    this.caluclateMetaData(dayjs().startOf('day').add(330,'minutes').toDate())
   })
 }
 
@@ -41,7 +42,7 @@ const deleteLoggers = async () => {
 }
 
 exports.caluclateMetaData = async (currentDate) => {
-  const prevDate = dayjs(currentDate).subtract(1, 'days').startOf('day').toDate()
+  const prevDate = dayjs(currentDate).subtract(1, 'days').startOf('day').add(330).toDate()
   loggers.info('caluclating-meta-data', currentDate, prevDate)
   console.log('caluclating-meta-data', currentDate, prevDate)
   const procurmentPipeline = [
@@ -286,6 +287,7 @@ exports.caluclateMetaData = async (currentDate) => {
     dateDate.procurementId = dateDate._id
     delete dateDate._id
     const metaData = new MetaData({ ...dateDate })
+    console.log(JSON.stringify(metaData))
     await metaData.save()
     await new Promise((res) => setTimeout(() => res(), 300))
   }
@@ -336,11 +338,13 @@ exports.caluclateMetaData = async (currentDate) => {
     delete paymentData._id
     const metaData = new MetaData({ ...paymentData[0], type:'PAYMENT', date:currentDate})
     await metaData.save()
+    console.log(JSON.stringify(metaData))
   }
   const roundOffsData = await billingsModel.aggregate(roundOffPipeline)
   if(roundOffsData[0]?.totalRoundOff){
     delete roundOffsData._id
     const metaData = new MetaData({ ...roundOffsData[0], type:'ROUNDOFF', date:currentDate})
+    console.log(JSON.stringify(metaData))
     await metaData.save()
   }
 }
