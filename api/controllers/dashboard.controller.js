@@ -431,7 +431,7 @@ const caluclatePercentagesAll = (data, startDate, endDate) => {
   const percentages ={}
   keys.map(ele=>{
     const percentage = caluclatePercentageEach(data, ele, eDate.diff(sDate, 'months'))
-    percentages[ele+'%'] = percentage
+    percentages[ele+'_perecntage'] = percentage
   })
   return percentages
   
