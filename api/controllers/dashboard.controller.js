@@ -170,7 +170,7 @@ exports.dahboardMetaData = async (req, res) => {
     },
     {
       $group: {
-        _id: "$bill_data._id",
+        _id: "$bill_data._id.en.name",
         quantity: {
           $sum: "$bill_data.quantity",
         },
@@ -266,7 +266,7 @@ exports.dahboardMetaData = async (req, res) => {
   }
   console.log(JSON.stringify(roundOffPipeline))
   const quantity = await procurmentModel.aggregate(quantityPipeline)
-  console.log(metaData)
+  console.log(variants, 'variants')
   
   const timeData = await caluclateGraphs(startDate, endDate, categories, plants)
   console.log(timeData)
