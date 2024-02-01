@@ -289,7 +289,7 @@ exports.caluclateMetaData = async (currentDate) => {
     const metaData = new MetaData({ ...dateDate })
     console.log(JSON.stringify(metaData))
     await metaData.save()
-    await new Promise((res) => setTimeout(() => res(), 300))
+    await new Promise((res) => setTimeout(() => res(), 100))
   }
   const paymentPipeline = [
     {

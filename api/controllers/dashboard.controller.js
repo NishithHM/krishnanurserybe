@@ -371,7 +371,7 @@ const caluclateGraphs = async (startDate, endDate, categories, plants) => {
           ],
         },
         profit: {
-          $subtract: plantIds.length === 0 && categoryIds.length === 0 ? [{ $subtract: ["$sales", "$roundOff"] }, "$investment"] : ["$totalSales", "$investment"],
+          $subtract: plantIds.length === 0 && categoryIds.length === 0 ? [{ $subtract: ["$sales", "$roundOff"] }, "$investment"] : ["$sales", "$investment"],
         },
         sales: {
           $subtract: plantIds.length === 0 && categoryIds.length === 0 ? ["$sales", "$roundOff"] : ["$sales", 0],
@@ -425,7 +425,7 @@ const fillMonths = (metaData, startDate, endDate) => {
 
 
 const caluclatePercentagesAll = (data, startDate, endDate) => {
-  const keys = ['payments', 'totalSales', 'saleQuantity', 'investment', 'profit']
+  const keys = ['payments', 'sales', 'saleQuantity', 'investment', 'profit']
   const sDate = dayjs(startDate, 'YYYY-MM').startOf('month')
   const eDate = dayjs(endDate, 'YYYY-MM').endOf('month')
   const percentages ={}
@@ -442,7 +442,7 @@ const caluclatePercentageEach = (data, key, duration) => {
   const current =  _.last(data)[key]
   values = values - current
   const avg = values/duration ===0 ? 1 : values/duration
-  console.log(avg,key, values, duration,'test')
-  const percentage = ((current-avg) * 100)/avg
+  console.log(avg,key, current, duration,'percentage')
+  const percentage = ((current-avg) * 100)/Math.abs(avg)
   return percentage
 }
