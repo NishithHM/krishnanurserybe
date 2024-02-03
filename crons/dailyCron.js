@@ -43,8 +43,8 @@ const deleteLoggers = async () => {
 
 exports.caluclateMetaData = async (currentDate) => {
   const prevDate = dayjs(currentDate).subtract(1, 'days').startOf('day').add(330).toDate()
-  loggers.info('caluclating-meta-data', currentDate, prevDate)
-  console.log('caluclating-meta-data', currentDate, prevDate)
+  // loggers.info('caluclating-meta-data', currentDate, prevDate)
+  // console.log('caluclating-meta-data', currentDate, prevDate)
   const procurmentPipeline = [
     {
       $lookup: {
@@ -99,11 +99,6 @@ exports.caluclateMetaData = async (currentDate) => {
               },
               status: "BILLED",
               type: "NURSERY",
-              customerId: {
-                $ne: mongoose.mongo.ObjectId(
-                  "651aebbc9208921fc8f10be3"
-                ),
-              },
             },
           },
           {
@@ -281,7 +276,7 @@ exports.caluclateMetaData = async (currentDate) => {
     },
   ]
   const plantData = await Procurment.aggregate(procurmentPipeline)
-  console.log(plantData.length)
+  // console.log(plantData.length)
   for (let i = 0; i < plantData.length; i++) {
     const dateDate = plantData[i]
     dateDate.procurementId = dateDate._id
@@ -289,7 +284,7 @@ exports.caluclateMetaData = async (currentDate) => {
     const metaData = new MetaData({ ...dateDate })
     console.log(JSON.stringify(metaData))
     await metaData.save()
-    await new Promise((res) => setTimeout(() => res(), 100))
+    // await new Promise((res) => setTimeout(() => res(), 100))
   }
   const paymentPipeline = [
     {
@@ -338,13 +333,13 @@ exports.caluclateMetaData = async (currentDate) => {
     delete paymentData._id
     const metaData = new MetaData({ ...paymentData[0], type:'PAYMENT', date:currentDate})
     await metaData.save()
-    console.log(JSON.stringify(metaData))
+    // console.log(JSON.stringify(metaData))
   }
   const roundOffsData = await billingsModel.aggregate(roundOffPipeline)
   if(roundOffsData[0]?.totalRoundOff){
     delete roundOffsData._id
     const metaData = new MetaData({ ...roundOffsData[0], type:'ROUNDOFF', date:currentDate})
-    console.log(JSON.stringify(metaData))
+    // console.log(JSON.stringify(metaData))
     await metaData.save()
   }
 }

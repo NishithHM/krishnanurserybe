@@ -187,7 +187,7 @@ exports.dahboardMetaData = async (req, res) => {
         10,
     },
   ]
-  console.log(JSON.stringify(pipelineMeta))
+  console.log(JSON.stringify(pipelineMeta), "pipelineMeta")
   const pipelinePayments = [
     {
       $match: {
@@ -349,7 +349,10 @@ const caluclateGraphs = async (startDate, endDate, categories, plants) => {
         },
         roundOff: {
           $sum: "$totalRoundOff"
-        }
+        },
+        wastages:{
+          $sum: "$damages"
+        },
       },
     },
     {
@@ -384,7 +387,7 @@ const caluclateGraphs = async (startDate, endDate, categories, plants) => {
     },
   ]
 
-  console.log(JSON.stringify(pipeline))
+  console.log(JSON.stringify(pipeline), 'graphs')
 
   const metaData = await metaDataModel.aggregate(pipeline)
 
@@ -410,7 +413,8 @@ const fillMonths = (metaData, startDate, endDate) => {
     "investment": 0,
     "roundOff": 0,
     "profit": 0,
-    "inventory": 0
+    "inventory": 0,
+    "wastages": 0
   }
   const finalMeta = monhts.map(ele => {
     const month = metaData.filter(data => data.month === ele)
@@ -425,7 +429,7 @@ const fillMonths = (metaData, startDate, endDate) => {
 
 
 const caluclatePercentagesAll = (data, startDate, endDate) => {
-  const keys = ['payments', 'sales', 'saleQuantity', 'investment', 'profit']
+  const keys = ['payments', 'sales', 'saleQuantity', 'investment', 'profit', 'wastages']
   const sDate = dayjs(startDate, 'YYYY-MM').startOf('month')
   const eDate = dayjs(endDate, 'YYYY-MM').endOf('month')
   const percentages ={}
