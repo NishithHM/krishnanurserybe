@@ -131,6 +131,18 @@ const BillingHistory = new mongoose.Schema({
         type: Date,
         default: null
     },
+    extras:{
+        type:[{name:{
+            type: String,
+            lowercase: true
+        },
+        price:{
+            type: Number
+        }}]
+    },
+    totalExtras:{
+        type: Number
+    }
 }, {
     timestamps: true
 })

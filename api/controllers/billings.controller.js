@@ -12,7 +12,7 @@ const Tracker = require('../models/tracker.model');
 
 exports.addToCart = async (req, res) => {
     try {
-        const { customerNumber, customerName, customerDob, items, customerId, isWholeSale } = req.body;
+        const { customerNumber, customerName, customerDob, items, customerId, isWholeSale, extras } = req.body;
         const soldBy = {
             _id: req?.token?.id,
             name: req?.token?.name
@@ -24,11 +24,11 @@ exports.addToCart = async (req, res) => {
             customerRes = await Customer.findById(customerId);
         }
         if (!isEmpty(customerRes)) {
-            const { errors, formattedItems, totalPrice, discount } = await validatePricesAndQuantityAndFormatItems(items, isWholeSale)
+            const { errors, formattedItems, totalPrice, discount, totalExtras } = await validatePricesAndQuantityAndFormatItems(items, isWholeSale, extras)
             if (isEmpty(errors)) {
                 if (formattedItems.length > 0) {
                    
-                    const billing = new Billing({ customerName: customerRes.name, customerId: customerRes._id, customerNumber: customerRes.phoneNumber, soldBy, items: formattedItems, totalPrice, discount, status: "CART", type:'NURSERY' , isWholeSale, isApproved: false })
+                    const billing = new Billing({ customerName: customerRes.name, customerId: customerRes._id, customerNumber: customerRes.phoneNumber, soldBy, items: formattedItems, totalPrice, discount, status: "CART", type:'NURSERY' , isWholeSale, isApproved: false, extras, totalExtras })
                     const cartDetails = await billing.save()
                     res.status(200).send(cartDetails)
                     if(!customerId){
@@ -56,10 +56,10 @@ exports.addToCart = async (req, res) => {
 
 exports.updateCart = async (req, res) => {
     try {
-        const { items, id , isWholeSale} = req.body;
+        const { items, id , isWholeSale, extras} = req.body;
         const billData = await Billing.findById(id)
         if (billData) {
-            const { errors, formattedItems, totalPrice, discount } = await validatePricesAndQuantityAndFormatItems(items, isWholeSale)
+            const { errors, formattedItems, totalPrice, discount, totalExtras } = await validatePricesAndQuantityAndFormatItems(items, isWholeSale, extras)
             if (isEmpty(errors)) {
                 if (formattedItems.length > 0) {
                     billData.items = formattedItems;
@@ -67,6 +67,8 @@ exports.updateCart = async (req, res) => {
                     billData.discount = discount;
                     billData.isWholeSale = isWholeSale
                     billData.isApproved = false
+                    billData.extras = extras;
+                    billData.totalExtras = totalExtras;
                     const cartDetails = await billData.save()
                     res.status(200).send(cartDetails)
                 } else {
@@ -111,7 +113,7 @@ exports.confirmCart = async (req, res) => {
                         }
                     })
                     const isWholeSale = billData.isWholeSale
-                    const { errors } = await validatePricesAndQuantityAndFormatItems(itemList, isWholeSale)
+                    const { errors } = await validatePricesAndQuantityAndFormatItems(itemList, isWholeSale, billData.extras)
                     if (isEmpty(errors)) {
                         const billedBy = {
                             _id: req?.token?.id,
@@ -266,7 +268,7 @@ exports.getCustomerCart = async (req, res) => {
 
 }
 
-const validatePricesAndQuantityAndFormatItems = async (items, isWholeSale) => {
+const validatePricesAndQuantityAndFormatItems = async (items, isWholeSale, extras=[]) => {
     const procurements = uniq(items.map(ele => new mongoose.mongo.ObjectId(ele.procurementId)))
     const variants = uniq(items.map(ele => new mongoose.mongo.ObjectId(ele.variantId)))
     const itemsProcurmentAndVariants = items.map(ele=> ele.variantId+ele.procurementId)
@@ -346,11 +348,9 @@ const validatePricesAndQuantityAndFormatItems = async (items, isWholeSale) => {
         totalPrice = totalPrice + price * quantity;
         discount = discount + (maxPrice - price) * quantity;
     }
-
-    return { errors, formattedItems, totalPrice, discount }
-
-
-
+    const totalExtras = extras.reduce((acc, val)=> acc+parseInt(val.price), 0)
+    totalPrice = totalPrice + totalExtras
+    return { errors, formattedItems, totalPrice, discount, totalExtras }
 }
 
 const validateRoundOff = (totalPrice, amount) => {

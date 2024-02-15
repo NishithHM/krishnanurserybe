@@ -325,6 +325,9 @@ exports.caluclateMetaData = async (currentDate) => {
           totalRoundOff: {
             $sum: "$roundOff",
           },
+          totalExtras:{
+            $sum: "$totalExtras"
+          }
         },
     },
   ]
