@@ -251,6 +251,9 @@ exports.dahboardMetaData = async (req, res) => {
         roundOff: {
           $sum: "$totalRoundOff",
         },
+        totalExtras: {
+          $sum: "$totalExtras"
+        },
       },
     },
   ]
@@ -275,9 +278,9 @@ exports.dahboardMetaData = async (req, res) => {
   if(!_.isEmpty(metaPayments)){
     payments = metaPayments[0]
   }
-  const resp = { ...metaData[0], ...payments, ...quantity[0], ...roundOffs[0], plants: plantsData, variants, ...percentages }
-  resp.sales = resp.sales - _.get(resp, "roundOff", 0)
-  resp.profit = resp.profit - _.get(resp, "roundOff", 0)
+  const resp = { ...metaData[0], ...payments, ...quantity[0], ...roundOffs[0], ...roundOffs[1], plants: plantsData, variants, ...percentages }
+  resp.sales = resp.sales - _.get(resp, "roundOff", 0) + _.get(resp, "totalExtras", 0)
+  resp.profit = resp.profit - _.get(resp, "roundOff", 0) + _.get(resp, "totalExtras", 0)
   resp.inventory = resp.underMaintenanceQuantity + resp.remainingQuantity
   // console.log(resp)
 
@@ -350,6 +353,9 @@ const caluclateGraphs = async (startDate, endDate, categories, plants) => {
         roundOff: {
           $sum: "$totalRoundOff"
         },
+        totalExtras: {
+          $sum: "$totalExtras"
+        },
         wastages:{
           $sum: "$damages"
         },
@@ -414,7 +420,8 @@ const fillMonths = (metaData, startDate, endDate) => {
     "roundOff": 0,
     "profit": 0,
     "inventory": 0,
-    "wastages": 0
+    "wastages": 0,
+    "totalExtras": 0
   }
   const finalMeta = monhts.map(ele => {
     const month = metaData.filter(data => data.month === ele)
