@@ -110,6 +110,10 @@ exports.setProcurementMinQuantitySchema = Joi.object().keys({
     minimumQuantity: Joi.number().required()
 })
 
+exports.uploadPamphletSchema = Joi.object().keys({
+    id: Joi.string().required(),
+});
+
 exports.getProcurementsLowSchema = Joi.object().keys({
     pageNumber: Joi.number(),
     isCount: Joi.boolean(),

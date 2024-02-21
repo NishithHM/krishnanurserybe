@@ -6,7 +6,7 @@ const mongoose = require("mongoose");
 const uuid = require("uuid");
 const dayjs = require("dayjs");
 const uniq = require("lodash/uniq");
-const { handleMongoError, uploadFile } = require("../utils");
+const { handleMongoError, uploadFile, deleteFile } = require("../utils");
 const loggers = require("../../loggers");
 const { isEmpty, isNumber } = require("lodash");
 
@@ -1218,3 +1218,41 @@ exports.getOrderIdDetails = async (req, res) => {
     res.status(500).send(err);
   }
 };
+
+exports.uploadPhamplet=async(req, res)=>{
+  const {id} = req.body
+  const keys = [];
+  const paths = [];
+  if (!isEmpty(req.files)) {
+    req.files.map((ele) => {
+      const key = uuid.v4();
+      keys.push(key);
+      const [name, type] = ele?.filename ? ele.filename.split(".") : [];
+      paths.push(`nursery/procurements/${key}.${type}`);
+    });
+  } else {
+    res.status(422).json({
+      message: "Damaged Images are required",
+    });
+    return;
+  }
+  const procurment = await Procurement.findById(id)
+  if(procurment.pamphlet){
+    const [path, key] = procurment.pamphlet.split('nursery/procurements')
+    await deleteFile({path:'nursery/procurements', key})
+  }
+  procurment.pamphlet = paths[0]
+  if (!isEmpty(req.files)) {
+    req.files.map((ele, index) => {
+      const [name, type] = ele.filename ? ele.filename.split(".") : [];
+      uploadFile({
+        file: ele,
+        path: "nursery/procurements",
+        key: `${keys[index]}.${type}`,
+      });
+    });
+  }
+  res.json({
+    message: "Successfully Added",
+  });
+}

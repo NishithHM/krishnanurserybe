@@ -56,6 +56,24 @@ exports.uploadFile = async ({ file, path, key }) => {
   }
 };
 
+exports.deleteFile = async ({ file, path, key }) => {
+  const AWS = require("aws-sdk");
+  const s3 = new AWS.S3();
+  const uploadParams = {
+    Bucket: `${process.env.AWS_BUCKET_NAME}/${process.env.ENV}/${path}`,
+    Key: key,
+  };
+  try {
+    const res = await s3.deleteObject(uploadParams).promise();
+    console.log(JSON.stringify(res));
+    return res;
+  } catch (error) {
+    console.error(error, error.stack);
+  } finally {
+    fs.unlinkSync(file.path);
+  }
+};
+
 exports.downloadFile = async (req, res) => {
   try {
     const { path } = req.body;

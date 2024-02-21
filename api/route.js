@@ -9,7 +9,7 @@ const { authWall, bodyValidator, paramsToBody } = require('./middlewares/auth.mi
 const { createUserSchema, loginUserSchema, deleteUserSchema, getUsersSchema } = require('./validators/user.validators')
 const { createCategorySchema, deleteCategorySchema, getCategorySchema } = require('./validators/categories.validators')
 const { createCategory, deleteCategoryById, getAllCategories } = require('./controllers/categories.controller')
-const { requestProcurementSchema, getProcurementsSchema, getProcurementsHistorySchema, addVariantsSchema, setProcurementMinQuantitySchema, getProcurementsLowSchema, getOrderIdSchema, placeOrderSchema, rejectProcurementSchema, verifyProcurementSchema, addInvoiceProcurementSchema, getOrdersProcurementSchema, updateDeliveryProcurementSchema, updateDamageProcurementSchema, getDamagesSchema, updateMaintenanceProcurementSchema, getProcurementIdSchema } = require('./validators/procurement.validators')
+const { requestProcurementSchema, getProcurementsSchema, getProcurementsHistorySchema, addVariantsSchema, setProcurementMinQuantitySchema, getProcurementsLowSchema, getOrderIdSchema, placeOrderSchema, rejectProcurementSchema, verifyProcurementSchema, addInvoiceProcurementSchema, getOrdersProcurementSchema, updateDeliveryProcurementSchema, updateDamageProcurementSchema, getDamagesSchema, updateMaintenanceProcurementSchema, getProcurementIdSchema, uploadPamphletSchema } = require('./validators/procurement.validators')
 const { requestOrder, getAllProcurements, getAllProcurementsHistory, addProcurementVariants, setMinimumQuantity, getLowProcurements, placeOrder, rejectOrderRequest, verifyOrder, uploadInvoiceToOrder, getAllOrders, updateDeliveryDate, updateDamage, getDamageList, getProcurementById, updateMaintenance, getVendorPlacedOrders, getOrderIdDetails } = require('./controllers/procurement.controller')
 const { customerSchema, getCustomerSchema } = require('./validators/customer.validators')
 const { addToCartSchema, updateCartSchema, confirmCartSchema, getCustomerCartSchema, getBillingHistory, getBillApproveSchema } = require('./validators/billing.validators')
@@ -86,7 +86,7 @@ router.get('/api/procurements/report-maintenance/:id', [authWall(['sales']), par
 router.get('/api/procurements/:id', [authWall(['sales', 'procurement']), paramsToBody(['id'], 'params'), bodyValidator(getProcurementIdSchema)], getProcurementById)
 router.get('/api/procurements/vendor-orders/:id', [authWall(['procurement']), paramsToBody(['id'], 'params'), bodyValidator(getProcurementIdSchema)], getVendorPlacedOrders)
 router.get('/api/procurements/order/:id', [authWall(['procurement']), paramsToBody(['id'], 'params'),  paramsToBody(['page'], 'query'), bodyValidator(getOrderIdSchema)], getOrderIdDetails)
-
+router.post('/api/procurements/pamphlet/:id', [authWall(['admin']), uploadInvoice.array('images', 1), paramsToBody(['body'], 'formData'), paramsToBody(['id'], 'params'), bodyValidator(uploadPamphletSchema)], setMinimumQuantity)
 
 // vendors
 router.get('/api/vendors/getAll', [authWall(['procurement', 'admin']), paramsToBody(['search', 'type'], 'query'), bodyValidator(getVendorSchema)], getVendorList)

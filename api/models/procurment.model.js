@@ -63,6 +63,9 @@ const Procurement = new mongoose.Schema({
         type: Number,
         default: 0,
     },
+    pamphlet:{
+        type: String
+    }
 }, {
     timestamps: true
 })
