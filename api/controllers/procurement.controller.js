@@ -525,6 +525,7 @@ exports.getAllProcurements = async (req, res) => {
       "variants",
       "minimumQuantity",
       "categories",
+      "pamphlet"
     ],
     procurement: [
       "_id",
@@ -1252,6 +1253,7 @@ exports.uploadPhamplet=async(req, res)=>{
       });
     });
   }
+  await procurment.save()
   res.json({
     message: "Successfully Added",
   });
