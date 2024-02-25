@@ -94,7 +94,7 @@ exports.downloadBillingExcel = async (req, res) => {
     const itempSpreaded= spreadJson(bills,headers, 'items')
     await writeExcel(headers, itempSpreaded, 'billing')
     res.header("Content-Disposition",
-    "attachment; filename=new-excel-file.xls");
+    "attachment; filename=billing.xls");
     res.header("Content-Type","application/octet-stream")
     res.header("count",count)
     res.header("isNext",(count-1000*1) > 0)
