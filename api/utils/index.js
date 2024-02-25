@@ -70,7 +70,7 @@ exports.deleteFile = async ({ file, path, key }) => {
   } catch (error) {
     console.error(error, error.stack);
   } finally {
-    fs.unlinkSync(file.path);
+    // fs.unlinkSync(file.path);
   }
 };
 
