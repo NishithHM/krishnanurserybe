@@ -1226,7 +1226,7 @@ exports.uploadPhamplet=async(req, res)=>{
   const paths = [];
   if (!isEmpty(req.files)) {
     req.files.map((ele) => {
-      const key = uuid.v4();
+      const key = "phamphlet"
       keys.push(key);
       const [name, type] = ele?.filename ? ele.filename.split(".") : [];
       paths.push(`nursery/procurements/${key}.${type}`);
@@ -1239,8 +1239,8 @@ exports.uploadPhamplet=async(req, res)=>{
   }
   const procurment = await Procurement.findById(id)
   if(procurment.pamphlet){
-    const [path, key] = procurment.pamphlet.split('nursery/procurements')
-    await deleteFile({path:'nursery/procurements', key})
+    const key ="phamphlet"
+    await deleteFile({path:'nursery/procurements/', key})
   }
   procurment.pamphlet = paths[0]
   if (!isEmpty(req.files)) {

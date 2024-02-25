@@ -58,7 +58,9 @@ exports.bodyValidator = (schema) => (req, res, next) => {
 exports.paramsToBody =(listOfParams, type)=> (req, res, next) =>{
     //type params / query / formData
     if(type === 'formData'){
-        req.body = {...JSON.parse(req.body[listOfParams[0]])}
+        if( req.body[listOfParams[0]]){
+            req.body = {...JSON.parse(req.body[listOfParams[0]])}
+        }
     }else{
         const params = {}
         for(let i=0; i<listOfParams.length; i++){
