@@ -95,6 +95,7 @@ exports.downloadBillingExcel = async (req, res) => {
     await writeExcel(headers, itempSpreaded, 'billing')
     res.header("Content-Disposition",
     "attachment; filename=billing.xls");
+    res.header("Access-Control-Expose-Headers", "*")
     res.header("Content-Type","application/octet-stream")
     res.header("count",count)
     res.header("isNext",(count-1000*1) > 0)
@@ -155,6 +156,7 @@ exports.downloadWasteMgmtExcel = async (req, res) => {
     res.header("Content-Type","application/octet-stream")
     res.header("count",count)
     res.header("isNext",(count-1000*1) > 0)
+    res.header("Access-Control-Expose-Headers", "*")
     res.sendFile('billing.xlsx', { root: __dirname });
 }
 
@@ -238,6 +240,7 @@ exports.downloadOrderMgmtExcel = async (req, res) => {
     res.header("Content-Type","application/octet-stream")
     res.header("count",count)
     res.header("isNext",(count-1000*1) > 0)
+    res.header("Access-Control-Expose-Headers", "*")
     res.sendFile('orders.xlsx', { root: __dirname });
 }
 
