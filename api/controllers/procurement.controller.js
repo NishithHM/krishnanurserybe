@@ -544,6 +544,7 @@ exports.getAllProcurements = async (req, res) => {
       "categories",
       "remainingQuantity",
       "underMaintenanceQuantity",
+      "pamphlet"
     ],
     preSales: ["_id", "names", "variants", "categories"],
   };
