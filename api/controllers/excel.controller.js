@@ -157,7 +157,7 @@ exports.downloadWasteMgmtExcel = async (req, res) => {
     res.header("count",count)
     res.header("isNext",(count-1000*1) > 0)
     res.header("Access-Control-Expose-Headers", "*")
-    res.sendFile('billing.xlsx', { root: __dirname });
+    res.sendFile('damages.xlsx', { root: __dirname });
 }
 
 exports.downloadOrderMgmtExcel = async (req, res) => {
