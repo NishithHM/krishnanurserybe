@@ -21,6 +21,15 @@ const customerSchema = new mongoose.Schema({
         type: Date,
         required: true
     },
+    address:{
+        type:String
+    },
+    shippingAddress:{
+        type:String
+    },
+    gst:{
+        type:String
+    },
     interestedCategories: {
         type: [{
             _id: {

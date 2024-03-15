@@ -44,14 +44,14 @@ exports.getAgriItemDetails = async (req, res) => {
 
 exports.agriAddToCart = async (req, res)=>{
       try {
-            const { customerNumber, customerName, customerDob, items, customerId } = req.body;
+            const { customerNumber, customerName, customerDob, items, customerId, customerAddress, customerGst, shippingAddress } = req.body;
             const soldBy = {
                 _id: req?.token?.id,
                 name: req?.token?.name
             }
             let customerRes
             if (!customerId) {
-                 customerRes = new Customer({ phoneNumber: parseInt(customerNumber, 10), dob: dayjs(customerDob, 'YYYY-MM-DD').toDate(), name: customerName })
+                 customerRes = new Customer({ phoneNumber: parseInt(customerNumber, 10), dob: dayjs(customerDob, 'YYYY-MM-DD').toDate(), name: customerName, gst: customerGst, address: customerAddress, shippingAddress })
             } else {
                 customerRes = await Customer.findById(customerId);
             }
@@ -61,7 +61,7 @@ exports.agriAddToCart = async (req, res)=>{
                 if (isEmpty(errors)) {
                     if (formattedItems.length > 0) {
                        
-                        const billing = new Billing({ customerName: customerRes.name, customerId: customerRes._id, customerNumber: customerRes.phoneNumber, soldBy, items: formattedItems, totalPrice, discount, status: "CART", type: 'AGRI', gstAmount, totalWithOutGst })
+                        const billing = new Billing({ customerName: customerRes.name, customerId: customerRes._id, customerNumber: customerRes.phoneNumber, shippingAddress: customerRes.shippingAddress, customerAddress: customerRes.address, customerGst: customerRes.gst, soldBy, items: formattedItems, totalPrice, discount, status: "CART", type: 'AGRI', gstAmount, totalWithOutGst })
                         const cartDetails = await billing.save()
                         res.status(200).send(cartDetails)
                         if(!customerId){
@@ -289,7 +289,7 @@ const validatePricesAndQuantityAndFormatItems =async (items)=>{
         const variantData = await AgriVariantModel.findOne({type, name: typeName})
         const currentGST = (price*quantity * variantData.gst)/100
         gstAmount =  gstAmount + currentGST 
-        formattedItems.push({ procurementId: itemProcurmentId, procurementName: {en:{name:procurementNames}}, quantity, mrp: maxPrice, rate: price, variant, type, typeName, gstAmount, rateWithGst:price+currentGST})
+        formattedItems.push({ procurementId: itemProcurmentId, procurementName: {en:{name:procurementNames}}, quantity, mrp: maxPrice, rate: price, variant, type, typeName, gstAmount, rateWithGst:price+currentGST, hsnCode: variantData.hsnCode, gst: variantData.gst})
         totalPrice = totalPrice + price * quantity + currentGST;
         discount = discount + (maxPrice - price) * quantity;
         
