@@ -19,6 +19,15 @@ const BillingHistory = new mongoose.Schema({
             }
         }
     },
+    shippingAddress:{
+        type: String
+    },
+    customerAddress:{
+        type: String
+    },
+    customerGst:{
+        type: String
+    },
     items: {
         type: [{
             procurementId: {
@@ -64,6 +73,12 @@ const BillingHistory = new mongoose.Schema({
             },
             rateWithGst:{
                 type:Number
+            },
+            hsnCode:{
+                type:String
+            },
+            gst:{
+                type: Number
             }
         }],
     },
