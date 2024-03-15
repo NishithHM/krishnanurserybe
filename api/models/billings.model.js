@@ -58,6 +58,12 @@ const BillingHistory = new mongoose.Schema({
             },
             typeName: {
                 type: String,
+            },
+            gstAmount:{
+                type:Number
+            },
+            rateWithGst:{
+                type:Number
             }
         }],
     },
@@ -116,6 +122,13 @@ const BillingHistory = new mongoose.Schema({
     isApproved:{
         type: Boolean,
         default: false
+    },
+    gstAmount:{
+        type:Number,
+        default: 0
+    },
+    totalWithOutGst:{
+        type:Number,
     },
     approvedBy: {
         name: {
