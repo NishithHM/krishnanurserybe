@@ -6,7 +6,7 @@ const { handleMongoError } = require('../utils')
 
 exports.addAgriVariant = async (req, res)=>{
     try {
-        const {type, name, options} = req.body
+        const {type, name, options, gst, hsnCode} = req.body
         checkAndAddType('type', type)
         const optionsWithDefault =  options.map(({optionName, optionValues})=>{
             const newOptions = [...optionValues]
@@ -17,7 +17,7 @@ exports.addAgriVariant = async (req, res)=>{
             return {optionName: optionName, optionValues: newOptions}
             
         })
-        const agriVariant = new AgriVariants({type, name, options: optionsWithDefault, isActive: true})
+        const agriVariant = new AgriVariants({type, name, options: optionsWithDefault, isActive: true,gst, hsnCode})
         await agriVariant.save()
         res.send({
             message:'Agri Variant added Succesfully'
@@ -33,7 +33,7 @@ exports.addAgriVariant = async (req, res)=>{
 
 exports.updateAgriVariant = async (req, res)=>{
     try {
-        const {options, id} = req.body
+        const {options, id, gst, hsnCode} = req.body
         const agriVariant = await AgriVariants.findById(id)
         const optionsWithDefault =  options.map(({optionName, optionValues})=>{
             const newOptions = [...optionValues]
@@ -45,6 +45,8 @@ exports.updateAgriVariant = async (req, res)=>{
             
         })
         agriVariant.options = optionsWithDefault
+        agriVariant.gst = gst
+        agriVariant.hsnCode = hsnCode
         await agriVariant.save()
         res.send({
             message:'Agri Variant updated Succesfully'

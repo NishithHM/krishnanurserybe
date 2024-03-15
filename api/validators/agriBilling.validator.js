@@ -32,5 +32,5 @@ exports.updateAgriCartSchema = Joi.object().keys({
 
 exports.confirmAgriCartSchema = Joi.object().keys({
     id: Joi.string().required(),
-    roundOff: Joi.number().min(0).max(500).default(0),
+    roundOff: Joi.number().min(0).max(1).default(0),
 });

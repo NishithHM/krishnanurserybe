@@ -7,6 +7,7 @@ const { default: mongoose } = require("mongoose");
 const Tracker = require("../models/tracker.model");
 const loggers = require("../../loggers");
 const dayjs = require("dayjs");
+const AgriVariantModel = require("../models/agriVariants.model");
 
 
 exports.getAgriItemDetails = async (req, res) => {
@@ -55,12 +56,12 @@ exports.agriAddToCart = async (req, res)=>{
                 customerRes = await Customer.findById(customerId);
             }
             if (!isEmpty(customerRes)) {
-                const { errors, formattedItems, totalPrice, discount } = await validatePricesAndQuantityAndFormatItems(items)
+                const { errors, formattedItems, totalPrice, discount, gstAmount, totalWithOutGst } = await validatePricesAndQuantityAndFormatItems(items)
                 console.log(formattedItems)
                 if (isEmpty(errors)) {
                     if (formattedItems.length > 0) {
                        
-                        const billing = new Billing({ customerName: customerRes.name, customerId: customerRes._id, customerNumber: customerRes.phoneNumber, soldBy, items: formattedItems, totalPrice, discount, status: "CART", type: 'AGRI' })
+                        const billing = new Billing({ customerName: customerRes.name, customerId: customerRes._id, customerNumber: customerRes.phoneNumber, soldBy, items: formattedItems, totalPrice, discount, status: "CART", type: 'AGRI', gstAmount, totalWithOutGst })
                         const cartDetails = await billing.save()
                         res.status(200).send(cartDetails)
                         if(!customerId){
@@ -90,13 +91,14 @@ exports.updateAgriCart = async (req, res) => {
           const { items, id } = req.body;
           const billData = await Billing.findById(id)
           if (billData) {
-              const { errors, formattedItems, totalPrice, discount } = await validatePricesAndQuantityAndFormatItems(items)
+              const { errors, formattedItems, totalPrice, discount, gstAmount, totalWithOutGst } = await validatePricesAndQuantityAndFormatItems(items)
               if (isEmpty(errors)) {
                   if (formattedItems.length > 0) {
                       billData.items = formattedItems;
                       billData.totalPrice = totalPrice;
                       billData.discount = discount;
-                      
+                      billData.gstAmount = gstAmount
+                      billData.totalWithOutGst = totalWithOutGst
                       const cartDetails = await billData.save()
                       res.status(200).send(cartDetails)
                   } else {
@@ -257,10 +259,11 @@ const validatePricesAndQuantityAndFormatItems =async (items)=>{
             return {errors}
       }
       const agriProcs = await AgriProcurementModel.find({_id:{$in: procurements}})
-      console.log(agriProcs)
+      console.log(JSON.stringify(agriProcs))
       const formattedItems = []
     let totalPrice = 0;
     let discount = 0
+    let gstAmount = 0
     for (const element of agriProcs) {
         const {
             _id: resultProcurementId,
@@ -283,13 +286,17 @@ const validatePricesAndQuantityAndFormatItems =async (items)=>{
         if (quantity > remainingQuantity) {
             errors.push(`Ooops!! stock of "${procurementNames}" is low, maximum order can be "${remainingQuantity}"`)
         }
-        formattedItems.push({ procurementId: itemProcurmentId, procurementName: {en:{name:procurementNames}}, quantity, mrp: maxPrice, rate: price, variant, type, typeName})
-        totalPrice = totalPrice + price * quantity;
+        const variantData = await AgriVariantModel.findOne({type, name: typeName})
+        const currentGST = (price*quantity * variantData.gst)/100
+        gstAmount =  gstAmount + currentGST 
+        formattedItems.push({ procurementId: itemProcurmentId, procurementName: {en:{name:procurementNames}}, quantity, mrp: maxPrice, rate: price, variant, type, typeName, gstAmount, rateWithGst:price+currentGST})
+        totalPrice = totalPrice + price * quantity + currentGST;
         discount = discount + (maxPrice - price) * quantity;
         
     }
+    const totalWithOutGst = totalPrice - gstAmount
 
-    return { errors, formattedItems, totalPrice, discount }
+    return { errors, formattedItems, totalPrice, discount, gstAmount, totalWithOutGst }
 
 
 }
