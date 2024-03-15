@@ -79,7 +79,7 @@ exports.agriAddToCart = async (req, res)=>{
                 res.status(400).send({ error: 'Unable to find the customer, please try again' })
             }
         } catch (error) {
-            console.log('addToCart-error', JSON.stringify(error))
+            console.log('addToCart-error',error)
             const err = handleMongoError(error)
             loggers.info(`addToCart-error, ${error}`)
             res.status(500).send(err)
