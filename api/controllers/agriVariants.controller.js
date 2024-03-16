@@ -142,10 +142,11 @@ exports.getTypes = async(req, res)=>{
 }
 
 exports.getTypesOptions = async(req, res)=>{
-    const {type} = req.body
+    const {type, search} = req.body
+    console.log(type, search)
     try {
         const agriOptions = await AgriOptions.findOne({name: type})
-        res.send(agriOptions?.options)  
+        res.send(agriOptions?.options.filter(ele=> ele.includes(search)))  
     } catch (error) {
         loggers.info("getTypes-error", JSON.stringify(error))
         console.log("getTypes-error", JSON.stringify(error))
