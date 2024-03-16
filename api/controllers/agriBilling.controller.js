@@ -289,7 +289,7 @@ const validatePricesAndQuantityAndFormatItems =async (items)=>{
         const variantData = await AgriVariantModel.findOne({type, name: typeName})
         const currentGST = (price*quantity * variantData.gst)/100
         gstAmount =  gstAmount + currentGST 
-        formattedItems.push({ procurementId: itemProcurmentId, procurementName: {en:{name:procurementNames}}, quantity, mrp: maxPrice, rate: price, variant, type, typeName, gstAmount, rateWithGst:price+currentGST, hsnCode: variantData.hsnCode, gst: variantData.gst})
+        formattedItems.push({ procurementId: itemProcurmentId, procurementName: {en:{name:procurementNames}}, quantity, mrp: maxPrice, rate: price, variant, type, typeName, gstAmount:currentGST, rateWithGst:parseInt(price, 10)+currentGST, hsnCode: variantData.hsnCode, gst: variantData.gst})
         totalPrice = totalPrice + price * quantity + currentGST;
         discount = discount + (maxPrice - price) * quantity;
         
