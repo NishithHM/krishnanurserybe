@@ -157,7 +157,8 @@ exports.confirmAgriCart = async (req, res) => {
                       await billData.save()
                       await updateRemainingQuantity(procurementQuantityMapping)
                       await updateCustomerPurchaseHistory(billData)
-                      await Tracker.findOneAndUpdate({name:"agriInvoiceId"}, {$inc:{number:1}}, {$upsert:false})
+                      trackerVal.number = trackerVal.number + 1
+                      await trackerVal.save()
                       res.status(200).send(billData)
                   } else {
                       res.status(400).send({ error: errors.join(' ') })
