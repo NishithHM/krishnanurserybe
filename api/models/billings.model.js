@@ -159,6 +159,12 @@ const BillingHistory = new mongoose.Schema({
         type: Date,
         default: null
     },
+    paymentType:{
+        type:String,
+    },
+    paymentInfo:{
+        type:String,
+    }
 }, {
     timestamps: true
 })

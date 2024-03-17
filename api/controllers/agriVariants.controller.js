@@ -146,7 +146,11 @@ exports.getTypesOptions = async(req, res)=>{
     console.log(type, search)
     try {
         const agriOptions = await AgriOptions.findOne({name: type})
-        res.send(agriOptions?.options.filter(ele=> ele.includes(search)))  
+        if(search){
+            res.send(agriOptions?.options.filter(ele=> ele.includes(search)))  
+        }else{
+            res.send(agriOptions?.options)
+        }
     } catch (error) {
         loggers.info("getTypes-error", JSON.stringify(error))
         console.log("getTypes-error", JSON.stringify(error))
