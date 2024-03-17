@@ -52,3 +52,5 @@ Thumbs.db
 *.wmv
 *-audit.json
 .env.prod
+*.xlsx
+*.xlsx#
