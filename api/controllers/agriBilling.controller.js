@@ -120,7 +120,7 @@ exports.updateAgriCart = async (req, res) => {
 }
 
 exports.confirmAgriCart = async (req, res) => {
-      const { id, roundOff = 0, paymentType, paymentInfo} = req.body;
+      const { id, roundOff = 0, paymentType, paymentInfo, cashAmount, onlineAmount} = req.body;
       try {
           const billData = await Billing.findOne({ _id: new mongoose.mongo.ObjectId(id), status: 'CART' })
           if (billData) {
@@ -153,7 +153,9 @@ exports.confirmAgriCart = async (req, res) => {
                       billData.invoiceId = `AGR_${trackerVal.number}`
                       billData.billedDate = new Date()
                       billData.paymentInfo = paymentInfo
+                      billData.cashAmount = cashAmount
                       billData.paymentType = paymentType
+                      billData.onlineAmount = onlineAmount
                       await billData.save()
                       await updateRemainingQuantity(procurementQuantityMapping)
                       await updateCustomerPurchaseHistory(billData)

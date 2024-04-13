@@ -88,7 +88,7 @@ exports.updateCart = async (req, res) => {
 }
 
 exports.confirmCart = async (req, res) => {
-    const { id, roundOff = 0} = req.body;
+    const { id, roundOff = 0, paymentInfo, paymentType, cashAmount, onlineAmount} = req.body;
     try {
         const billData = await Billing.findOne({ _id: new mongoose.mongo.ObjectId(id), status: 'CART' })
         if (billData) {
@@ -122,6 +122,10 @@ exports.confirmCart = async (req, res) => {
                         billData.status = "BILLED"
                         billData.billedBy = billedBy
                         billData.billedDate = new Date()
+                        billData.paymentInfo = paymentInfo
+                        billData.cashAmount = cashAmount
+                        billData.paymentType = paymentType
+                        billData.onlineAmount = onlineAmount
                         const trackerVal = await Tracker.findOne({name:"invoiceId"})
                         loggers.info("fetched-bill-tracker", JSON.stringify({tracker:trackerVal.number, id}))
                         billData.invoiceId = `NUR_${trackerVal.number}`
