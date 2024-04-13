@@ -35,6 +35,8 @@ exports.updateAgriCartSchema = Joi.object().keys({
 exports.confirmAgriCartSchema = Joi.object().keys({
     id: Joi.string().required(),
     roundOff: Joi.number().min(0).max(1).default(0),
-    paymentType: Joi.string().required().valid('CASH', 'ONLINE'),
-    paymentInfo: Joi.string().allow(null, '')
+    paymentType: Joi.string().required().valid('CASH', 'ONLINE', 'BOTH'),
+    paymentInfo: Joi.string().allow(null, ''),
+    cashAmount: Joi.number().min(0).required(),
+    onlineAmount: Joi.number().min(0).required(),
 });
