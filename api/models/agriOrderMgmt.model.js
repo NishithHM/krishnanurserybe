@@ -93,6 +93,9 @@ const AgriOrders = new mongoose.Schema({
     },
     typeName:{
         type: String
+    },
+    invoiceId:{
+        type: String
     }
 }, {
     timestamps: true

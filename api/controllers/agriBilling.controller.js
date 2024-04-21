@@ -44,7 +44,7 @@ exports.getAgriItemDetails = async (req, res) => {
 
 exports.agriAddToCart = async (req, res)=>{
       try {
-            const { customerNumber, customerName, customerDob, items, customerId, customerAddress, customerGst, shippingAddress } = req.body;
+            const { customerNumber, customerName, customerDob, items, customerId, customerAddress, customerGst, shippingAddress, isCustomerUpdate } = req.body;
             const soldBy = {
                 _id: req?.token?.id,
                 name: req?.token?.name
@@ -54,6 +54,13 @@ exports.agriAddToCart = async (req, res)=>{
                  customerRes = new Customer({ phoneNumber: parseInt(customerNumber, 10), dob: dayjs(customerDob, 'YYYY-MM-DD').toDate(), name: customerName, gst: customerGst, address: customerAddress, shippingAddress })
             } else {
                 customerRes = await Customer.findById(customerId);
+                if(isCustomerUpdate){
+                    customerRes.shippingAddress = shippingAddress
+                    customerRes.gst = customerGst
+                    customerRes.address = customerAddress
+                    await customerRes.save()
+                }
+                
             }
             if (!isEmpty(customerRes)) {
                 const { errors, formattedItems, totalPrice, discount, gstAmount, totalWithOutGst } = await validatePricesAndQuantityAndFormatItems(items)
@@ -88,9 +95,16 @@ exports.agriAddToCart = async (req, res)=>{
 
 exports.updateAgriCart = async (req, res) => {
       try {
-          const { items, id } = req.body;
+          const { items, id, isCustomerUpdate,shippingAddress, customerGst, customerAddress  } = req.body;
           const billData = await Billing.findById(id)
           if (billData) {
+            const customerRes = await Customer.findById(billData.customerId);
+            if(isCustomerUpdate){
+                customerRes.shippingAddress = shippingAddress
+                customerRes.gst = customerGst
+                customerRes.address = customerAddress
+                await customerRes.save()
+            }
               const { errors, formattedItems, totalPrice, discount, gstAmount, totalWithOutGst } = await validatePricesAndQuantityAndFormatItems(items)
               if (isEmpty(errors)) {
                   if (formattedItems.length > 0) {
@@ -99,6 +113,11 @@ exports.updateAgriCart = async (req, res) => {
                       billData.discount = discount;
                       billData.gstAmount = gstAmount
                       billData.totalWithOutGst = totalWithOutGst
+                      if(isCustomerUpdate){
+                        billData.shippingAddress = shippingAddress
+                        billData.customerAddress = customerAddress
+                        billData.customerGst = customerGst
+                      }
                       const cartDetails = await billData.save()
                       res.status(200).send(cartDetails)
                   } else {
