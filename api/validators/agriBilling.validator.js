@@ -16,6 +16,7 @@ exports.agriAddToCartSchema = Joi.object().keys({
     customerGst: Joi.string(),
     customerAddress: Joi.string(),
     shippingAddress: Joi.string(),
+    isCustomerUpdate: Joi.boolean().default(false),
     items: Joi.array().items(Joi.object().keys({
         procurementId: Joi.string().required(),
         quantity: Joi.number().min(0).required(),
@@ -25,6 +26,10 @@ exports.agriAddToCartSchema = Joi.object().keys({
 
 exports.updateAgriCartSchema = Joi.object().keys({
     id: Joi.string().required(),
+    customerGst: Joi.string(),
+    customerAddress: Joi.string(),
+    shippingAddress: Joi.string(),
+    isCustomerUpdate: Joi.boolean().default(false),
     items: Joi.array().items(Joi.object().keys({
         procurementId: Joi.string().required(),
         quantity: Joi.number().min(0).required(),

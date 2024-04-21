@@ -162,6 +162,7 @@ exports.agriOrderList = async (req, res) => {
         "orderId",
         "variant",
         "type",
+        "invoiceId"
       ],
       procurement: [
         "_id",
@@ -185,6 +186,7 @@ exports.agriOrderList = async (req, res) => {
         "orderId",
         "variant",
         "type",
+        "invoiceId"
       ],
       sales: [
         "_id",
@@ -640,7 +642,7 @@ exports.agriSetAmounts = async (req, res) => {
 
 exports.uploadInvoiceToAgriOrder = async (req, res) => {
   try {
-    const { orderData, finalAmountPaid } = req.body;
+    const { orderData, finalAmountPaid, invoiceId } = req.body;
     const finalInvoiceAmount = orderData.totalAmount;
     const keys = [];
     const paths = [];
@@ -659,6 +661,7 @@ exports.uploadInvoiceToAgriOrder = async (req, res) => {
           procHistory.totalPrice = parseInt(item.totalPrice, 10);
           procHistory.currentPaidAmount = parseInt(item.totalPrice, 10);
           procHistory.invoice = paths[0];
+          procHistory.invoiceId = invoiceId
           vendorId = procHistory.vendorId;
           await procHistory.save();
         }
