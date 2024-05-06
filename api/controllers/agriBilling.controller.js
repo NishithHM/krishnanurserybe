@@ -7,6 +7,7 @@ const { default: mongoose } = require("mongoose");
 const Tracker = require("../models/tracker.model");
 const loggers = require("../../loggers");
 const dayjs = require("dayjs");
+const AgriVariantModel = require("../models/agriVariants.model");
 
 
 exports.getAgriItemDetails = async (req, res) => {
@@ -43,24 +44,31 @@ exports.getAgriItemDetails = async (req, res) => {
 
 exports.agriAddToCart = async (req, res)=>{
       try {
-            const { customerNumber, customerName, customerDob, items, customerId } = req.body;
+            const { customerNumber, customerName, customerDob, items, customerId, customerAddress, customerGst, shippingAddress, isCustomerUpdate } = req.body;
             const soldBy = {
                 _id: req?.token?.id,
                 name: req?.token?.name
             }
             let customerRes
             if (!customerId) {
-                 customerRes = new Customer({ phoneNumber: parseInt(customerNumber, 10), dob: dayjs(customerDob, 'YYYY-MM-DD').toDate(), name: customerName })
+                 customerRes = new Customer({ phoneNumber: parseInt(customerNumber, 10), dob: dayjs(customerDob, 'YYYY-MM-DD').toDate(), name: customerName, gst: customerGst, address: customerAddress, shippingAddress })
             } else {
                 customerRes = await Customer.findById(customerId);
+                if(isCustomerUpdate){
+                    customerRes.shippingAddress = shippingAddress
+                    customerRes.gst = customerGst
+                    customerRes.address = customerAddress
+                    await customerRes.save()
+                }
+                
             }
             if (!isEmpty(customerRes)) {
-                const { errors, formattedItems, totalPrice, discount } = await validatePricesAndQuantityAndFormatItems(items)
+                const { errors, formattedItems, totalPrice, discount, gstAmount, totalWithOutGst } = await validatePricesAndQuantityAndFormatItems(items)
                 console.log(formattedItems)
                 if (isEmpty(errors)) {
                     if (formattedItems.length > 0) {
                        
-                        const billing = new Billing({ customerName: customerRes.name, customerId: customerRes._id, customerNumber: customerRes.phoneNumber, soldBy, items: formattedItems, totalPrice, discount, status: "CART", type: 'AGRI' })
+                        const billing = new Billing({ customerName: customerRes.name, customerId: customerRes._id, customerNumber: customerRes.phoneNumber, shippingAddress: customerRes.shippingAddress, customerAddress: customerRes.address, customerGst: customerRes.gst, soldBy, items: formattedItems, totalPrice, discount, status: "CART", type: 'AGRI', gstAmount, totalWithOutGst })
                         const cartDetails = await billing.save()
                         res.status(200).send(cartDetails)
                         if(!customerId){
@@ -78,7 +86,7 @@ exports.agriAddToCart = async (req, res)=>{
                 res.status(400).send({ error: 'Unable to find the customer, please try again' })
             }
         } catch (error) {
-            console.log('addToCart-error', JSON.stringify(error))
+            console.log('addToCart-error',error)
             const err = handleMongoError(error)
             loggers.info(`addToCart-error, ${error}`)
             res.status(500).send(err)
@@ -87,16 +95,29 @@ exports.agriAddToCart = async (req, res)=>{
 
 exports.updateAgriCart = async (req, res) => {
       try {
-          const { items, id } = req.body;
+          const { items, id, isCustomerUpdate,shippingAddress, customerGst, customerAddress  } = req.body;
           const billData = await Billing.findById(id)
           if (billData) {
-              const { errors, formattedItems, totalPrice, discount } = await validatePricesAndQuantityAndFormatItems(items)
+            const customerRes = await Customer.findById(billData.customerId);
+            if(isCustomerUpdate){
+                customerRes.shippingAddress = shippingAddress
+                customerRes.gst = customerGst
+                customerRes.address = customerAddress
+                await customerRes.save()
+            }
+              const { errors, formattedItems, totalPrice, discount, gstAmount, totalWithOutGst } = await validatePricesAndQuantityAndFormatItems(items)
               if (isEmpty(errors)) {
                   if (formattedItems.length > 0) {
                       billData.items = formattedItems;
                       billData.totalPrice = totalPrice;
                       billData.discount = discount;
-                      
+                      billData.gstAmount = gstAmount
+                      billData.totalWithOutGst = totalWithOutGst
+                      if(isCustomerUpdate){
+                        billData.shippingAddress = shippingAddress
+                        billData.customerAddress = customerAddress
+                        billData.customerGst = customerGst
+                      }
                       const cartDetails = await billData.save()
                       res.status(200).send(cartDetails)
                   } else {
@@ -118,7 +139,7 @@ exports.updateAgriCart = async (req, res) => {
 }
 
 exports.confirmAgriCart = async (req, res) => {
-      const { id, roundOff = 0} = req.body;
+      const { id, roundOff = 0, paymentType, paymentInfo, cashAmount, onlineAmount} = req.body;
       try {
           const billData = await Billing.findOne({ _id: new mongoose.mongo.ObjectId(id), status: 'CART' })
           if (billData) {
@@ -150,10 +171,15 @@ exports.confirmAgriCart = async (req, res) => {
                       const trackerVal = await Tracker.findOne({name:"agriInvoiceId"})
                       billData.invoiceId = `AGR_${trackerVal.number}`
                       billData.billedDate = new Date()
+                      billData.paymentInfo = paymentInfo
+                      billData.cashAmount = cashAmount
+                      billData.paymentType = paymentType
+                      billData.onlineAmount = onlineAmount
                       await billData.save()
                       await updateRemainingQuantity(procurementQuantityMapping)
                       await updateCustomerPurchaseHistory(billData)
-                      await Tracker.findOneAndUpdate({name:"agriInvoiceId"}, {$inc:{number:1}}, {$upsert:false})
+                      trackerVal.number = trackerVal.number + 1
+                      await trackerVal.save()
                       res.status(200).send(billData)
                   } else {
                       res.status(400).send({ error: errors.join(' ') })
@@ -257,10 +283,11 @@ const validatePricesAndQuantityAndFormatItems =async (items)=>{
             return {errors}
       }
       const agriProcs = await AgriProcurementModel.find({_id:{$in: procurements}})
-      console.log(agriProcs)
+      console.log(JSON.stringify(agriProcs))
       const formattedItems = []
     let totalPrice = 0;
     let discount = 0
+    let gstAmount = 0
     for (const element of agriProcs) {
         const {
             _id: resultProcurementId,
@@ -283,13 +310,17 @@ const validatePricesAndQuantityAndFormatItems =async (items)=>{
         if (quantity > remainingQuantity) {
             errors.push(`Ooops!! stock of "${procurementNames}" is low, maximum order can be "${remainingQuantity}"`)
         }
-        formattedItems.push({ procurementId: itemProcurmentId, procurementName: {en:{name:procurementNames}}, quantity, mrp: maxPrice, rate: price, variant, type, typeName})
-        totalPrice = totalPrice + price * quantity;
+        const variantData = await AgriVariantModel.findOne({type, name: typeName})
+        const currentGST = (price*quantity * variantData.gst)/100
+        gstAmount =  gstAmount + currentGST 
+        formattedItems.push({ procurementId: itemProcurmentId, procurementName: {en:{name:procurementNames}}, quantity, mrp: maxPrice, rate: price, variant, type, typeName, gstAmount:currentGST, rateWithGst:parseInt(price, 10)+currentGST, hsnCode: variantData.hsnCode, gst: variantData.gst})
+        totalPrice = totalPrice + price * quantity + currentGST;
         discount = discount + (maxPrice - price) * quantity;
         
     }
+    const totalWithOutGst = totalPrice - gstAmount
 
-    return { errors, formattedItems, totalPrice, discount }
+    return { errors, formattedItems, totalPrice, discount, gstAmount, totalWithOutGst }
 
 
 }

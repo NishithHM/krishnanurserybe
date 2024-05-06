@@ -36,6 +36,8 @@ const { getAgriItemDetials, getAgriItemDetails, agriAddToCart, updateAgriCart, c
 const { getAgriBillingDataSchema, agriAddToCartSchema, updateAgriCartSchema, confirmAgriCartSchema } = require('./validators/agriBilling.validator');
 const { metaDataValidator, metaGraphValidator } = require('./validators/dashboard.validator');
 const { dahboardMetaData, dahboardMetaGraph } = require('./controllers/dashboard.controller');
+const { downloadBillingExcel, downloadWasteMgmtExcel, downloadOrderMgmtExcel } = require('./controllers/excel.controller');
+const { billingExcelValidator, wasteMgmtExcelValidator, orderMgmtExcelValidator } = require('./validators/excel.validator');
 
 const fileStorageEngine = multer.diskStorage({
 	destination:(req,file,cb) =>{
@@ -116,7 +118,7 @@ router.post('/api/agri/variants/:id', [authWall(['procurement', 'admin']), param
 router.get('/api/agri/variants/:id', [authWall(['procurement', 'admin', 'sales']), paramsToBody(['id'], 'params'), bodyValidator(getVariantSchema)], getAgriVariant )
 router.get('/api/agri/variants', [authWall(['procurement', 'admin', 'sales']), paramsToBody(['pageNumber', 'search', 'isCount', 'type'], 'query'), bodyValidator(getAgriVariantSchema)], getAgriVariants )
 router.get('/api/agri/types', [authWall(['procurement', 'admin', 'sales'])], getTypes )
-router.get('/api/agri/type-options', [authWall(['procurement', 'admin', 'sales']), paramsToBody(['type'], 'query'), bodyValidator(getAgriVariantSchema)], getTypesOptions )
+router.get('/api/agri/type-options', [authWall(['procurement', 'admin', 'sales']), paramsToBody(['type', 'search'], 'query'), bodyValidator(getAgriVariantSchema)], getTypesOptions )
 router.get('/api/agri/delete-variant/:id', [authWall(['procurement', 'admin']),paramsToBody(['id'], 'params'), bodyValidator(deleteAgriVariantSchema)], deleteAgriVariant )
 
 //agri order-mgmt
@@ -145,6 +147,14 @@ router.get('/api/download',[authWall(['admin','procurement', 'sales', 'preSales'
 // dashboard 
 router.post('/api/dashboard/meta-data', [authWall(['admin']), bodyValidator(metaDataValidator)], dahboardMetaData)
 router.post('/api/dashboard/meta-graph', [authWall(['admin']),bodyValidator(metaDataValidator)], dahboardMetaGraph)
+
+
+// excel download
+router.get('/api/excel/billing', [authWall(['admin']), paramsToBody(['pageNumber', 'isCount', 'startDate', 'endDate'], 'query'), bodyValidator(billingExcelValidator)], downloadBillingExcel)
+router.get('/api/excel/waste-mgmt', [authWall(['admin']), paramsToBody(['pageNumber', 'isCount', 'startDate', 'endDate'], 'query'), bodyValidator(wasteMgmtExcelValidator)], downloadWasteMgmtExcel)
+router.get('/api/excel/order-mgmt', [authWall(['admin']), paramsToBody(['pageNumber', 'isCount', 'startDate', 'endDate'], 'query'), bodyValidator(orderMgmtExcelValidator)], downloadOrderMgmtExcel)
+
+
 
 // router.get('/video', videoRender)
 module.exports = router

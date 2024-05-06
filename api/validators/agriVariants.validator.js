@@ -7,6 +7,8 @@ exports.variantSchema = Joi.object().keys({
         optionName: Joi.string().required(),
         optionValues: Joi.array().items(Joi.string().required())
     })),
+    gst: Joi.number().required().max(30),
+    hsnCode: Joi.string().required()
 });
 
 exports.editVariantSchema = Joi.object().keys({
@@ -14,7 +16,9 @@ exports.editVariantSchema = Joi.object().keys({
         optionName: Joi.string().required(),
         optionValues: Joi.array().items(Joi.string().required())
     })),
-    id: Joi.string().required()
+    id: Joi.string().required(),
+    gst: Joi.number().required().max(30),
+    hsnCode: Joi.string().required()
 });
 
 exports.getVariantSchema = Joi.object().keys({

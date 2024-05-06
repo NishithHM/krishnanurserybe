@@ -79,7 +79,8 @@ exports.agriSetAmountsSchema = Joi.object().keys({
 exports.addInvoiceAgriSchema = Joi.object().keys({
     id: Joi.string().required(),
     orderData: Joi.object(),
-    finalAmountPaid: Joi.number().required()
+    finalAmountPaid: Joi.number().required(),
+    invoiceId: Joi.string().required()
 });
 
 exports.getAgriOrderIdSchema = Joi.object().keys({

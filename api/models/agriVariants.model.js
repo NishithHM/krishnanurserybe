@@ -15,6 +15,15 @@ const AgriVariants = new mongoose.Schema({
         required: true,
         default: true
     },
+    gst:{
+        type: Number,
+        required: true,
+    },
+    hsnCode:{
+        type: String,
+        uppercase: true,
+        required: true
+    },
     options:{
         type:[{
             optionName:{

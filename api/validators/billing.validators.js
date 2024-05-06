@@ -28,6 +28,10 @@ exports.updateCartSchema = Joi.object().keys({
 exports.confirmCartSchema = Joi.object().keys({
     id: Joi.string().required(),
     roundOff: Joi.number().min(0).max(500).default(0),
+    paymentType: Joi.string().required().valid('CASH', 'ONLINE', 'BOTH'),
+    paymentInfo: Joi.string().allow(null, ''),
+    cashAmount: Joi.number().min(0).required(),
+    onlineAmount: Joi.number().min(0).required(),
 });
 
 exports.getCustomerCartSchema = Joi.object().keys({
