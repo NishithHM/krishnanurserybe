@@ -8,7 +8,8 @@ const cors = require('cors')
 const compression = require('compression')
 const helmet = require('helmet')
 const app = express();
-const logger = require('./loggers')
+const logger = require('./loggers');
+const { mergePdfs } = require('./api/utils');
 app.use(compression())
 app.use(helmet())
 dotenv.config({ path: './.env' })

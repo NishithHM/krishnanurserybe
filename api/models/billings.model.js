@@ -79,12 +79,20 @@ const BillingHistory = new mongoose.Schema({
             },
             gst:{
                 type: Number
+            },
+            isInfoSheet:{
+                type: Boolean,
+                default: false
             }
         }],
     },
     totalPrice: {
         type: Number,
         required: true,
+    },
+    infoSheetPrice: {
+        type: Number,
+        default: 0
     },
     discount: {
         type: Number,

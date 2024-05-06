@@ -5,9 +5,9 @@ const mongoose = require('mongoose');
 const dayjs = require('dayjs');
 const Procurements = require('../models/procurment.model')
 const Billing = require('../models/billings.model');
-const { handleMongoError } = require('../utils');
+const { handleMongoError, saveFile, mergePdfs, removeFiles } = require('../utils');
 const loggers = require('../../loggers');
-const { uniqBy } = require('lodash');
+const { uniqBy, last } = require('lodash');
 const Tracker = require('../models/tracker.model');
 
 exports.addToCart = async (req, res) => {
@@ -24,11 +24,11 @@ exports.addToCart = async (req, res) => {
             customerRes = await Customer.findById(customerId);
         }
         if (!isEmpty(customerRes)) {
-            const { errors, formattedItems, totalPrice, discount } = await validatePricesAndQuantityAndFormatItems(items, isWholeSale)
+            const { errors, formattedItems, totalPrice, discount, infoSheetPrice } = await validatePricesAndQuantityAndFormatItems(items, isWholeSale)
             if (isEmpty(errors)) {
                 if (formattedItems.length > 0) {
                    
-                    const billing = new Billing({ customerName: customerRes.name, customerId: customerRes._id, customerNumber: customerRes.phoneNumber, soldBy, items: formattedItems, totalPrice, discount, status: "CART", type:'NURSERY' , isWholeSale, isApproved: false })
+                    const billing = new Billing({ customerName: customerRes.name, customerId: customerRes._id, customerNumber: customerRes.phoneNumber, soldBy, items: formattedItems, totalPrice, discount, status: "CART", type:'NURSERY' , isWholeSale, isApproved: false, infoSheetPrice })
                     const cartDetails = await billing.save()
                     res.status(200).send(cartDetails)
                     if(!customerId){
@@ -59,7 +59,7 @@ exports.updateCart = async (req, res) => {
         const { items, id , isWholeSale} = req.body;
         const billData = await Billing.findById(id)
         if (billData) {
-            const { errors, formattedItems, totalPrice, discount } = await validatePricesAndQuantityAndFormatItems(items, isWholeSale)
+            const { errors, formattedItems, totalPrice, discount, infoSheetPrice } = await validatePricesAndQuantityAndFormatItems(items, isWholeSale)
             if (isEmpty(errors)) {
                 if (formattedItems.length > 0) {
                     billData.items = formattedItems;
@@ -67,6 +67,7 @@ exports.updateCart = async (req, res) => {
                     billData.discount = discount;
                     billData.isWholeSale = isWholeSale
                     billData.isApproved = false
+                    billData.infoSheetPrice = infoSheetPrice
                     const cartDetails = await billData.save()
                     res.status(200).send(cartDetails)
                 } else {
@@ -129,6 +130,7 @@ exports.confirmCart = async (req, res) => {
                         const trackerVal = await Tracker.findOne({name:"invoiceId"})
                         loggers.info("fetched-bill-tracker", JSON.stringify({tracker:trackerVal.number, id}))
                         billData.invoiceId = `NUR_${trackerVal.number}`
+                        const buffer = await mergeInfoSheets(billData.items)
                         await billData.save()
                         await updateRemainingQuantity(procurementQuantityMapping)
                         await updateCustomerPurchaseHistory(billData)
@@ -136,7 +138,8 @@ exports.confirmCart = async (req, res) => {
                         await trackerVal.save()
                         const trackerValNew = await Tracker.findOne({name:"invoiceId"})
                         loggers.info("fetched-bill-tracker-new", JSON.stringify({ttracker:trackerValNew.number, id}))
-                        res.status(200).send(billData)
+                        
+                        res.status(200).send({...billData, infoBuffer: buffer})
                     } else {
                         res.status(400).send({ error: errors.join(' ') })
                     }
@@ -276,6 +279,12 @@ const validatePricesAndQuantityAndFormatItems = async (items, isWholeSale) => {
     const itemsProcurmentAndVariants = items.map(ele=> ele.variantId+ele.procurementId)
     const uniqItems = uniq(itemsProcurmentAndVariants)
     const errors = []
+    const infoSheetCount = items.reduce((acc, ele)=>{
+        if(ele?.isInfoSheet){
+            acc = acc +1
+        }
+        return acc
+    }, 0)
 
     if(itemsProcurmentAndVariants.length > uniqItems.length){
         errors.push('Duplicate Item found please check')
@@ -336,7 +345,7 @@ const validatePricesAndQuantityAndFormatItems = async (items, isWholeSale) => {
             remainingQuantity,
         } = element
 
-        const { procurementId: itemProcurmentId, variantId: itemVariantId, quantity, price } = items.find((ele) => ele.procurementId === resultProcurementId.toString() && ele.variantId === resultVariantId.toString()) || {}
+        const { procurementId: itemProcurmentId, variantId: itemVariantId, quantity, price, isInfoSheet } = items.find((ele) => ele.procurementId === resultProcurementId.toString() && ele.variantId === resultVariantId.toString()) || {}
         if (price > maxPrice) {
             errors.push(`"${procurementNames?.en?.name}" of variant "${resultVariantNames?.en?.name}" should be less than "${maxPrice}"`)
         }
@@ -346,12 +355,14 @@ const validatePricesAndQuantityAndFormatItems = async (items, isWholeSale) => {
         if (quantity > remainingQuantity) {
             errors.push(`Ooops!! stock of "${procurementNames?.en?.name}" is low, maximum order can be "${remainingQuantity}"`)
         }
-        formattedItems.push({ procurementId: itemProcurmentId, procurementName: procurementNames, variant: { variantId: resultVariantId, ...resultVariantNames }, quantity, mrp: maxPrice, rate: price })
-        totalPrice = totalPrice + price * quantity;
+        formattedItems.push({ procurementId: itemProcurmentId, procurementName: procurementNames, variant: { variantId: resultVariantId, ...resultVariantNames }, quantity, mrp: maxPrice, rate: price, isInfoSheet })
+        totalPrice = totalPrice + price * quantity
         discount = discount + (maxPrice - price) * quantity;
     }
+    const infoSheetPrice = 2 * infoSheetCount;
+    totalPrice = totalPrice + infoSheetPrice;
 
-    return { errors, formattedItems, totalPrice, discount }
+    return { errors, formattedItems, totalPrice, discount, infoSheetPrice }
 
 
 
@@ -520,6 +531,20 @@ exports.approveBill = async (req, res)=>{
     billData.approvedOn = new Date()
     await billData.save()
     res.json(billData.toJSON())
+}
+
+const mergeInfoSheets = async(items)=>{
+    console.log('bill-items', items)
+    const infoSheetProcIds = items.reduce((acc, ele)=> ele?.isInfoSheet ? acc.concat(ele.procurementId) : acc, [])?.map(ele=> new mongoose.mongo.ObjectId(ele))
+    const procurementInfoSheetPaths = await Procurements.find({_id: {$in: infoSheetProcIds}.$in, pamphlet:{$exists: true}}, {pamphlet:1})
+    console.log('procurementInfoSheetPaths-log', procurementInfoSheetPaths)
+    const promises = procurementInfoSheetPaths.map(ele=> saveFile(ele?.pamphlet))
+    const procurementInfoSheetFiles = procurementInfoSheetPaths.map(ele=> last(ele?.pamphlet.split('/')))
+    await Promise.all(promises)
+    const buffer = await mergePdfs(procurementInfoSheetFiles)
+    removeFiles(procurementInfoSheetFiles)
+    return buffer
+
 }
 
 

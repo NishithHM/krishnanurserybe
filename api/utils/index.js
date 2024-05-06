@@ -1,4 +1,6 @@
 const fs = require("fs");
+const { last } = require("lodash");
+const PdfMerger = require('pdf-merger-js')
 
 exports.handleMongoError = (error) => {
   console.log(JSON.parse(JSON.stringify(error)));
@@ -95,6 +97,41 @@ exports.downloadFile = async (req, res) => {
   }
 };
 
+exports.saveFile = async (path) => {
+  try {
+    return new Promise((res, rej)=>{
+
+    
+    const AWS = require("aws-sdk");
+    const s3 = new AWS.S3();
+    const bucket = process.env.AWS_BUCKET_NAME;
+    const fileKey = `${process.env.ENV}/${path}`;
+    const fileName = last(path.split('/'));
+    console.log(fileKey);
+    
+    // Download file from S3
+    s3.getObject({ Bucket: bucket, Key: fileKey }, (err, data) => {
+      if (err) {
+        console.error('Error downloading file from S3:', err);
+      } else {
+        // Save file locally
+        fs.writeFile(`downloads/${fileName}`, data.Body, (err) => {
+          if (err) {
+            console.error('Error saving file locally:', err);
+          } else {
+            console.log('File downloaded and saved locally successfully.');
+            res()
+          }
+        });
+      }
+    }); 
+  })
+  } catch (e) {
+    console.log(e)
+  }
+  
+};
+
 exports.uploadAwsTest = async (req, res) => {
   try {
     const AWS = require("aws-sdk");
@@ -105,3 +142,19 @@ exports.uploadAwsTest = async (req, res) => {
     res.status(500);
   }
 };
+
+
+exports.mergePdfs = async (paths)=>{
+  const merger = new PdfMerger();
+  for(let path of paths){
+    await merger.add(`downloads/${path}`)
+  }
+  const buffer = await merger.saveAsBuffer()
+  return buffer
+}
+
+exports.removeFiles = async (paths)=>{
+  for(let path of paths){
+    fs.unlinkSync(`downloads/${path}`)
+  }
+}
