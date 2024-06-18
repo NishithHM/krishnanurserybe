@@ -16,6 +16,14 @@ exports.addPayment = async (req, res) => {
       amount,
       type,
       brokerId,
+      transferType,
+      phoneNumber,
+      accountNumber,
+      ifscCode,
+      bankName,
+      comment,
+      cashAmount,
+      onlineAmount
     } = req.body;
     console.log(brokerName, invoiceId, brokerName, empName, amount, type);
     const role = req?.token?.role;
@@ -58,6 +66,14 @@ exports.addPayment = async (req, res) => {
     } else {
       paymentData.type = type;
       paymentData.name = empName;
+      paymentData.transferType = transferType;
+      paymentData.phoneNumber = phoneNumber
+      paymentData.accountNumber = accountNumber
+      paymentData.ifscCode = ifscCode
+      paymentData.bankName = bankName
+      paymentData.comment = comment
+      paymentData.cashAmount = cashAmount
+      paymentData.onlineAmount = onlineAmount
     }
 
     paymentData.amount = amount;
@@ -175,3 +191,10 @@ exports.getPaymentHistory = async (req, res) => {
     res.status(500).send(err);
   }
 };
+
+
+exports.getPaymentInfo = async (req, res)=>{
+  const {phoneNumber} = req.body
+  const paymentData = await Payment.findOne({phoneNumber}).sort({createdAt:-1})
+  res.json(paymentData)
+}

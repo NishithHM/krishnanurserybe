@@ -19,6 +19,35 @@ const payments = new mongoose.Schema(
       type: String,
       enum: ["BROKER", "SALARY", "OTHERS"],
     },
+    transferType:{
+      type: {
+        type: String,
+        enum: ["CASH", "ONLINE", "BOTH"],
+      },
+    },
+    phoneNumber:{
+      type: String,
+    },
+    accountNumber:{
+      type: String,
+    },
+    ifscCode:{
+      type: String,
+    },
+    bankName:{
+      type: String,
+    },
+    comment:{
+      type: String
+    },
+    cashAmount:{
+      type: Number,
+      default: 0
+    },
+    onlineAmount:{
+      type: Number,
+      default: 0
+    },
     brokerId: {
       type: String,
       default: null,

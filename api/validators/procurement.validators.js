@@ -21,7 +21,10 @@ exports.verifyProcurementSchema = Joi.object().keys({
 exports.addInvoiceProcurementSchema = Joi.object().keys({
     id: Joi.string().required(),
     orderData: Joi.object(),
-    finalAmountPaid: Joi.number().required()
+    finalAmountPaid: Joi.number().required(),
+    cashAmount: Joi.number().required(),
+    onlineAmount: Joi.number().required(),
+    comments: Joi.string().required()
 });
 
 exports.getOrdersProcurementSchema = Joi.object().keys({

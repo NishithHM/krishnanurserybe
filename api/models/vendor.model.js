@@ -22,7 +22,32 @@ const vendors = new mongoose.Schema({
    type:{
     type: String,
     require: true
-   }
+   },
+   paymentTypes : [{
+    type: {
+            cashAmount:{
+                type: Number,
+                default:0
+            },
+            onlineAmount:{
+                type: Number,
+                default:0
+            },
+            totalAmount:{
+                type: Number,
+                default:0
+            },
+            comments:{
+                type: String,
+            },
+            orderId:{
+                type: String
+            },
+            date:{
+                type: Date
+            }
+    }
+   }]
 }, {
 	timestamps: true
 })
