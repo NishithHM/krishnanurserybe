@@ -9,6 +9,7 @@ const uniq = require("lodash/uniq");
 const { handleMongoError, uploadFile } = require("../utils");
 const loggers = require("../../loggers");
 const { isEmpty, isNumber } = require("lodash");
+const { ObjectId } = require("mongodb");
 
 exports.requestOrder = async (req, res) => {
   const { nameInEnglish, totalQuantity, id, descriptionSales, ownProduction } =
@@ -270,7 +271,7 @@ exports.verifyOrder = async (req, res) => {
 
 exports.uploadInvoiceToOrder = async (req, res) => {
   try {
-    const { orderData, finalAmountPaid } = req.body;
+    const { orderData, finalAmountPaid, onlineAmount, cashAmount, comments , id} = req.body;
     const finalInvoiceAmount = orderData.totalAmount;
     const keys = [];
     const paths = [];
@@ -308,6 +309,7 @@ exports.uploadInvoiceToOrder = async (req, res) => {
         const vendorData = await Vendor.findById(vendorId);
         vendorData.deviation = vendorData.deviation + currentTxnDeviation;
         vendorData.save();
+        await Vendor.findOneAndUpdate({_id:new ObjectId(vendorId)}, {$push:{paymentTypes:{onlineAmount, cashAmount, comments, orderId:id, totalAmount: orderData.totalAmount, date: new Date()}}})
         res.status(200).json({
           message: "invoice uploaded",
         });

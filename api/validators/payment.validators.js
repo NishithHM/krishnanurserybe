@@ -7,7 +7,15 @@ exports.addPaymentScheme = Joi.object().keys({
     brokerNumber: Joi.string(),
     empName: Joi.string().pattern(new RegExp(/[A-Za-z]/)),
     amount: Joi.number().required(),
-    type: Joi.string().valid('BROKER', 'OTHERS', 'SALARY')
+    type: Joi.string().valid('BROKER', 'OTHERS', 'SALARY'),
+    transferType: Joi.string().valid('CASH', 'ONLINE', 'BOTH'),
+    phoneNumber: Joi.string().length(10),
+    accountNumber: Joi.string(),
+    ifscCode: Joi.string(),
+    bankName: Joi.string(),
+    comment: Joi.string(),
+    cashAmount: Joi.number(),
+    onlineAmount: Joi.number()
 });
 
 exports.getPaymentHistorySchema = Joi.object().keys({
@@ -19,4 +27,8 @@ exports.getPaymentHistorySchema = Joi.object().keys({
     sortType: Joi.number().valid(-1, 1).default(1),
     search: Joi.string().pattern(new RegExp(/[A-Za-z0-9]/)),
     type: Joi.string().valid('BROKER', 'OTHERS', 'SALARY')
+});
+
+exports.getPaymentInfoSchema = Joi.object().keys({
+    phoneNumber: Joi.string().length(10)
 });

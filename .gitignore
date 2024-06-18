@@ -54,3 +54,4 @@ Thumbs.db
 .env.prod
 *.xlsx
 *.xlsx#
+*.timetracker

@@ -14,6 +14,8 @@ exports.downloadBillingExcel = async (req, res) => {
     { name: 'item mrp', key: 'mrp' },
     { name: 'item quantity', key: 'quantity' }, 
     { name: 'total price', key: 'totalPrice' }, 
+    { name: 'cash', key: 'cashAmount' }, 
+    { name: 'online', key: 'onlineAmount' }, 
     { name: 'discount', key: 'discount' }, 
     { name: 'round off', key: 'roundOff' }, 
     { name: 'invoice id', key: 'invoiceId' }, 
@@ -53,6 +55,8 @@ exports.downloadBillingExcel = async (req, res) => {
             roundOff: 1,
             invoiceId: 1,
             billedDate: 1,
+            onlineAmount:1,
+            cashAmount:1,
             "soldBy":  "$soldBy.name",
             "billedBy": "$billedBy.name",
             "_id": 0
