@@ -308,7 +308,7 @@ exports.uploadInvoiceToOrder = async (req, res) => {
           parseInt(finalInvoiceAmount, 10) - parseInt(finalAmountPaid, 10);
         const vendorData = await Vendor.findById(vendorId);
         vendorData.deviation = vendorData.deviation + currentTxnDeviation;
-        vendorData.save();
+        await vendorData.save();
         await Vendor.findOneAndUpdate({_id:new ObjectId(vendorId)}, {$push:{paymentTypes:{onlineAmount, cashAmount, comments, orderId:id, totalAmount: orderData.totalAmount, date: new Date()}}})
         res.status(200).json({
           message: "invoice uploaded",
@@ -481,11 +481,7 @@ exports.getAllOrders = async (req, res) => {
     }
     console.log("getAllOrders-pipeline", JSON.stringify(pipeline));
     const orders = await ProcurementHistory.aggregate(pipeline);
-    loggers.info(`getAllOrders-pipeline, ${JSON.stringify(pipeline)}`);
-
-    const sortedOrders = orders.sort((a, b) => b.orderId - a.orderId);
-
-    res.json(sortedOrders);
+    res.json(orders);
   } catch (error) {
     console.log(error);
     loggers.info(`getAllProcurementsHistory-error, ${error}`);
