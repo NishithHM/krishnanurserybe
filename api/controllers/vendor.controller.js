@@ -19,8 +19,12 @@ exports.getVendorList = async (req, res)=>{
     }
 
     try {
-        const vendors = await Vendor.find(query)
-        res.status(200).json(vendors)
+        const vendors = await Vendor.find(query, [], {sort:{updatedAt:-1}})
+        const vendorFinal = vendors.map((ele)=> {
+            const data = ele.toJSON()
+            return{...data, paymentTypes: data.paymentTypes.sort((a, b)=> b.date-a.date) }
+        })
+        res.status(200).json(vendorFinal)
     } catch (error) {
         console.log(error)
         loggers.info(`getVendorList-error, ${error}`)
