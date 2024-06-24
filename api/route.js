@@ -36,8 +36,8 @@ const { getAgriItemDetials, getAgriItemDetails, agriAddToCart, updateAgriCart, c
 const { getAgriBillingDataSchema, agriAddToCartSchema, updateAgriCartSchema, confirmAgriCartSchema } = require('./validators/agriBilling.validator');
 const { metaDataValidator, metaGraphValidator } = require('./validators/dashboard.validator');
 const { dahboardMetaData, dahboardMetaGraph } = require('./controllers/dashboard.controller');
-const { downloadBillingExcel, downloadWasteMgmtExcel, downloadOrderMgmtExcel } = require('./controllers/excel.controller');
-const { billingExcelValidator, wasteMgmtExcelValidator, orderMgmtExcelValidator } = require('./validators/excel.validator');
+const { downloadBillingExcel, downloadWasteMgmtExcel, downloadOrderMgmtExcel, downloadPaymentExcel } = require('./controllers/excel.controller');
+const { billingExcelValidator, wasteMgmtExcelValidator, orderMgmtExcelValidator, paymentExcelValidator } = require('./validators/excel.validator');
 
 const fileStorageEngine = multer.diskStorage({
 	destination:(req,file,cb) =>{
@@ -153,6 +153,7 @@ router.post('/api/dashboard/meta-graph', [authWall(['admin']),bodyValidator(meta
 router.get('/api/excel/billing', [authWall(['admin', 'procurement', 'sales']), paramsToBody(['pageNumber', 'isCount', 'startDate', 'endDate'], 'query'), bodyValidator(billingExcelValidator)], downloadBillingExcel)
 router.get('/api/excel/waste-mgmt', [authWall(['admin', 'procurement', 'sales']), paramsToBody(['pageNumber', 'isCount', 'startDate', 'endDate'], 'query'), bodyValidator(wasteMgmtExcelValidator)], downloadWasteMgmtExcel)
 router.get('/api/excel/order-mgmt', [authWall(['admin', 'procurement', 'sales']), paramsToBody(['pageNumber', 'isCount', 'startDate', 'endDate'], 'query'), bodyValidator(orderMgmtExcelValidator)], downloadOrderMgmtExcel)
+router.get('/api/excel/payments', [authWall(['admin', 'procurement', 'sales']), paramsToBody(['pageNumber', 'isCount', 'startDate', 'endDate', 'type'], 'query'), bodyValidator(paymentExcelValidator)], downloadPaymentExcel)
 
 
 

@@ -3,6 +3,7 @@ const billingsModel = require("../models/billings.model")
 const ExcelJS = require('exceljs');
 const damageHistoryModel = require("../models/damageHistory.model");
 const procurementHistoryModel = require("../models/procurementHistory.model");
+const paymentModel = require("../models/payment.model");
 
 exports.downloadBillingExcel = async (req, res) => {
     const { pageNumber = 1, startDate, endDate } = req.body
@@ -246,6 +247,76 @@ exports.downloadOrderMgmtExcel = async (req, res) => {
     res.header("isNext",(count-1000*1) > 0)
     res.header("Access-Control-Expose-Headers", "*")
     res.sendFile('orders.xlsx', { root: __dirname });
+}
+
+exports.downloadPaymentExcel = async (req, res) => {
+    const { pageNumber = 1, startDate, endDate, type } = req.body
+
+    
+    const headers = [   
+    { name: 'date', key: 'createdAt' }, 
+        
+        { name: 'name', key: 'name' }, 
+        {name: 'phone number', key:'phoneNumber'},
+    { name: 'amount', key: 'amount' },
+    { name: 'cash amount', key: 'cashAmount' },
+    {name: 'online amount', key:'onlineAmount'},
+    {name: 'comments', key:'comment'},
+    {name: 'type', key:'type'},
+    
+    ]
+
+    const query = {
+        createdAt: {
+            $gte: dayjs(startDate, 'YYYY-MM-DD').toDate(),
+            $lte: dayjs(endDate, 'YYYY-MM-DD').endOf('day').toDate()
+        },
+        // type
+    }
+    const match = {
+        $match: query
+    }
+    const skip = {
+        $skip: (pageNumber - 1) * 1000
+    }
+    const limit = {
+        $limit: 1000
+    }
+
+    const project = {
+        $project: {
+            "name": 1,
+            createdAt:1,
+            amount:1,
+            cashAmount:1,
+            onlineAmount:1,
+            type:1,
+            comments:1,
+            phoneNumber:1
+        }
+    }
+
+   
+
+    const pipeline = []
+    pipeline.push(match)
+    pipeline.push(skip)
+    pipeline.push(limit)
+    pipeline.push(project)
+
+    console.log('payment-pipeline', JSON.stringify(pipeline))
+
+    const procs = await paymentModel.aggregate(pipeline);
+    const count = await paymentModel.countDocuments(query)
+    console.log(procs.length,)
+    await writeExcel(headers, procs, 'payments')
+    res.header("Content-Disposition",
+    "attachment; filename=payments.xls");
+    res.header("Content-Type","application/octet-stream")
+    res.header("count",count)
+    res.header("isNext",(count-1000*1) > 0)
+    res.header("Access-Control-Expose-Headers", "*")
+    res.sendFile('payments.xlsx', { root: __dirname });
 }
 
 const writeExcel = async (headers, json, name) => {
