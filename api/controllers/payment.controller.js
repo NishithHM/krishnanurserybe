@@ -5,6 +5,8 @@ const Payment = require("../models/payment.model");
 const Billing = require("../models/billings.model");
 const dayjs = require('dayjs')
 const { handleMongoError } = require("../utils");
+const Tracker = require("../models/tracker.model");
+const vendorModel = require("../models/vendor.model");
 
 exports.addPayment = async (req, res) => {
   try {
@@ -24,9 +26,9 @@ exports.addPayment = async (req, res) => {
       bankName,
       comment,
       cashAmount,
-      onlineAmount
+      onlineAmount,
+      vendorId
     } = req.body;
-    console.log(brokerName, invoiceId, brokerName, empName, amount, type);
     const role = req?.token?.role;
     let broker;
     if (invoiceId) {
@@ -78,11 +80,28 @@ exports.addPayment = async (req, res) => {
     }
 
     paymentData.amount = amount;
+    if(type==='VENDOR'){
+      paymentData.vendorId = vendorId;
+      const vendor = await vendorModel.findById(vendorId);
+      paymentData.empName = vendor?.name
+      vendor.deviation = vendor.deviation - amount
+      await vendor.save()
+    }
     const payment = new Payment({ ...paymentData });
     await payment.save();
+
     if (brokerName && !brokerId) {
       broker.save();
     }
+
+    if(type==='CAPITAL'){
+      capital.number = capital.number + amount
+    }else{
+      capital.number = capital.number - amount
+    }
+    await capital.save()
+
+    
     res.json({
       message: "Successfully Created",
     });
@@ -105,17 +124,28 @@ exports.getPaymentHistory = async (req, res) => {
       sortType,
       search,
       type,
+      businessType,
+      vendorId
     } = req.body;
     const role = req?.token?.role;
     let typeFilter = type;
     if (role === "sales") {
       typeFilter = { $in: ["BROKER", "OTHERS"] };
     }
-    const match = {};
+    const match = {businessType};
 
     if (typeFilter) {
       match.type = typeFilter;
     }
+    
+    if(vendorId && type==='VENDOR'){
+      match.vendorId = vendorId
+    }
+
+    if(type){
+      match.type = typeFilter;
+    }
+
     if (!isCount) {
       if (startDate && endDate) {
         match.createdAt = {
@@ -146,6 +176,7 @@ exports.getPaymentHistory = async (req, res) => {
       },
     ];
     const pipeline = [];
+    const sumPipeline = []
 
     let sortStage;
     if (sortBy) {
@@ -168,6 +199,7 @@ exports.getPaymentHistory = async (req, res) => {
     if (!isEmpty(match)) {
       const matchVal = [{ $match: { ...match } }];
       pipeline.push(...matchVal);
+      sumPipeline.push(...matchVal)
     }
     pipeline.push(...sortStage);
     if (pageNumber) {
@@ -179,11 +211,37 @@ exports.getPaymentHistory = async (req, res) => {
     }
     console.log("getPaymentHistory-pipeline", JSON.stringify(pipeline));
     loggers.info(`getPaymentHistory-pipeline, ${JSON.stringify(pipeline)}`);
+    sumPipeline.push(match)
     const results = await Payment.aggregate(pipeline);
+    let sum
+    let remainingCapital
+    let vendorDeviation
+    if(type){
+      const sumGroup = {
+        $group:{
+          _id:"$type",
+          amount:{
+            $sum: "$amount"
+          }
+        }
+      }
+      sumPipeline.push(sumGroup)
+
+      sum = await Payment.aggregate(sumPipeline);
+      sum = sum?.[0]?.amount
+      if(type==='CAPITAL'){
+         const capital = await Tracker.findOne({name:'capital'})
+         remainingCapital = capital.number
+      }
+      if(type==='VENDOR'){
+        const vendor = await vendorModel.findById(vendorId)
+        vendorDeviation = vendor.deviation
+     }
+    }
     if (results.length === 0 && isCount === "true") {
-      res.json([{ count: 0 }]);
+      res.json({data:[{ count: 0 }]});
     } else {
-      res.json(results);
+      res.json({data:results, sum, remainingCapital, vendorDeviation});
     }
   } catch (error) {
     console.log(error);

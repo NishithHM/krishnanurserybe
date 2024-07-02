@@ -43,20 +43,7 @@ edit date api for proc
 /*
 TODO 
 
-Excel break down (online cash)  (1) 10min done
-Backend price reset in agri (1)  30
-Excel download all roles (1)  10  2 min (done)
 
-
-Add invoice comments (for procurement) (cash + online)  2
-vendor listing apis (with deviations as filter)  30  2
-
-Payment
-Name, Phonenumber Acc number IFSC code bank name, mode of payment (online cash both) comment for others  4
-Payment Date filter, total payments 10
-
-
-Procurement alphabetical sorting
 Reverse GST for AGRI
 
 */
