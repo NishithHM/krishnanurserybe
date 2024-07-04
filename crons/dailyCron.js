@@ -313,6 +313,7 @@ exports.caluclateMetaData = async (currentDate) => {
           $gte: prevDate,
           $lt: currentDate,
         },
+        status: "BILLED"
       }
     },
     {
@@ -338,14 +339,14 @@ exports.caluclateMetaData = async (currentDate) => {
   const paymentData = await paymentModel.aggregate(paymentPipeline)
   if(paymentData[0]?.amount){
     delete paymentData._id
-    const metaData = new MetaData({ ...paymentData[0], type:'PAYMENT', date:currentDate})
+    const metaData = new MetaData({ ...paymentData[0], type:'PAYMENT', date:prevDate})
     await metaData.save()
     // console.log(JSON.stringify(metaData))
   }
   const roundOffsData = await billingsModel.aggregate(roundOffPipeline)
-  if(roundOffsData[0]?.totalRoundOff){
+  if(roundOffsData[0]?.totalRoundOff || roundOffsData[0]?.totalCashAmount || roundOffsData[0]?.totalOnlineAmount  ){
     delete roundOffsData._id
-    const metaData = new MetaData({ ...roundOffsData[0], type:'ROUNDOFF', date:currentDate})
+    const metaData = new MetaData({ ...roundOffsData[0], type:'ROUNDOFF', date:prevDate})
     // console.log(JSON.stringify(metaData))
     await metaData.save()
   }
