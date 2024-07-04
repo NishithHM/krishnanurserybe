@@ -146,8 +146,8 @@ const removeBillingAgri = async (async)=>{
 
 const caluclateMetaDataAll = async()=>{
     const dates = []
-    let minDate = dayjs('2023-01-01', 'YYYY-MM-DD').toDate()
-    const maxDate = dayjs().toDate()
+    let minDate = dayjs('2023-05-25', 'YYYY-MM-DD').add(330, 'minutes').toDate()
+    const maxDate = dayjs('2024-07-04', 'YYYY-MM-DD').add(330, 'minutes').toDate()
     while(minDate<maxDate){
         dates.push(minDate)
         minDate = dayjs(minDate).add(1, 'day').toDate()
@@ -234,7 +234,7 @@ const startScripts =async()=>{
     await new Promise(res=> setTimeout(()=>res(1), 1000))
     // testApi()
     console.log('db connected')
-    // caluclateMetaDataAll()
+    caluclateMetaDataAll()
 }
 
 startScripts()

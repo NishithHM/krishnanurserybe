@@ -42,7 +42,8 @@ const deleteLoggers = async () => {
 }
 
 exports.caluclateMetaData = async (currentDate) => {
-  const prevDate = dayjs(currentDate).subtract(1, 'days').startOf('day').add(330).toDate()
+  const prevDate = dayjs(currentDate).subtract(1, 'days').startOf('day').add(330, 'minutes').toDate()
+  
   // loggers.info('caluclating-meta-data', currentDate, prevDate)
   // console.log('caluclating-meta-data', currentDate, prevDate)
   const procurmentPipeline = [
@@ -93,7 +94,7 @@ exports.caluclateMetaData = async (currentDate) => {
         pipeline: [
           {
             $match: {
-              updatedAt: {
+              billedDate: {
                 $gte: prevDate,
                 $lt: currentDate,
               },
@@ -308,7 +309,7 @@ exports.caluclateMetaData = async (currentDate) => {
   const roundOffPipeline = [
     {
       $match:{
-        updatedAt: {
+        billedDate: {
           $gte: prevDate,
           $lt: currentDate,
         },
@@ -325,6 +326,12 @@ exports.caluclateMetaData = async (currentDate) => {
           totalRoundOff: {
             $sum: "$roundOff",
           },
+          totalCashAmount:{
+            $sum: "$cashAmount"
+          },
+          totalOnlineAmount:{
+            $sum: "$onlineAmount"
+          }
         },
     },
   ]
