@@ -71,7 +71,7 @@ const clearS3 = ()=>{
 
 const dbCon = ()=>{
     const env = 'dev'
-    mongoose.connect(`mongodb+srv://admin:admin123@cluster0.t2cxv.mongodb.net/nursery_mgmt_${env}?retryWrites=true&w=majority`, {
+    mongoose.connect(`mongodb+srv://sknProd:1ONEvuYlmiexoPA7@sknprod.fionm1o.mongodb.net/nursery_mgmt_${env}?retryWrites=true&w=majority`, {
         useNewUrlParser: true,
         useUnifiedTopology: true,
     }).then(() => console.log("Database connected! ", env))
@@ -157,6 +157,75 @@ const caluclateMetaDataAll = async()=>{
         await caluclateMetaData(dates[i])
         console.log('added-date', dates[i], i)
     }
+}
+
+
+const correctBillData = async()=>{
+    const mismatchPipelines = [
+        {
+          $sort:
+            /**
+             * Provide any number of field/order pairs.
+             */
+            {
+              billedDate: -1,
+            },
+        },
+        {
+          $match:
+            /**
+             * query: The query in MQL.
+             */
+            {
+              status: "BILLED",
+              cashAmount: {
+                $exists: true,
+              },
+            },
+        },
+        {
+          $addFields:
+            /**
+             * newField: The new field name.
+             * expression: The new field expression.
+             */
+            {
+              amounts: {
+                $add: ["$cashAmount", "$onlineAmount"],
+              },
+            },
+        },
+        {
+          $match:
+            /**
+             * query: The query in MQL.
+             */
+            {
+              $expr: {
+                $ne: ["$amounts", "$totalPrice"],
+              },
+            },
+        },
+        
+      ]
+
+    const bills = await billingsModel.aggregate(mismatchPipelines)
+    console.log(bills.length, 'bill', bills[0])
+
+    for(let i=0; i< bills.length; i++){
+        const bill = bills[i]
+        const nBill = await billingsModel.findOne({_id:bill._id})
+        if(bill.paymentType==='CASH'){
+            
+            nBill.cashAmount = bill.totalPrice
+            await nBill.save()
+
+        }else if(bill.paymentType==='ONLINE'){
+            nBill.onlineAmount = bill.totalPrice
+            await nBill.save()
+        }
+    }
+
 }
 
 const startScripts =async()=>{
