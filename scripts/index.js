@@ -71,7 +71,7 @@ const clearS3 = ()=>{
 
 const dbCon = ()=>{
     const env = 'dev'
-    mongoose.connect(`mongodb+srv://admin:admin123@cluster0.t2cxv.mongodb.net/nursery_mgmt_${env}?retryWrites=true&w=majority`, {
+    mongoose.connect(`mongodb+srv://sknProd:1ONEvuYlmiexoPA7@sknprod.fionm1o.mongodb.net/nursery_mgmt_${env}?retryWrites=true&w=majority`, {
         useNewUrlParser: true,
         useUnifiedTopology: true,
     }).then(() => console.log("Database connected! ", env))
@@ -146,8 +146,8 @@ const removeBillingAgri = async (async)=>{
 
 const caluclateMetaDataAll = async()=>{
     const dates = []
-    let minDate = dayjs('2023-01-01', 'YYYY-MM-DD').toDate()
-    const maxDate = dayjs().toDate()
+    let minDate = dayjs('2023-05-25', 'YYYY-MM-DD').add(330, 'minutes').toDate()
+    const maxDate = dayjs('2024-07-04', 'YYYY-MM-DD').add(330, 'minutes').toDate()
     while(minDate<maxDate){
         dates.push(minDate)
         minDate = dayjs(minDate).add(1, 'day').toDate()
@@ -159,13 +159,82 @@ const caluclateMetaDataAll = async()=>{
     }
 }
 
+
+const correctBillData = async()=>{
+    const mismatchPipelines = [
+        {
+          $sort:
+            /**
+             * Provide any number of field/order pairs.
+             */
+            {
+              billedDate: -1,
+            },
+        },
+        {
+          $match:
+            /**
+             * query: The query in MQL.
+             */
+            {
+              status: "BILLED",
+              cashAmount: {
+                $exists: true,
+              },
+            },
+        },
+        {
+          $addFields:
+            /**
+             * newField: The new field name.
+             * expression: The new field expression.
+             */
+            {
+              amounts: {
+                $add: ["$cashAmount", "$onlineAmount"],
+              },
+            },
+        },
+        {
+          $match:
+            /**
+             * query: The query in MQL.
+             */
+            {
+              $expr: {
+                $ne: ["$amounts", "$totalPrice"],
+              },
+            },
+        },
+        
+      ]
+
+    const bills = await billingsModel.aggregate(mismatchPipelines)
+    console.log(bills.length, 'bill', bills[0])
+
+    for(let i=0; i< bills.length; i++){
+        const bill = bills[i]
+        const nBill = await billingsModel.findOne({_id:bill._id})
+        if(bill.paymentType==='CASH'){
+            
+            nBill.cashAmount = bill.totalPrice
+            await nBill.save()
+
+        }else if(bill.paymentType==='ONLINE'){
+            nBill.onlineAmount = bill.totalPrice
+            await nBill.save()
+        }
+    }
+
+}
+
 const startScripts =async()=>{
     await dbCon()
     
     await new Promise(res=> setTimeout(()=>res(1), 1000))
     // testApi()
     console.log('db connected')
-    // caluclateMetaDataAll()
+    caluclateMetaDataAll()
 }
 
 startScripts()

@@ -35,6 +35,12 @@ exports.downloadBillingExcel = async (req, res) => {
     const match = {
         $match: query
     }
+
+    const sort = {
+        $sort:{
+            billedDate:1
+        }
+    }
     const skip = {
         $skip: (pageNumber - 1) * 1000
     }
@@ -86,6 +92,7 @@ exports.downloadBillingExcel = async (req, res) => {
 
     const pipeline = []
     pipeline.push(match)
+    pipeline.push(sort)
     pipeline.push(skip)
     pipeline.push(limit)
     pipeline.push(addField)
