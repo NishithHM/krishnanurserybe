@@ -211,7 +211,7 @@ exports.getPaymentHistory = async (req, res) => {
     }
     console.log("getPaymentHistory-pipeline", JSON.stringify(pipeline));
     loggers.info(`getPaymentHistory-pipeline, ${JSON.stringify(pipeline)}`);
-    sumPipeline.push(match)
+    // sumPipeline.push(match)
     const results = await Payment.aggregate(pipeline);
     let sum
     let remainingCapital
@@ -226,6 +226,8 @@ exports.getPaymentHistory = async (req, res) => {
         }
       }
       sumPipeline.push(sumGroup)
+
+      console.log(`getPaymentHistory-pipeline-sum, ${JSON.stringify(sumPipeline)}`);
 
       sum = await Payment.aggregate(sumPipeline);
       sum = sum?.[0]?.amount

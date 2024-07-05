@@ -30,6 +30,7 @@ exports.getPaymentHistorySchema = Joi.object().keys({
     search: Joi.string().pattern(new RegExp(/[A-Za-z0-9]/)),
     type: Joi.string().valid('BROKER', 'OTHERS', 'SALARY', 'VENDOR', 'CAPITAL'),
     businessType: Joi.string().valid('AGRI', 'NURSERY').required(),
+    vendorId: Joi.string()
     
 });
 

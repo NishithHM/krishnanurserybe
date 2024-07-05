@@ -6,8 +6,8 @@ const _ = require('lodash')
 
 exports.dahboardMetaData = async (req, res) => {
   const { startDate, endDate, categories, plants } = req.body
-  const sDate = dayjs(startDate, 'YYYY-MM').startOf('month').toDate()
-  const eDate = dayjs(endDate, 'YYYY-MM').endOf('month').toDate()
+  const sDate = dayjs(startDate, 'YYYY-MM-DD').startOf('day').toDate()
+  const eDate = dayjs(endDate, 'YYYY-MM-DD').endOf('day').toDate()
   let plantIds = [], categoryIds = []
   const otherMetaMatch = {}, otherProcMatch = {}
   if (plants?.length) {
@@ -251,6 +251,12 @@ exports.dahboardMetaData = async (req, res) => {
         roundOff: {
           $sum: "$totalRoundOff",
         },
+        cashAmount:{
+          $sum: "$totalCashAmount"
+        },
+        onlineAmount:{
+          $sum: "$totalOnlineAmount"
+        }
       },
     },
   ]
@@ -262,6 +268,7 @@ exports.dahboardMetaData = async (req, res) => {
   }
   let roundOffs = []
   if (plantIds?.length === 0 && categoryIds.length === 0) {
+    console.log('pipeline-round', JSON.stringify(roundOffPipeline))
     roundOffs = await metaDataModel.aggregate(roundOffPipeline)
   }
   console.log(JSON.stringify(roundOffPipeline))
