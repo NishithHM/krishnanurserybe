@@ -4,6 +4,7 @@ const ExcelJS = require('exceljs');
 const damageHistoryModel = require("../models/damageHistory.model");
 const procurementHistoryModel = require("../models/procurementHistory.model");
 const paymentModel = require("../models/payment.model");
+const { createXML } = require("../utils");
 
 exports.downloadBillingExcel = async (req, res) => {
     const { pageNumber = 1, startDate, endDate } = req.body
@@ -112,6 +113,99 @@ exports.downloadBillingExcel = async (req, res) => {
     res.header("count",count)
     res.header("isNext",(count-1000*1) > 0)
     res.sendFile('billing.xlsx', { root: __dirname });
+}
+
+exports.downloadBillingXML = async (req, res) => {
+    const { pageNumber = 1, startDate, endDate } = req.body
+
+    const query = {
+        billedDate: {
+            $gte: dayjs(startDate, 'YYYY-MM-DD').toDate(),
+            $lte: dayjs(endDate, 'YYYY-MM-DD').endOf('day').toDate()
+        },
+        status: 'BILLED',
+        type: 'NURSERY'
+    }
+    const match = {
+        $match: query
+    }
+
+    const sort = {
+        $sort:{
+            billedDate:1
+        }
+    }
+    const skip = {
+        $skip: (pageNumber - 1) * 1000
+    }
+    const limit = {
+        $limit: 1000
+    }
+
+    const project = {
+        $project: {
+            customerName: 1,
+            customerNumber: 1,
+            "items.procurementName": 1,
+            "items.variant": 1,
+            "items.quantity": 1,
+            "items.mrp": 1,
+            "items.rate": 1,
+            totalPrice: 1,
+            discount: 1,
+            roundOff: 1,
+            invoiceId: 1,
+            billedDate: 1,
+            onlineAmount:1,
+            cashAmount:1,
+            paymentType: 1,
+            "soldBy":  "$soldBy.name",
+            "billedBy": "$billedBy.name",
+            "_id": 0
+        }
+    }
+
+    const addField = {
+        $addFields:{
+        items: {
+          $map: {
+            input: "$items",
+            as: "item",
+            in: {
+              $mergeObjects: [
+                "$$item",
+                {
+                  "procurementName": "$$item.procurementName.en.name",
+                  "variant": "$$item.variant.en.name"
+                }
+              ]
+            }
+          }
+        }
+    }
+  }
+
+    const pipeline = []
+    pipeline.push(match)
+    pipeline.push(sort)
+    pipeline.push(skip)
+    pipeline.push(limit)
+    pipeline.push(addField)
+    pipeline.push(project)
+
+    console.log('bills-pipeline-xml', JSON.stringify(pipeline))
+
+    const bills = await billingsModel.aggregate(pipeline);
+    const count = await billingsModel.countDocuments(query)
+    console.log(bills.length, bills[0])
+    await createXML(bills)
+    res.header("Content-Disposition",
+    "attachment; filename=billing_txn.xml");
+    res.header("Access-Control-Expose-Headers", "*")
+    res.header("Content-Type","xml")
+    res.header("count",count)
+    res.header("isNext",(count-1000*1) > 0)
+    res.sendFile('billing_xml.xml', { root: __dirname });
 }
 
 exports.downloadWasteMgmtExcel = async (req, res) => {

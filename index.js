@@ -8,7 +8,9 @@ const cors = require('cors')
 const compression = require('compression')
 const helmet = require('helmet')
 const app = express();
-const logger = require('./loggers')
+const logger = require('./loggers');
+const { createXML } = require('./api/utils');
+const { number } = require('joi');
 app.use(compression())
 app.use(helmet())
 dotenv.config({ path: './.env' })
@@ -27,6 +29,7 @@ app.use(router)
 const server = app.listen(port, () => {
 	console.log(`Server is running on port ${port}`)
     logger.info(`Server is running on port ${port}`)
+    // createXML([{name:"govindhappa", number:"9008171631", date: "20240706", partyName: "CASH",  items:[{pricePerPlant:"30", price: "300", qty: 10, itemName: "Clove"}], totalPrice: "300"}])
 })
 server.setTimeout(5000)
 

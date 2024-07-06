@@ -1,4 +1,5 @@
 const fs = require("fs");
+const { txnData, baseFileData } = require("../controllers/paymentXMLTemplate");
 
 exports.handleMongoError = (error) => {
   console.log(JSON.parse(JSON.stringify(error)));
@@ -87,3 +88,22 @@ exports.uploadAwsTest = async (req, res) => {
     res.status(500);
   }
 };
+
+exports.createXML = async (data)=>{
+    const txtInput = data.map(({customerName, customerNumber, billedDate, paymentType, items, totalPrice})=> txnData({customerName, customerNumber, billedDate, paymentType, items, totalPrice}))
+    const fullXML = baseFileData(txtInput)
+    console.log(fullXML)
+    const xmlPath = 'api/controllers/billing_xml.xml'
+    return new Promise((res, rej)=>{
+      fs.writeFile(xmlPath, fullXML, (err) => {
+        if (err) {
+          console.error('Error writing XML to file:', err);
+          rej(err)
+        } else {
+          console.log('XML file has been saved successfully.');
+          res(xmlPath)
+        }
+      });
+    })
+    
+}
