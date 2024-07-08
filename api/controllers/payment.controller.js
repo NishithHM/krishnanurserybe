@@ -27,7 +27,8 @@ exports.addPayment = async (req, res) => {
       comment,
       cashAmount,
       onlineAmount,
-      vendorId
+      vendorId,
+      businessType
     } = req.body;
     const role = req?.token?.role;
     let broker;
@@ -80,6 +81,8 @@ exports.addPayment = async (req, res) => {
     }
 
     paymentData.amount = amount;
+    paymentData.businessType = businessType;
+    paymentData
     if(type==='VENDOR'){
       paymentData.vendorId = vendorId;
       const vendor = await vendorModel.findById(vendorId);
@@ -93,6 +96,7 @@ exports.addPayment = async (req, res) => {
     if (brokerName && !brokerId) {
       broker.save();
     }
+    const capital = await Tracker.findOne({name:'capital'})
 
     if(type==='CAPITAL'){
       capital.number = capital.number + amount

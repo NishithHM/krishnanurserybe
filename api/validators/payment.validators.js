@@ -7,7 +7,7 @@ exports.addPaymentScheme = Joi.object().keys({
     brokerNumber: Joi.string(),
     empName: Joi.string().pattern(new RegExp(/[A-Za-z]/)),
     amount: Joi.number().required(),
-    type: Joi.string().valid('BROKER', 'OTHERS', 'SALARY', 'VENDOR', 'CAPITAL'),
+    type: Joi.string().valid('BROKER', 'OTHERS', 'SALARY', 'VENDOR', 'CAPITAL').required(),
     transferType: Joi.string().valid('CASH', 'ONLINE', 'BOTH'),
     businessType: Joi.string().valid('AGRI', 'NURSERY').required(),
     phoneNumber: Joi.string().length(10),
