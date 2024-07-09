@@ -311,7 +311,7 @@ exports.uploadInvoiceToOrder = async (req, res) => {
         const vendorData = await Vendor.findById(vendorId);
         vendorData.deviation = vendorData.deviation + currentTxnDeviation;
         await vendorData.save();
-        await updatePayment(vendorData, totalAmount, cashAmount, onlineAmount, comments)
+        await updatePayment(vendorData, finalInvoiceAmount, cashAmount, onlineAmount, comments)
         await Vendor.findOneAndUpdate({_id:new ObjectId(vendorId)}, {$push:{paymentTypes:{onlineAmount, cashAmount, comments, orderId:id, totalAmount: orderData.totalAmount, date: new Date()}}})
         
         res.status(200).json({
@@ -1267,8 +1267,9 @@ const updatePayment =async(vendor, amount, cashAmount, onlineAmount, comment)=>{
   }else if (onlineAmount>0){
     type="ONLINE"
   }
-  const payment = new Payment({vendorId: vendor._id, name: vendor?.name, amount, cashAmount, onlineAmount, type:'VENDORS', phoneNumber: vendor.contact, comment, transferType: type})
+  const payment = new Payment({vendorId: vendor._id, name: vendor?.name, amount, cashAmount, onlineAmount, type:'VENDORS', phoneNumber: vendor.contact, comment, transferType: type, businessType:'NURSERY'})
   await payment.save()
   const capital = await Tracker.findOne({name: 'capital'});
   capital.number = capital.number - amount
+  await capital.save()
 }
