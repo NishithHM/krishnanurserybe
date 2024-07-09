@@ -6,6 +6,7 @@ const damageHistoryModel = require("../models/damageHistory.model");
 const procurementHistoryModel = require("../models/procurementHistory.model");
 const paymentModel = require("../models/payment.model");
 const { createXML, createLegderXML } = require("../utils");
+const { uniq } = require("lodash");
 
 exports.downloadBillingExcel = async (req, res) => {
     const { pageNumber = 1, startDate, endDate } = req.body
@@ -138,10 +139,10 @@ exports.downloadBillingXML = async (req, res) => {
     }
     const skip = {
         // $skip: (pageNumber - 1) * 1000
-        $skip: 1
+        $skip: 10
     }
     const limit = {
-        $limit: 9
+        $limit: 1000
     }
 
     const project = {
@@ -221,7 +222,7 @@ exports.downloadBillingXML = async (req, res) => {
     // await createLegderXML(customers)
     console.log(bills.length, bills[0])
     const items = bills.map(ele=> ele.items.map(i=> i.procurementName)).flat()
-    console.log(items)
+    console.log(JSON.stringify(uniq(items)))
     await createXML(bills)
     res.header("Content-Disposition",
     "attachment; filename=billing_txn.xml");
