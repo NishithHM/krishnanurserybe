@@ -1270,6 +1270,6 @@ const updatePayment =async(vendor, amount, cashAmount, onlineAmount, comment)=>{
   const payment = new Payment({vendorId: vendor._id, name: vendor?.name, amount, cashAmount, onlineAmount, type:'VENDORS', phoneNumber: vendor.contact, comment, transferType: type, businessType:'NURSERY'})
   await payment.save()
   const capital = await Tracker.findOne({name: 'capital'});
-  capital.number = capital.number - amount
+  capital.number = capital.number - parseInt(amount, 10)
   await capital.save()
 }
