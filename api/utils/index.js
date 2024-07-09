@@ -1,5 +1,5 @@
 const fs = require("fs");
-const { txnData, baseFileData } = require("../controllers/paymentXMLTemplate");
+const { txnData, baseFileData, baseLedgerData, ledgerDate, ledgerData } = require("../controllers/paymentXMLTemplate");
 
 exports.handleMongoError = (error) => {
   console.log(JSON.parse(JSON.stringify(error)));
@@ -90,9 +90,9 @@ exports.uploadAwsTest = async (req, res) => {
 };
 
 exports.createXML = async (data)=>{
-    const txtInput = data.map(({customerName, customerNumber, billedDate, paymentType, items, totalPrice})=> txnData({customerName, customerNumber, billedDate, paymentType, items, totalPrice}))
+    const txtInput = data.map(({customerName, customerNumber, billedDate, paymentType, items, totalPrice}, index)=> txnData({customerName, customerNumber, billedDate, paymentType, items, totalPrice, index: index+1}))
     const fullXML = baseFileData(txtInput)
-    console.log(fullXML)
+    // console.log(fullXML)
     const xmlPath = 'api/controllers/billing_xml.xml'
     return new Promise((res, rej)=>{
       fs.writeFile(xmlPath, fullXML, (err) => {
@@ -106,4 +106,23 @@ exports.createXML = async (data)=>{
       });
     })
     
+}
+
+exports.createLegderXML = async (data)=>{
+  const txtInput = data.map(({name}, index)=> ledgerData({customerName:name}))
+  const fullXML = baseLedgerData(txtInput)
+  // console.log(fullXML)
+  const xmlPath = 'api/controllers/ledger_xml.xml'
+  return new Promise((res, rej)=>{
+    fs.writeFile(xmlPath, fullXML, (err) => {
+      if (err) {
+        console.error('Error writing XML to file:', err);
+        rej(err)
+      } else {
+        console.log('XML file has been saved successfully.');
+        res(xmlPath)
+      }
+    });
+  })
+  
 }

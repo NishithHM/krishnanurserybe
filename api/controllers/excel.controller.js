@@ -1,10 +1,11 @@
 const dayjs = require("dayjs")
 const billingsModel = require("../models/billings.model")
+const customerModel = require("../models/customer.model")
 const ExcelJS = require('exceljs');
 const damageHistoryModel = require("../models/damageHistory.model");
 const procurementHistoryModel = require("../models/procurementHistory.model");
 const paymentModel = require("../models/payment.model");
-const { createXML } = require("../utils");
+const { createXML, createLegderXML } = require("../utils");
 
 exports.downloadBillingExcel = async (req, res) => {
     const { pageNumber = 1, startDate, endDate } = req.body
@@ -136,10 +137,11 @@ exports.downloadBillingXML = async (req, res) => {
         }
     }
     const skip = {
-        $skip: (pageNumber - 1) * 1000
+        // $skip: (pageNumber - 1) * 1000
+        $skip: 1
     }
     const limit = {
-        $limit: 1000
+        $limit: 9
     }
 
     const project = {
@@ -197,7 +199,29 @@ exports.downloadBillingXML = async (req, res) => {
 
     const bills = await billingsModel.aggregate(pipeline);
     const count = await billingsModel.countDocuments(query)
+
+    const newCustomerPipeline = [
+     {
+        $match:{
+            createdAt: {
+                $gte: dayjs(startDate, 'YYYY-MM-DD').toDate(),
+                $lte: dayjs(endDate, 'YYYY-MM-DD').endOf('day').toDate()
+            },
+        },
+       
+    },
+    // { $skip:208,
+    //     },
+    //     {
+    //         $limit:1000
+    //     }
+    ]
+    // const customers = await customerModel.aggregate(newCustomerPipeline)
+    // console.log(customers.map(ele=> ele?.name))
+    // await createLegderXML(customers)
     console.log(bills.length, bills[0])
+    const items = bills.map(ele=> ele.items.map(i=> i.procurementName)).flat()
+    console.log(items)
     await createXML(bills)
     res.header("Content-Disposition",
     "attachment; filename=billing_txn.xml");
