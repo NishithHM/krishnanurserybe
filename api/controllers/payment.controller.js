@@ -99,9 +99,9 @@ exports.addPayment = async (req, res) => {
     const capital = await Tracker.findOne({name:'capital'})
 
     if(type==='CAPITAL'){
-      capital.number = capital.number + amount
+      capital.number = capital.number + parseInt(amount, 10)
     }else{
-      capital.number = capital.number - amount
+      capital.number = capital.number - parseInt(amount, 10)
     }
     await capital.save()
 
@@ -203,8 +203,8 @@ exports.getPaymentHistory = async (req, res) => {
       pipeline.push(...matchVal);
       sumPipeline.push(...matchVal)
     }
-    if(!count){
-      pipeline.push(...sortStage);
+    if(count!=="true"){
+        pipeline.push(...sortStage);
       if (pageNumber) {
         pipeline.push(...pagination);
       }
