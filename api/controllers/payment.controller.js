@@ -150,7 +150,6 @@ exports.getPaymentHistory = async (req, res) => {
       match.type = typeFilter;
     }
 
-    if (!isCount) {
       if (startDate && endDate) {
         match.createdAt = {
           $gte: dayjs(startDate, "YYYY-MM-DD").toDate(),
@@ -164,7 +163,6 @@ exports.getPaymentHistory = async (req, res) => {
           { customerNumber: search },
         ];
       }
-    }
     const pagination = [
       {
         $skip: 10 * (pageNumber - 1),
@@ -205,9 +203,11 @@ exports.getPaymentHistory = async (req, res) => {
       pipeline.push(...matchVal);
       sumPipeline.push(...matchVal)
     }
-    pipeline.push(...sortStage);
-    if (pageNumber) {
-      pipeline.push(...pagination);
+    if(!count){
+      pipeline.push(...sortStage);
+      if (pageNumber) {
+        pipeline.push(...pagination);
+      }
     }
 
     if (isCount === "true") {
