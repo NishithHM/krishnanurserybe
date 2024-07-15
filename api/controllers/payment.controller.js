@@ -239,7 +239,7 @@ exports.getPaymentHistory = async (req, res) => {
          const capital = await Tracker.findOne({name:'capital'})
          remainingCapital = capital.number
       }
-      if(type==='VENDOR'){
+      if(type==='VENDOR' && vendorId){
         const vendor = await vendorModel.findById(vendorId)
         vendorDeviation = vendor.deviation
      }
