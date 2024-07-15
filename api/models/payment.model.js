@@ -17,7 +17,7 @@ const payments = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["BROKER", "SALARY", "OTHERS", "VENDORS", "CAPITAL"],
+      enum: ["BROKER", "SALARY", "OTHERS", "VENDOR", "CAPITAL"],
     },
     transferType:{
       type: {

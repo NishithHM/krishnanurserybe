@@ -290,7 +290,7 @@ exports.uploadInvoiceToOrder = async (req, res) => {
           const item = orderData?.items?.[i];
           const procHistory = await ProcurementHistory.findById(item?._id);
           procHistory.totalPrice = parseInt(item.totalPrice, 10);
-          procHistory.currentPaidAmount = parseInt(item.totalPrice, 10);
+          procHistory.currentPaidAmount = parseInt(finalAmountPaid, 10);
           procHistory.invoice = paths[0];
           vendorId = procHistory.vendorId;
           await procHistory.save();
@@ -311,8 +311,7 @@ exports.uploadInvoiceToOrder = async (req, res) => {
         const vendorData = await Vendor.findById(vendorId);
         vendorData.deviation = vendorData.deviation + currentTxnDeviation;
         await vendorData.save();
-        await updatePayment(vendorData, finalInvoiceAmount, cashAmount, onlineAmount, comments)
-        await Vendor.findOneAndUpdate({_id:new ObjectId(vendorId)}, {$push:{paymentTypes:{onlineAmount, cashAmount, comments, orderId:id, totalAmount: orderData.totalAmount, date: new Date()}}})
+        await updatePayment(vendorData, finalAmountPaid, cashAmount, onlineAmount, comments)
         
         res.status(200).json({
           message: "invoice uploaded",
@@ -1228,7 +1227,7 @@ const updatePayment =async(vendor, amount, cashAmount, onlineAmount, comment)=>{
   }else if (onlineAmount>0){
     type="ONLINE"
   }
-  const payment = new Payment({vendorId: vendor._id, name: vendor?.name, amount, cashAmount, onlineAmount, type:'VENDORS', phoneNumber: vendor.contact, comment, transferType: type, businessType:'NURSERY'})
+  const payment = new Payment({vendorId: vendor._id, name: vendor?.name, amount, cashAmount, onlineAmount, type:'VENDOR', phoneNumber: vendor.contact, comment, transferType: type, businessType:'NURSERY'})
   await payment.save()
   const capital = await Tracker.findOne({name: 'capital'});
   capital.number = capital.number - parseInt(amount, 10)
