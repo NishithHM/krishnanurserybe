@@ -3,12 +3,15 @@ const mongoose = require('mongoose')
 const procurmentModel = require("../api/models/procurment.model")
 const billingsModel = require("../api/models/billings.model")
 const Tracker = require("../api/models/tracker.model")
+const Damages = require("../api/models/damageHistory.model")
 const Vendors = require("../api/models/vendor.model")
 
 var request = require('request');
 var fs = require('fs');
 const dayjs = require("dayjs")
 const { caluclateMetaData } = require("../crons/dailyCron")
+const procurementHistoryModel = require("../api/models/procurementHistory.model")
+const metaDataModel = require("../api/models/metaData.model")
 
 const addInvoiceToProcHistory = async ()=>{
     const res = await ProcurementHistory.updateMany({}, {$set: {invoice: 'null'}}, {upsert: false})
@@ -71,7 +74,7 @@ const clearS3 = ()=>{
 
 const dbCon = ()=>{
     const env = 'dev'
-    mongoose.connect(`mongodb+srv://sknProd:1ONEvuYlmiexoPA7@sknprod.fionm1o.mongodb.net/nursery_mgmt_${env}?retryWrites=true&w=majority`, {
+    mongoose.connect(`mongodb+srv://admin:admin123@cluster0.t2cxv.mongodb.net/nursery_mgmt_${env}?retryWrites=true&w=majority`, {
         useNewUrlParser: true,
         useUnifiedTopology: true,
     }).then(() => console.log("Database connected! ", env))
@@ -228,13 +231,70 @@ const correctBillData = async()=>{
 
 }
 
+const updateProcurementName = async (id, newName) => {
+  try {
+    const updatedProcurement = await procurmentModel.findOneAndUpdate(
+      { _id: new mongoose.mongo.ObjectId(id) },
+      {$set:{names:newName}},
+      {timestamps: false}
+    )
+
+    const updatedProcHistory = await procurementHistoryModel.updateMany(
+      { procurementId: new mongoose.mongo.ObjectId(id) },
+      {$set:{names:newName}},
+      {timestamps: false}
+    )
+
+    const billings = await billingsModel.find({"items.procurementId": new mongoose.mongo.ObjectId(id)})
+    for(let i=0; i< billings.length; i++){
+       const bill = billings[i]
+       const items = bill.items?.map(ele=> {
+        if(ele?.procurementId?.toString()===id){
+           ele.procurementName = newName
+        }
+        return ele
+       })
+       await billingsModel.updateOne({_id:bill?._id}, {$set: {items}}, {timestamps: false})
+    }
+
+    const metaValues = await metaDataModel.updateMany(
+      { procurementId: new mongoose.mongo.ObjectId(id) },
+      {$set:{names:newName}},
+      {timestamps: false}
+    )
+
+    const damages = await Damages.updateMany(
+      { procurementId: new mongoose.mongo.ObjectId(id) },
+      {$set:{names:newName}},
+      {timestamps: false}
+    )
+
+
+    return updatedProcurement
+  } catch (err) {
+    console.error(err)
+    throw err
+  }
+}
+
+
+
 const startScripts =async()=>{
     await dbCon()
     
     await new Promise(res=> setTimeout(()=>res(1), 1000))
     // testApi()
     console.log('db connected')
-    caluclateMetaDataAll()
+    const name = {
+    "en": {
+      "name": "tea 1"
+    },
+    "ka": {
+      "name": "ಚಹಾ 1"
+    }
+  }
+   await updateProcurementName("644902225d698cdd131aacd9", name )
+   console.log('done')
 }
 
 startScripts()

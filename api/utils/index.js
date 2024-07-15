@@ -90,7 +90,7 @@ exports.uploadAwsTest = async (req, res) => {
 };
 
 exports.createXML = async (data)=>{
-    const txtInput = data.map(({customerName, customerNumber, billedDate, paymentType, items, totalPrice}, index)=> txnData({customerName, customerNumber, billedDate, paymentType, items, totalPrice, index: index+1}))
+    const txtInput = data.map(({customerName, customerNumber, billedDate, paymentType, items, totalPrice, roundOff}, index)=> txnData({customerName, customerNumber, billedDate, paymentType, items, totalPrice, index: index+1, roundOff}))
     const fullXML = baseFileData(txtInput)
     // console.log(fullXML)
     const xmlPath = 'api/controllers/billing_xml.xml'

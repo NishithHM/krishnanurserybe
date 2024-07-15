@@ -139,7 +139,7 @@ exports.downloadBillingXML = async (req, res) => {
     }
     const skip = {
         // $skip: (pageNumber - 1) * 1000
-        $skip: 10
+        $skip: 0
     }
     const limit = {
         $limit: 1000
