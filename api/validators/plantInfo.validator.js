@@ -22,4 +22,11 @@ const getPlantByIdValidator = Joi.object({
     id: Joi.string().required()
 })
 
-module.exports = {addPlantInfoValidator, getPlantByIdValidator}
+const getPlantValidator = Joi.object({
+    search: Joi.string(),
+    pageNumber: Joi.number().default(1),
+    tags: Joi.array().items(Joi.string())
+})
+
+
+module.exports = {addPlantInfoValidator, getPlantByIdValidator, getPlantValidator}

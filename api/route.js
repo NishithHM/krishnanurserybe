@@ -43,8 +43,8 @@ const { addSectionValidator } = require('./validators/section.validator');
 const { addSection } = require('./controllers/section.controller');
 const { addOfferValidator } = require('./validators/offers.validator');
 const { addOffer, getAllOffers } = require('./controllers/offers.controller');
-const { addPlantInfoValidator, getPlantByIdValidator } = require('./validators/plantInfo.validator');
-const { addPlantInfo, getPlantInfoByProcurementId } = require('./controllers/plant_info.controller');
+const { addPlantInfoValidator, getPlantByIdValidator, getPlantValidator } = require('./validators/plantInfo.validator');
+const { addPlantInfo, getPlantInfoByProcurementId, getPlantInfoList } = require('./controllers/plant_info.controller');
 
 const fileStorageEngine = multer.diskStorage({
 	destination:(req,file,cb) =>{
@@ -172,6 +172,7 @@ router.get('/api/excel/payments', [authWall(['admin', 'procurement', 'sales']), 
 // plant_info
 router.post('/api/customer/plant-info/add', [authWall('admin'), bodyValidator(addPlantInfoValidator)], addPlantInfo)
 router.get('/api/customer/plant-info/:id', [paramsToBody(['id'], "params"), bodyValidator(getPlantByIdValidator)], getPlantInfoByProcurementId)
+router.get('/api/customer/plant-info', [paramsToBody(['pageNumber', 'search'], "params"), bodyValidator(getPlantValidator)], getPlantInfoList)
 
 // sections
 router.post('/api/customer/section/add', [authWall(['admin']),  bodyValidator(addSectionValidator)], addSection)

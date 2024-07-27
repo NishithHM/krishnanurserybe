@@ -131,7 +131,51 @@ const getPlantInfoByProcurementId = async (req, res) => {
     }
 }
 
+const getPlantInfoList = async (req, res) => {
+    try {
+        
+        const { search, pageNumber = 1, tags } = req.body
+        const limit = 10
+        const skip = (pageNumber - 1) * limit
 
+        let query = {}
+
+        if (search) {
+            query.$or = [
+                { 'names.customer.name': { $regex: search, $options: 'i' } },
+                { 'names.en.name': { $regex: search, $options: 'i' } }
+            ]
+        }
+
+        if (tags && tags.length > 0) {
+            query.tags._id = { $in: tags }
+        }
+
+        const totalCount = await PlantInfo.countDocuments(query)
+        const plantInfoList = await PlantInfo.find(query)
+            .skip(skip)
+            .limit(limit)
+            .lean()
+
+        const plantInfoWithPresignedUrls = await Promise.all(
+            plantInfoList.map(async (plantInfo) => {
+                const coverImages = await convertCoverImagesToPresignedUrls(plantInfo.coverImages)
+                const sections = await convertSectionImagesToPresignedUrls(plantInfo.sections)
+                return { ...plantInfo, coverImages, sections }
+            })
+        )
+
+        res.status(200).json({
+            plantInfoList: plantInfoWithPresignedUrls,
+            totalCount,
+            currentPage: pageNumber,
+            totalPages: Math.ceil(totalCount / limit)
+        })
+    } catch (error) {
+        console.error('Error in getPlantInfoList:', error)
+        res.status(500).json({ error: 'Internal server error' })
+    }
+}
 
 
 const convertCoverImagesToPresignedUrls = async (coverImages) => {
@@ -168,4 +212,4 @@ const convertSectionImagesToPresignedUrls = async (sections) => {
 
 
 
-module.exports = { addPlantInfo,  getPlantInfoByProcurementId}
+module.exports = { addPlantInfo,  getPlantInfoByProcurementId, getPlantInfoList}
