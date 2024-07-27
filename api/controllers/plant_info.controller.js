@@ -43,10 +43,11 @@ const addPlantInfo = async (req, res) => {
         }))
 
         const sections = []
-        for(let i=0; i<value.sections; i++){
-            sections.push({text: value.sections[i]?.text, image: sectionS3s[i]})
+        for(let i=0; i<value.sections.length; i++){
+            sections.push({image: sectionS3s[i], text: value.sections[i]?.text})
         }
-    
+
+        console.log(sections)
 
         // Add tags to the tags collection if they don't exist
         const tagPromises = value.tags.map(async (tagName) => {
@@ -212,4 +213,4 @@ const convertSectionImagesToPresignedUrls = async (sections) => {
 
 
 
-module.exports = { addPlantInfo,  getPlantInfoByProcurementId, getPlantInfoList}
+module.exports = { addPlantInfo,  getPlantInfoByProcurementId, getPlantInfoList, convertCoverImagesToPresignedUrls, convertSectionImagesToPresignedUrls}

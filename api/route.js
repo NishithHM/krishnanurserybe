@@ -40,7 +40,7 @@ const { dahboardMetaData, dahboardMetaGraph } = require('./controllers/dashboard
 const { downloadBillingExcel, downloadWasteMgmtExcel, downloadOrderMgmtExcel, downloadPaymentExcel } = require('./controllers/excel.controller');
 const { billingExcelValidator, wasteMgmtExcelValidator, orderMgmtExcelValidator, paymentExcelValidator } = require('./validators/excel.validator');
 const { addSectionValidator } = require('./validators/section.validator');
-const { addSection } = require('./controllers/section.controller');
+const { addSection, getSections } = require('./controllers/section.controller');
 const { addOfferValidator } = require('./validators/offers.validator');
 const { addOffer, getAllOffers } = require('./controllers/offers.controller');
 const { addPlantInfoValidator, getPlantByIdValidator, getPlantValidator } = require('./validators/plantInfo.validator');
@@ -176,6 +176,8 @@ router.get('/api/customer/plant-info', [paramsToBody(['pageNumber', 'search'], "
 
 // sections
 router.post('/api/customer/section/add', [authWall(['admin']),  bodyValidator(addSectionValidator)], addSection)
+router.get('/api/customer/section', [], getSections)
+
 
 
 //offers
