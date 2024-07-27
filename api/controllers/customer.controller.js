@@ -77,6 +77,9 @@ exports.getCustomerByNumber = async (req, res)=>{
                           {
                             $eq: ["$customerId", "$$id"],
                           },
+                          {
+                            $eq: ["$status", "BILLED"],
+                          },
                         ],
                       },
                     },
