@@ -87,3 +87,24 @@ exports.uploadAwsTest = async (req, res) => {
     res.status(500);
   }
 };
+
+
+
+exports.getPresignedUrl = async (key) => {
+  // Add this to api/utils/index.js
+  const AWS = require('aws-sdk')
+  const s3 = new AWS.S3()
+  const params = {
+    Bucket: process.env.AWS_BUCKET_NAME,
+    Key: `${process.env.ENV}/${key}`,
+    Expires: 3600 // URL expires in 1 hour
+  }
+
+  try {
+    const url = await s3.getSignedUrlPromise('getObject', params)
+    return url
+  } catch (error) {
+    console.error('Error generating presigned URL:', error)
+    return null
+  }
+}

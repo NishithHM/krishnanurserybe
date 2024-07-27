@@ -38,6 +38,10 @@ const { metaDataValidator, metaGraphValidator } = require('./validators/dashboar
 const { dahboardMetaData, dahboardMetaGraph } = require('./controllers/dashboard.controller');
 const { downloadBillingExcel, downloadWasteMgmtExcel, downloadOrderMgmtExcel, downloadPaymentExcel } = require('./controllers/excel.controller');
 const { billingExcelValidator, wasteMgmtExcelValidator, orderMgmtExcelValidator, paymentExcelValidator } = require('./validators/excel.validator');
+const { addSectionValidator } = require('./validators/section.validator');
+const { addSection } = require('./controllers/section.controller');
+const { addOfferValidator } = require('./validators/offers.validator');
+const { addOffer, getAllOffers } = require('./controllers/offers.controller');
 
 const fileStorageEngine = multer.diskStorage({
 	destination:(req,file,cb) =>{
@@ -155,7 +159,13 @@ router.get('/api/excel/waste-mgmt', [authWall(['admin', 'procurement', 'sales'])
 router.get('/api/excel/order-mgmt', [authWall(['admin', 'procurement', 'sales']), paramsToBody(['pageNumber', 'isCount', 'startDate', 'endDate'], 'query'), bodyValidator(orderMgmtExcelValidator)], downloadOrderMgmtExcel)
 router.get('/api/excel/payments', [authWall(['admin', 'procurement', 'sales']), paramsToBody(['pageNumber', 'isCount', 'startDate', 'endDate', 'type'], 'query'), bodyValidator(paymentExcelValidator)], downloadPaymentExcel)
 
+// sections
+router.post('/api/customer/section/add', [authWall(['admin']),  bodyValidator(addSectionValidator)], addSection)
 
+
+//offers
+router.post('/api/customer/offers/add', [authWall(['admin']),  bodyValidator(addOfferValidator)], addOffer)
+router.get('/api/customer/offers', [], getAllOffers)
 
 // router.get('/video', videoRender)
 module.exports = router
