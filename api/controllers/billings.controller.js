@@ -19,8 +19,13 @@ exports.addToCart = async (req, res) => {
         }
         let customerRes
         if (!customerId) {
-             customerRes = new Customer({ phoneNumber: parseInt(customerNumber, 10), dob: dayjs(customerDob, 'YYYY-MM-DD').toDate(), name: customerName })
-        } else {
+            if (customerNumber !== '1234567890') {
+                customerRes = new Customer({ phoneNumber: parseInt(customerNumber, 10), dob: dayjs(customerDob, 'YYYY-MM-DD').toDate(), name: customerName })
+            } else {
+                const ObjectId = mongoose.Types.ObjectId
+                customerRes = { _id: new ObjectId(), name: customerName, phoneNumber: parseInt('1234567890') }
+            }
+        }else{
             customerRes = await Customer.findById(customerId);
         }
         if (!isEmpty(customerRes)) {
@@ -31,7 +36,7 @@ exports.addToCart = async (req, res) => {
                     const billing = new Billing({ customerName: customerRes.name, customerId: customerRes._id, customerNumber: customerRes.phoneNumber, soldBy, items: formattedItems, totalPrice, discount, status: "CART", type:'NURSERY' , isWholeSale, isApproved: false, infoSheetPrice })
                     const cartDetails = await billing.save()
                     res.status(200).send(cartDetails)
-                    if(!customerId){
+                    if(!customerId &&  customerNumber !== '1234567890'){
                         customerRes.save()
                     }
                 } else {
@@ -129,11 +134,14 @@ exports.confirmCart = async (req, res) => {
                         billData.onlineAmount = onlineAmount
                         const trackerVal = await Tracker.findOne({name:"invoiceId"})
                         loggers.info("fetched-bill-tracker", JSON.stringify({tracker:trackerVal.number, id}))
+                        console.log("fetched-bill-tracker", JSON.stringify({tracker:trackerVal.number, id}))
                         billData.invoiceId = `NUR_${trackerVal.number}`
                         const buffer = await mergeInfoSheets(billData.items)
                         await billData.save()
                         await updateRemainingQuantity(procurementQuantityMapping)
-                        await updateCustomerPurchaseHistory(billData)
+                        if (billData.customerNumber !== 1234567890) {
+                            await updateCustomerPurchaseHistory(billData)
+                        }
                         trackerVal.number = trackerVal.number + 1
                         await trackerVal.save()
                         const trackerValNew = await Tracker.findOne({name:"invoiceId"})

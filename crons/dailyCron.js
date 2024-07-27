@@ -12,7 +12,7 @@ exports.dailyCron = () => {
   cron.schedule("0 0 * * *", () => {
     deleteLoggers()
     console.log('running')
-    this.caluclateMetaData(dayjs().startOf('day').add(330,'minutes').toDate())
+    this.caluclateMetaData(dayjs().startOf('day').toDate())
   })
 }
 
@@ -42,7 +42,7 @@ const deleteLoggers = async () => {
 }
 
 exports.caluclateMetaData = async (currentDate) => {
-  const prevDate = dayjs(currentDate).subtract(1, 'days').startOf('day').add(330, 'minutes').toDate()
+  const prevDate = dayjs(currentDate).subtract(1, 'days').startOf('day').toDate()
   
   // loggers.info('caluclating-meta-data', currentDate, prevDate)
   // console.log('caluclating-meta-data', currentDate, prevDate)

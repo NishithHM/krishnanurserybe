@@ -44,8 +44,62 @@ exports.customerRegister = async (req, res) => {
 exports.getCustomerByNumber = async (req, res)=>{
     const {phoneNumber} = req.body
     try { 
-        const customer = await Customer.findOne({phoneNumber: parseInt(phoneNumber, 10)})
-        res.status(200).send(customer)
+        const pipeline = [
+          {
+            $match:
+              /**
+               * query: The query in MQL.
+               */
+              {
+                phoneNumber: parseInt(phoneNumber, 10),
+              },
+          },
+          {
+            $lookup:
+              /**
+               * from: The target collection.
+               * localField: The local join field.
+               * foreignField: The target join field.
+               * as: The name for the results.
+               * pipeline: Optional pipeline to run on the foreign collection.
+               * let: Optional variables to use in the pipeline field stages.
+               */
+              {
+                from: "billing_histories",
+                let: {
+                  id: "$_id",
+                },
+                pipeline: [
+                  {
+                    $match: {
+                      $expr: {
+                        $and: [
+                          {
+                            $eq: ["$customerId", "$$id"],
+                          },
+                          {
+                            $eq: ["$status", "BILLED"],
+                          },
+                        ],
+                      },
+                    },
+                  },
+                  {
+                    $sort: {
+                      billedDate: -1,
+                    },
+                  },
+                  {
+                    $limit: 20,
+                  },
+                ],
+                as: "billingHistory",
+              },
+          },
+        ]
+        const customer = await Customer.aggregate(pipeline)
+        res.status(200).send(customer[0])
+        
     } catch (error) {
         console.log(error)
         loggers.info(`getCustomerByNumber-error, ${error}`)
