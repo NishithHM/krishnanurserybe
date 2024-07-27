@@ -1,6 +1,12 @@
+const { mongo } = require("mongoose")
+const Procurement = require('../models/procurment.model')
+const Section = require('../models/sections.model')
 exports.addSection = async (req, res) => {
   try {
     const { type, name, stack, plants } = req.body
+    // Get plant names from procurement model
+    const plantIds = plants?.map(ele=> new mongo.ObjectId(ele))
+    const plantsNames = await Procurement.find({_id:{$in:plantIds}}, {names:1, _id:1})
 
 
     // Create new section
@@ -8,7 +14,7 @@ exports.addSection = async (req, res) => {
       type,
       name,
       stack,
-      plants
+      plants: plantsNames
     })
 
     // Save section to database

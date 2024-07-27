@@ -94,6 +94,12 @@ exports.getPresignedUrl = async (key) => {
   // Add this to api/utils/index.js
   const AWS = require('aws-sdk')
   const s3 = new AWS.S3()
+ 
+  AWS.config.update({
+      signatureVersion: 'v4',
+      region: 'ap-south-1'
+  })
+
   const params = {
     Bucket: process.env.AWS_BUCKET_NAME,
     Key: `${process.env.ENV}/${key}`,

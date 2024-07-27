@@ -6,7 +6,7 @@ const addOfferValidator = Joi.object({
   percentageOff: Joi.number().required(),
   upto: Joi.number().required(),
   minPurchaseQty: Joi.number(),
-  image: Joi.string().base64(),
+  image: Joi.string().required(),
   offerCode: Joi.string().required(),
   stack: Joi.number().required(),
 }).custom((obj, helpers) => {

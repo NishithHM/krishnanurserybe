@@ -4,9 +4,10 @@ const fs = require('fs');
 const { handleMongoError, uploadFile, getPresignedUrl } = require('../utils')
 const Procurement = require('../models/procurment.model');
 const { mongo } = require('mongoose');
+const path = require('path');
 
 
-exports.addOffer = async (req, res) => {
+const addOffer = async (req, res) => {
   try {
     const {
       plants,
@@ -25,7 +26,7 @@ exports.addOffer = async (req, res) => {
       const buffer = Buffer.from(image.replace(/^data:image\/\w+;base64,/, ""), 'base64')
       const type = image.split(';')[0].split('/')[1]
       const fileName = `offer_${uuid.v4()}.${type}`
-      const tempFilePath = `/uploads/${fileName}`
+      const tempFilePath = path.join(__dirname, `../uploads/${fileName}`)
       
       await fs.promises.writeFile(tempFilePath, buffer)
       
@@ -39,10 +40,12 @@ exports.addOffer = async (req, res) => {
         imageUrl = `customer/offers/${fileName}`
       }
     }
+
     // Get plant names from procurement model
     const plantIds = plants?.map(ele=> new mongo.ObjectId(ele))
-    const plantsNames = Procurement.find({_id:{$in:plantIds}}, {names:1, _id:1})
+    const plantsNames = await Procurement.find({_id:{$in:plantIds}}, {names:1, _id:1})
 
+    if(plantsNames.length> 0){
 
     const newOffer = new Offer({
       plants: plantsNames,
@@ -54,6 +57,7 @@ exports.addOffer = async (req, res) => {
       offerCode,
       stack
     })
+   
 
 
     const savedOffer = await newOffer.save()
@@ -63,7 +67,15 @@ exports.addOffer = async (req, res) => {
       message: 'Offer added successfully',
       data: savedOffer
     })
+    }
+    else{
+    res.status(400).json({
+        success: false,
+        message: 'Plants not found',
+    });
+  }
   } catch (error) {
+    console.log(error)
     const mongoError = handleMongoError(error)
     if (mongoError.error) {
       return res.status(400).json(mongoError)
@@ -94,7 +106,7 @@ const getAllOffers = async (req, res) => {
 }
 
 module.exports = {
-  createOffer,
+  addOffer,
   getAllOffers
 }
 

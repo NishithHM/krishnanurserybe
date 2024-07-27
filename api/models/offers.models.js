@@ -3,7 +3,7 @@ const mongoose = require('mongoose')
 const offerSchema = new mongoose.Schema({
     plants: [{
         _id: { type: mongoose.Schema.Types.ObjectId},
-        name: Object
+        names: Object
     }],
     ordersAbove: {
         type: Number,
