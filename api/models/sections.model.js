@@ -28,7 +28,7 @@ const sectionSchema = new mongoose.Schema({
     }],
     required: true,
   }
-})
+}, { timestamps: true })
 
 
 

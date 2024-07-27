@@ -40,7 +40,7 @@ const offerSchema = new mongoose.Schema({
         type: String,
         required: true
     }
-})
+}, { timestamps: true })
 
 offerSchema.pre('save', function(next) {
     if (!this.ordersAbove && !this.minPurchaseQty) {

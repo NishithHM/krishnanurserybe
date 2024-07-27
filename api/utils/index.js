@@ -103,7 +103,7 @@ exports.getPresignedUrl = async (key) => {
   const params = {
     Bucket: process.env.AWS_BUCKET_NAME,
     Key: `${process.env.ENV}/${key}`,
-    Expires: 3600 // URL expires in 1 hour
+    Expires: 300 // URL expires in 5 min
   }
 
   try {

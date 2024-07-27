@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer')
 const path = require('path');
+
 const uuid = require('uuid')
 const { register, singIn, getAllUsers, deleteUserById } = require('./controllers/user.controller');
 const { authWall, bodyValidator, paramsToBody } = require('./middlewares/auth.middleware')
@@ -42,6 +43,8 @@ const { addSectionValidator } = require('./validators/section.validator');
 const { addSection } = require('./controllers/section.controller');
 const { addOfferValidator } = require('./validators/offers.validator');
 const { addOffer, getAllOffers } = require('./controllers/offers.controller');
+const { addPlantInfoValidator, getPlantByIdValidator } = require('./validators/plantInfo.validator');
+const { addPlantInfo, getPlantInfoByProcurementId } = require('./controllers/plant_info.controller');
 
 const fileStorageEngine = multer.diskStorage({
 	destination:(req,file,cb) =>{
@@ -54,6 +57,13 @@ const fileStorageEngine = multer.diskStorage({
 	}
 })
 const uploadInvoice = multer({storage:fileStorageEngine, limits:{fileSize: 1000*1024*1024}});
+
+const AWS = require('aws-sdk')
+ 
+  AWS.config.update({
+      signatureVersion: 'v4',
+      region: 'ap-south-1'
+  })
 
 // cron
 dailyCron()
@@ -158,6 +168,10 @@ router.get('/api/excel/billing', [authWall(['admin', 'procurement', 'sales']), p
 router.get('/api/excel/waste-mgmt', [authWall(['admin', 'procurement', 'sales']), paramsToBody(['pageNumber', 'isCount', 'startDate', 'endDate'], 'query'), bodyValidator(wasteMgmtExcelValidator)], downloadWasteMgmtExcel)
 router.get('/api/excel/order-mgmt', [authWall(['admin', 'procurement', 'sales']), paramsToBody(['pageNumber', 'isCount', 'startDate', 'endDate'], 'query'), bodyValidator(orderMgmtExcelValidator)], downloadOrderMgmtExcel)
 router.get('/api/excel/payments', [authWall(['admin', 'procurement', 'sales']), paramsToBody(['pageNumber', 'isCount', 'startDate', 'endDate', 'type'], 'query'), bodyValidator(paymentExcelValidator)], downloadPaymentExcel)
+
+// plant_info
+router.post('/api/customer/plant-info/add', [authWall('admin'), bodyValidator(addPlantInfoValidator)], addPlantInfo)
+router.get('/api/customer/plant-info/:id', [paramsToBody(['id'], "params"), bodyValidator(getPlantByIdValidator)], getPlantInfoByProcurementId)
 
 // sections
 router.post('/api/customer/section/add', [authWall(['admin']),  bodyValidator(addSectionValidator)], addSection)
