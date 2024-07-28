@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer')
 const path = require('path');
+
 const uuid = require('uuid')
 const { register, singIn, getAllUsers, deleteUserById } = require('./controllers/user.controller');
 const { authWall, bodyValidator, paramsToBody } = require('./middlewares/auth.middleware')
@@ -38,6 +39,12 @@ const { metaDataValidator, metaGraphValidator } = require('./validators/dashboar
 const { dahboardMetaData, dahboardMetaGraph } = require('./controllers/dashboard.controller');
 const { downloadBillingExcel, downloadWasteMgmtExcel, downloadOrderMgmtExcel, downloadPaymentExcel } = require('./controllers/excel.controller');
 const { billingExcelValidator, wasteMgmtExcelValidator, orderMgmtExcelValidator, paymentExcelValidator } = require('./validators/excel.validator');
+const { addSectionValidator } = require('./validators/section.validator');
+const { addSection, getSections } = require('./controllers/section.controller');
+const { addOfferValidator } = require('./validators/offers.validator');
+const { addOffer, getAllOffers } = require('./controllers/offers.controller');
+const { addPlantInfoValidator, getPlantByIdValidator, getPlantValidator } = require('./validators/plantInfo.validator');
+const { addPlantInfo, getPlantInfoByProcurementId, getPlantInfoList } = require('./controllers/plant_info.controller');
 
 const fileStorageEngine = multer.diskStorage({
 	destination:(req,file,cb) =>{
@@ -50,6 +57,13 @@ const fileStorageEngine = multer.diskStorage({
 	}
 })
 const uploadInvoice = multer({storage:fileStorageEngine, limits:{fileSize: 1000*1024*1024}});
+
+const AWS = require('aws-sdk')
+ 
+  AWS.config.update({
+      signatureVersion: 'v4',
+      region: 'ap-south-1'
+  })
 
 // cron
 dailyCron()
@@ -155,7 +169,20 @@ router.get('/api/excel/waste-mgmt', [authWall(['admin', 'procurement', 'sales'])
 router.get('/api/excel/order-mgmt', [authWall(['admin', 'procurement', 'sales']), paramsToBody(['pageNumber', 'isCount', 'startDate', 'endDate'], 'query'), bodyValidator(orderMgmtExcelValidator)], downloadOrderMgmtExcel)
 router.get('/api/excel/payments', [authWall(['admin', 'procurement', 'sales']), paramsToBody(['pageNumber', 'isCount', 'startDate', 'endDate', 'type'], 'query'), bodyValidator(paymentExcelValidator)], downloadPaymentExcel)
 
+// plant_info
+router.post('/api/customer/plant-info/add', [authWall('admin'), bodyValidator(addPlantInfoValidator)], addPlantInfo)
+router.get('/api/customer/plant-info/:id', [paramsToBody(['id'], "params"), bodyValidator(getPlantByIdValidator)], getPlantInfoByProcurementId)
+router.get('/api/customer/plant-info', [paramsToBody(['pageNumber', 'search'], "params"), bodyValidator(getPlantValidator)], getPlantInfoList)
 
+// sections
+router.post('/api/customer/section/add', [authWall(['admin']),  bodyValidator(addSectionValidator)], addSection)
+router.get('/api/customer/section', [], getSections)
+
+
+
+//offers
+router.post('/api/customer/offers/add', [authWall(['admin']),  bodyValidator(addOfferValidator)], addOffer)
+router.get('/api/customer/offers', [], getAllOffers)
 
 // router.get('/video', videoRender)
 module.exports = router

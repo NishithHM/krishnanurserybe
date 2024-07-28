@@ -157,4 +157,29 @@ exports.removeFiles = async (paths)=>{
   for(let path of paths){
     fs.unlinkSync(`downloads/${path}`)
   }
+
+  exports.getPresignedUrl = async (key) => {
+    // Add this to api/utils/index.js
+    const AWS = require('aws-sdk')
+    const s3 = new AWS.S3()
+   
+    AWS.config.update({
+        signatureVersion: 'v4',
+        region: 'ap-south-1'
+    })
+  
+    const params = {
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: `${process.env.ENV}/${key}`,
+      Expires: 300 // URL expires in 5 min
+    }
+  
+    try {
+      const url = await s3.getSignedUrlPromise('getObject', params)
+      return url
+    } catch (error) {
+      console.error('Error generating presigned URL:', error)
+      return null
+    }
+  }
 }

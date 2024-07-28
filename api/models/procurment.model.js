@@ -13,6 +13,11 @@ const Procurement = new mongoose.Schema({
             name: {
                 type: String,
             }
+        },
+        customer: {
+            name: {
+                type: String,
+            }
         }
     },
     categories: {
