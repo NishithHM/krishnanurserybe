@@ -5,7 +5,8 @@ const plantInfoSchema = new Schema({
     procurementId: {
         type: Schema.Types.ObjectId,
         ref: 'Procurement',
-        required: true
+        required: true,
+        unique: true
     },
     names: {
        type: Object,

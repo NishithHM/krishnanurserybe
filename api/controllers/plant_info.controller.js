@@ -217,7 +217,33 @@ const convertSectionImagesToPresignedUrls = async (sections) => {
     return []
 }
 
+const publishPlantInfo = async (req, res) => {
+    try {
+        const { id } = req.body;
+
+        // Find the plant info by ID
+        const plantInfo = await PlantInfo.findOne({procurementId:id})
+
+        if (!plantInfo) {
+            return res.status(404).json({ message: 'Plant info not found' });
+        }
+
+        // Update the status to 'PUBLISH'
+        plantInfo.status = 'PUBLISH';
+
+        // Save the updated plant info
+        const updatedPlantInfo = await plantInfo.save();
 
 
+        res.status(200).json({
+            message: 'Plant info published successfully',
+            data: updatedPlantInfo
+        });
+    } catch (error) {
+        console.error('Error publishing plant info:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
 
-module.exports = { addPlantInfo,  getPlantInfoByProcurementId, getPlantInfoList, convertCoverImagesToPresignedUrls, convertSectionImagesToPresignedUrls}
+
+module.exports = { addPlantInfo,  getPlantInfoByProcurementId, getPlantInfoList, convertCoverImagesToPresignedUrls, convertSectionImagesToPresignedUrls, publishPlantInfo}

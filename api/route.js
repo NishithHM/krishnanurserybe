@@ -40,11 +40,11 @@ const { dahboardMetaData, dahboardMetaGraph } = require('./controllers/dashboard
 const { downloadBillingExcel, downloadWasteMgmtExcel, downloadOrderMgmtExcel, downloadPaymentExcel } = require('./controllers/excel.controller');
 const { billingExcelValidator, wasteMgmtExcelValidator, orderMgmtExcelValidator, paymentExcelValidator } = require('./validators/excel.validator');
 const { addSectionValidator } = require('./validators/section.validator');
-const { addSection, getSections } = require('./controllers/section.controller');
+const { addSection, getSections, getPlantsFromSection } = require('./controllers/section.controller');
 const { addOfferValidator } = require('./validators/offers.validator');
-const { addOffer, getAllOffers } = require('./controllers/offers.controller');
+const { addOffer, getAllOffers, getPlantsFromOffers } = require('./controllers/offers.controller');
 const { addPlantInfoValidator, getPlantByIdValidator, getPlantValidator } = require('./validators/plantInfo.validator');
-const { addPlantInfo, getPlantInfoByProcurementId, getPlantInfoList } = require('./controllers/plant_info.controller');
+const { addPlantInfo, getPlantInfoByProcurementId, getPlantInfoList, publishPlantInfo } = require('./controllers/plant_info.controller');
 
 const fileStorageEngine = multer.diskStorage({
 	destination:(req,file,cb) =>{
@@ -154,6 +154,7 @@ router.post('/api/agri/billing/addToCart', [authWall(['sales']), bodyValidator(a
 router.post('/api/agri/billing/update-cart/:id', [authWall(['sales']), paramsToBody(['id'], "params"), bodyValidator(updateAgriCartSchema)], updateAgriCart)
 router.post('/api/agri/billing/confirm-cart/:id', [authWall(['sales']),paramsToBody(['id'], "params"), bodyValidator(confirmAgriCartSchema)], confirmAgriCart)
 router.get('/api/agri/billing/get-cart/:id', [authWall(['sales', 'preSales']),paramsToBody(['id'], "params"), bodyValidator(getCustomerCartSchema)], getAgriCart)
+
 // s3 test
 router.post('/api/upload-large',[], uploadAwsTest)
 router.get('/api/download',[authWall(['admin','procurement', 'sales', 'preSales']), paramsToBody(['path'], "query")], downloadFile)
@@ -173,16 +174,19 @@ router.get('/api/excel/payments', [authWall(['admin', 'procurement', 'sales']), 
 router.post('/api/customer/plant-info/add', [authWall('admin'), bodyValidator(addPlantInfoValidator)], addPlantInfo)
 router.get('/api/customer/plant-info/:id', [paramsToBody(['id'], "params"), bodyValidator(getPlantByIdValidator)], getPlantInfoByProcurementId)
 router.get('/api/customer/plant-info', [paramsToBody(['pageNumber', 'search', 'type'], "query"), bodyValidator(getPlantValidator)], getPlantInfoList)
+router.get('/api/customer/plant-info/publish/:id', [authWall('admin'), paramsToBody(['id'], "params"), bodyValidator(getPlantByIdValidator)], publishPlantInfo)
 
 // sections
 router.post('/api/customer/section/add', [authWall(['admin']),  bodyValidator(addSectionValidator)], addSection)
 router.get('/api/customer/section', [], getSections)
+router.get('/api/customer/section/:id', [paramsToBody(['id'], "params")], getPlantsFromSection)
 
 
 
 //offers
 router.post('/api/customer/offers/add', [authWall(['admin']),  bodyValidator(addOfferValidator)], addOffer)
 router.get('/api/customer/offers', [], getAllOffers)
+router.get('/api/customer/offers/:id', [paramsToBody(['id'], "params")], getPlantsFromOffers)
 
 // router.get('/video', videoRender)
 module.exports = router

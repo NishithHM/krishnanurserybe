@@ -568,6 +568,7 @@ exports.getAllProcurements = async (req, res) => {
           $or: [
             { "names.en.name": { $regex: search, $options: "i" } },
             { "names.ka.name": { $regex: search, $options: "i" } },
+            { "names.customer.name": { $regex: search, $options: "i" } },
           ],
         },
       },
