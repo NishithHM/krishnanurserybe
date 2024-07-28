@@ -172,7 +172,7 @@ router.get('/api/excel/payments', [authWall(['admin', 'procurement', 'sales']), 
 // plant_info
 router.post('/api/customer/plant-info/add', [authWall('admin'), bodyValidator(addPlantInfoValidator)], addPlantInfo)
 router.get('/api/customer/plant-info/:id', [paramsToBody(['id'], "params"), bodyValidator(getPlantByIdValidator)], getPlantInfoByProcurementId)
-router.get('/api/customer/plant-info', [paramsToBody(['pageNumber', 'search'], "params"), bodyValidator(getPlantValidator)], getPlantInfoList)
+router.get('/api/customer/plant-info', [paramsToBody(['pageNumber', 'search', 'type'], "query"), bodyValidator(getPlantValidator)], getPlantInfoList)
 
 // sections
 router.post('/api/customer/section/add', [authWall(['admin']),  bodyValidator(addSectionValidator)], addSection)

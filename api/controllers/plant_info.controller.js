@@ -113,9 +113,9 @@ const addPlantInfo = async (req, res) => {
 const getPlantInfoByProcurementId = async (req, res) => {
     try {
         const { id } = req.params
-
+        const role = req?.token?.role;
         // Find plant info by procurementId
-        const plantInfo = await PlantInfo.findOne({ procurementId: id })
+        const plantInfo = await PlantInfo.findOne({ procurementId: id, status: role==='admin' ? 'PUBLISHED' : {$ne: ""}})
         plantInfo.coverImages = await convertCoverImagesToPresignedUrls(plantInfo.coverImages)
         plantInfo.sections = await convertSectionImagesToPresignedUrls(plantInfo.sections)
         if (!plantInfo) {
@@ -135,7 +135,7 @@ const getPlantInfoByProcurementId = async (req, res) => {
 const getPlantInfoList = async (req, res) => {
     try {
         
-        const { search, pageNumber = 1, tags } = req.body
+        const { search, pageNumber = 1, tags, type } = req.body
         const limit = 10
         const skip = (pageNumber - 1) * limit
 
@@ -152,22 +152,29 @@ const getPlantInfoList = async (req, res) => {
             query.tags._id = { $in: tags }
         }
 
+        if(role==='amdin'){
+            query.status = role==='admin' ? 'PUBLISHED' : {$ne: ""}
+        }
+
         const totalCount = await PlantInfo.countDocuments(query)
         const plantInfoList = await PlantInfo.find(query)
             .skip(skip)
             .limit(limit)
             .lean()
+        let infoResult = plantInfoList
 
-        const plantInfoWithPresignedUrls = await Promise.all(
-            plantInfoList.map(async (plantInfo) => {
-                const coverImages = await convertCoverImagesToPresignedUrls(plantInfo.coverImages)
-                const sections = await convertSectionImagesToPresignedUrls(plantInfo.sections)
-                return { ...plantInfo, coverImages, sections }
-            })
-        )
+        if (type !== 'search') {
+            infoResult = await Promise.all(
+                plantInfoList.map(async (plantInfo) => {
+                    const coverImages = await convertCoverImagesToPresignedUrls(plantInfo.coverImages)
+                    const sections = await convertSectionImagesToPresignedUrls(plantInfo.sections)
+                    return { ...plantInfo, coverImages, sections }
+                })
+            )
+        }
 
         res.status(200).json({
-            plantInfoList: plantInfoWithPresignedUrls,
+            plantInfoList: infoResult,
             totalCount,
             currentPage: pageNumber,
             totalPages: Math.ceil(totalCount / limit)
