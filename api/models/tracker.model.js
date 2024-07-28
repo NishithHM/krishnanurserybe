@@ -39,6 +39,16 @@ const createDefaults =async ()=>{
                console.log(error)
           }
      }
+     const dataCapital = await Tracker.findOne({name:'capital'})
+     if(isEmpty(dataCapital)){
+     try {
+          const initial = new Tracker({name:'capital', number:0})
+          initial.save()
+               
+          } catch (error) {
+               console.log(error)
+          }
+     }
 }
 
 createDefaults()

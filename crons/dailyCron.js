@@ -294,6 +294,8 @@ exports.caluclateMetaData = async (currentDate) => {
           $gte: prevDate,
           $lt: currentDate,
         },
+        type:{$ne:"CAPITAL"},
+        businessType: "NURSERY"
       }
     },
     {
@@ -339,7 +341,7 @@ exports.caluclateMetaData = async (currentDate) => {
   const paymentData = await paymentModel.aggregate(paymentPipeline)
   if(paymentData[0]?.amount){
     delete paymentData._id
-    const metaData = new MetaData({ ...paymentData[0], type:'PAYMENT', date:prevDate})
+    const metaData = new MetaData({ ...paymentData[0], type:'PAYMENT', date:prevDate, businessType: "NURSERY"})
     await metaData.save()
     // console.log(JSON.stringify(metaData))
   }

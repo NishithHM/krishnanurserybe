@@ -107,7 +107,7 @@ router.get('/api/billing/approve/:id', [authWall(['admin']), paramsToBody(['id']
 
 // payments
 router.post('/api/payments/addPayment', [authWall(['sales', 'procurement', 'admin']), bodyValidator(addPaymentScheme)], addPayment)
-router.get('/api/payments/getAll', [authWall(['sales', 'procurement', 'admin']),paramsToBody(['pageNumber', 'isCount','startDate', 'endDate', 'sortBy', 'sortType', 'search'], 'query', 'type'), bodyValidator(getPaymentHistorySchema)], getPaymentHistory)
+router.get('/api/payments/getAll', [authWall(['sales', 'procurement', 'admin']),paramsToBody(['pageNumber', 'isCount','startDate', 'endDate', 'sortBy', 'sortType', 'search', 'vendorId', 'businessType', 'type'], 'query', 'type'), bodyValidator(getPaymentHistorySchema)], getPaymentHistory)
 router.get('/api/payments/get-info/:phoneNumber', [authWall(['sales', 'procurement', 'admin']), paramsToBody(['phoneNumber'], 'params'), bodyValidator(getPaymentInfoSchema)], getPaymentInfo )
 // brokers
 router.get('/api/brokers/getAll', [authWall(['procurement', 'admin', 'sales']), paramsToBody(['search'], 'query'), bodyValidator(getBrokersSchema)], getBrokerList)

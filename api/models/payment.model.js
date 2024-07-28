@@ -17,7 +17,7 @@ const payments = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["BROKER", "SALARY", "OTHERS"],
+      enum: ["BROKER", "SALARY", "OTHERS", "VENDOR", "CAPITAL"],
     },
     transferType:{
       type: {
@@ -52,6 +52,15 @@ const payments = new mongoose.Schema(
       type: String,
       default: null,
     },
+    vendorId:{
+      type: String,
+      default: null,
+    },
+    businessType:{
+      type: String,
+      enum: ["AGRI", "NURSERY"],
+      required: true
+    }
   },
   {
     timestamps: true,

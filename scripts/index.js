@@ -146,8 +146,8 @@ const removeBillingAgri = async (async)=>{
 
 const caluclateMetaDataAll = async()=>{
     const dates = []
-    let minDate = dayjs('2024-07-05', 'YYYY-MM-DD').add(330, 'minutes').toDate()
-    const maxDate = dayjs('2024-07-06', 'YYYY-MM-DD').add(330, 'minutes').toDate()
+    let minDate = dayjs('2023-05-25', 'YYYY-MM-DD').add(330, 'minutes').toDate()
+    const maxDate = dayjs('2024-07-04', 'YYYY-MM-DD').add(330, 'minutes').toDate()
     while(minDate<maxDate){
         dates.push(minDate)
         minDate = dayjs(minDate).add(1, 'day').toDate()

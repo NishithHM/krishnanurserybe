@@ -2,6 +2,7 @@ const Procurement = require("../models/procurment.model");
 const Vendor = require("../models/vendor.model");
 const ProcurementHistory = require("../models/procurementHistory.model");
 const DamageHistory = require("../models/damageHistory.model");
+const Payment = require('../models/payment.model');
 const mongoose = require("mongoose");
 const uuid = require("uuid");
 const dayjs = require("dayjs");
@@ -10,6 +11,7 @@ const { handleMongoError, uploadFile } = require("../utils");
 const loggers = require("../../loggers");
 const { isEmpty, isNumber } = require("lodash");
 const { ObjectId } = require("mongodb");
+const Tracker = require("../models/tracker.model");
 
 exports.requestOrder = async (req, res) => {
   const { nameInEnglish, totalQuantity, id, descriptionSales, ownProduction } =
@@ -288,7 +290,7 @@ exports.uploadInvoiceToOrder = async (req, res) => {
           const item = orderData?.items?.[i];
           const procHistory = await ProcurementHistory.findById(item?._id);
           procHistory.totalPrice = parseInt(item.totalPrice, 10);
-          procHistory.currentPaidAmount = parseInt(item.totalPrice, 10);
+          procHistory.currentPaidAmount = parseInt(finalAmountPaid, 10);
           procHistory.invoice = paths[0];
           vendorId = procHistory.vendorId;
           await procHistory.save();
@@ -309,7 +311,8 @@ exports.uploadInvoiceToOrder = async (req, res) => {
         const vendorData = await Vendor.findById(vendorId);
         vendorData.deviation = vendorData.deviation + currentTxnDeviation;
         await vendorData.save();
-        await Vendor.findOneAndUpdate({_id:new ObjectId(vendorId)}, {$push:{paymentTypes:{onlineAmount, cashAmount, comments, orderId:id, totalAmount: orderData.totalAmount, date: new Date()}}})
+        await updatePayment(vendorData, finalAmountPaid, cashAmount, onlineAmount, comments)
+        
         res.status(200).json({
           message: "invoice uploaded",
         });
@@ -1216,3 +1219,17 @@ exports.getOrderIdDetails = async (req, res) => {
     res.status(500).send(err);
   }
 };
+
+const updatePayment =async(vendor, amount, cashAmount, onlineAmount, comment)=>{
+  let type = "CASH"
+  if(cashAmount>0 && onlineAmount>0){
+    type = 'BOTH'
+  }else if (onlineAmount>0){
+    type="ONLINE"
+  }
+  const payment = new Payment({vendorId: vendor._id, name: vendor?.name, amount, cashAmount, onlineAmount, type:'VENDOR', phoneNumber: vendor.contact, comment, transferType: type, businessType:'NURSERY'})
+  await payment.save()
+  const capital = await Tracker.findOne({name: 'capital'});
+  capital.number = capital.number - parseInt(amount, 10)
+  await capital.save()
+}
