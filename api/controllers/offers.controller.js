@@ -5,6 +5,8 @@ const { handleMongoError, uploadFile, getPresignedUrl } = require('../utils')
 const Procurement = require('../models/procurment.model');
 const { mongo } = require('mongoose');
 const path = require('path');
+const plant_infoModel = require('../models/plant_info.model');
+const { convertCoverImagesToPresignedUrls } = require('./plant_info.controller');
 
 
 const addOffer = async (req, res) => {
@@ -105,9 +107,53 @@ const getAllOffers = async (req, res) => {
   }
 }
 
+
+const getPlantsFromOffers = async (req, res) => {
+  try {
+    const { id , page = 1, limit = 10 } = req.body
+
+    const section = await Offer.findById(id).lean()
+
+    if (!section) {
+      return res.status(404).json({ message: 'Section not found' })
+    }
+
+    const plantIds = section.plants.map(plant => plant._id)
+    const skip = (page - 1) * limit
+
+    const plants = await plant_infoModel.find({ procurementId: { $in: plantIds } })
+      .skip(skip)
+      .limit(Number(limit))
+      .lean()
+
+    const plantsWithPresignedUrls = await Promise.all(plants.map(async (plant) => {
+      const coverImages = await convertCoverImagesToPresignedUrls(plant.coverImages)
+      return { 
+        ...plant, 
+        coverImages,
+        sectionName: section?.name
+      }
+    }))
+
+    const totalPlants = await plant_infoModel.countDocuments({ procurementId: { $in: plantIds } })
+    const totalPages = Math.ceil(totalPlants / limit)
+
+    res.status(200).json({
+      plants: plantsWithPresignedUrls,
+      currentPage: Number(page),
+      totalPages,
+      totalPlants
+    })
+  } catch (error) {
+    console.error('Error getting plants from offers:', error)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+}
+
 module.exports = {
   addOffer,
-  getAllOffers
+  getAllOffers,
+  getPlantsFromOffers
 }
 
 
