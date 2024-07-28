@@ -39,7 +39,7 @@ exports.getSections = async (req, res) => {
       const plantIds = section.plants.map(plant => plant._id)
       console.log(plantIds)
       const plants = await plant_infoModel.find({ procurementId: { $in: plantIds } })
-        .limit(7)
+        .limit(5)
         .lean()
 
       const plantsWithPresignedUrls = await Promise.all(plants.map(async (plant) => {
