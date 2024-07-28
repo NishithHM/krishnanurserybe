@@ -157,6 +157,7 @@ exports.removeFiles = async (paths)=>{
   for(let path of paths){
     fs.unlinkSync(`downloads/${path}`)
   }
+}
 
   exports.getPresignedUrl = async (key) => {
     // Add this to api/utils/index.js
@@ -180,6 +181,5 @@ exports.removeFiles = async (paths)=>{
     } catch (error) {
       console.error('Error generating presigned URL:', error)
       return null
-    }
   }
 }
