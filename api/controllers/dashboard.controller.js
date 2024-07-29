@@ -311,7 +311,7 @@ exports.dahboardMetaData = async (req, res) => {
 
   resp.inventory = resp.underMaintenanceQuantity + resp.remainingQuantity
 
-  resp.investment = resp.investment + vendorDevaition;
+  resp.investment = resp.investment + vendorDevaition.deviation;
   // console.log(resp)
 
   res.json(resp)
