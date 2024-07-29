@@ -300,7 +300,7 @@ exports.dahboardMetaData = async (req, res) => {
   let payments = {payments:0}
   let vendorDevaition = {deviation: 0}
   if(plantIds.length===0){
-    vendorDevaition = vendors
+    vendorDevaition = vendors[0]
   }
   if(!_.isEmpty(metaPayments)){
     payments = metaPayments[0]
