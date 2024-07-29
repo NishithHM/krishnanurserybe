@@ -299,7 +299,7 @@ exports.dahboardMetaData = async (req, res) => {
   const percentages = caluclatePercentagesAll(timeData, startDate, endDate)
   let payments = {payments:0}
   let vendorDevaition = {deviation: 0}
-  if(plants.length>0){
+  if(plantIds.length===0){
     vendorDevaition = vendors
   }
   if(!_.isEmpty(metaPayments)){
