@@ -20,10 +20,8 @@ const payments = new mongoose.Schema(
       enum: ["BROKER", "SALARY", "OTHERS", "VENDOR", "CAPITAL"],
     },
     transferType:{
-      type: {
         type: String,
         enum: ["CASH", "ONLINE", "BOTH"],
-      },
     },
     phoneNumber:{
       type: String,

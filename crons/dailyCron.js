@@ -287,6 +287,7 @@ exports.caluclateMetaData = async (currentDate) => {
     await metaData.save()
     // await new Promise((res) => setTimeout(() => res(), 100))
   }
+
   const paymentPipeline = [
     {
       $match:{
@@ -294,7 +295,7 @@ exports.caluclateMetaData = async (currentDate) => {
           $gte: prevDate,
           $lt: currentDate,
         },
-        type:{$ne:"CAPITAL"},
+        type:{$nin:["CAPITAL", "VENDOR"]},
         businessType: "NURSERY"
       }
     },
@@ -308,6 +309,7 @@ exports.caluclateMetaData = async (currentDate) => {
         },
     },
   ]
+  
   const roundOffPipeline = [
     {
       $match:{
