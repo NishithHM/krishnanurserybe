@@ -136,6 +136,7 @@ const getPlantInfoList = async (req, res) => {
     try {
         
         const { search, pageNumber = 1, tags, type } = req.body
+        const role = req?.token?.role;
         const limit = 10
         const skip = (pageNumber - 1) * limit
 
@@ -149,11 +150,11 @@ const getPlantInfoList = async (req, res) => {
         }
 
         if (tags && tags.length > 0) {
-            query.tags._id = { $in: tags }
+            query["tags._id"] = { $in: tags }
         }
 
         if(role==='amdin'){
-            query.status = role==='admin' ? 'PUBLISHED' : {$ne: ""}
+            query.status = role!=='admin' ? 'PUBLISHED' : {$ne: ""}
         }
 
         const totalCount = await PlantInfo.countDocuments(query)
