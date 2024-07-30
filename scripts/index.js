@@ -228,6 +228,41 @@ const correctBillData = async()=>{
 
 }
 
+const migrateProcurementPayments = async () => {
+  const procurementHistoryModel = require('../api/models/procurementHistory.model')
+  const paymentModel = require('../api/models/payment.model')
+
+  const procurements = await procurementHistoryModel.find({ currentPaidAmount: { $gt: 0 } })
+
+  for (const procurement of procurements) {
+    const existingPayment = await paymentModel.findOne({ invoiceId: procurement._id.toString() })
+
+    if (!existingPayment) {
+      const newPayment = new paymentModel({
+        name: procurement.vendorName || 'Unknown Vendor',
+        contact: procurement.vendorContact || '',
+        invoiceId: procurement._id.toString(),
+        amount: procurement.currentPaidAmount,
+        type: 'VENDOR',
+        transferType: 'ONLINE', // Assuming default transfer type
+        comment: `Migrated from procurement history: ${procurement.descriptionProc || ''}`,
+        onlineAmount: procurement.currentPaidAmount,
+        vendorId: procurement.vendorId || null,
+        businessType: 'NURSERY', // Assuming default business type
+        createdAt: procurement.createdAt,
+        updatedAt: procurement.updatedAt
+      })
+
+      await newPayment.save()
+      
+    }
+  }
+
+  console.log(`Migrated ${procurements.length} procurement payments`)
+}
+
+
+
 const startScripts =async()=>{
     await dbCon()
     
