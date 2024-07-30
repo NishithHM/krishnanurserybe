@@ -25,7 +25,8 @@ const getPlantByIdValidator = Joi.object({
 const getPlantValidator = Joi.object({
     search: Joi.string(),
     pageNumber: Joi.number().default(1),
-    tags: Joi.array().items(Joi.string())
+    tags: Joi.array().items(Joi.string()),
+    type: Joi.valid('search', 'list')
 })
 
 
