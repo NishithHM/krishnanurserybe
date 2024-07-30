@@ -6,6 +6,7 @@ const uuid = require('uuid')
 const path = require('path')
 const fs = require('fs')
 const { uploadFile, getPresignedUrl } = require('../utils')
+const { isEmpty } = require('lodash')
 
 
 const addPlantInfo = async (req, res) => {
@@ -52,8 +53,11 @@ const addPlantInfo = async (req, res) => {
         // Add tags to the tags collection if they don't exist
         const tagPromises = value.tags.map(async (tagName) => {
             if(!mongoose.Types.ObjectId.isValid(tagName)){
-                const newTag = new Tag({ name: tagName })
-                return newTag.save()
+                const tag = await Tag.findOne({name: tagName}).lean()
+                if(isEmpty(tag)){
+                    const newTag = new Tag({ name: tagName })
+                    return newTag.save()
+                }
             }
             return tagName
         })
