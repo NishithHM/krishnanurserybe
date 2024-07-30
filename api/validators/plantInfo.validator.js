@@ -26,7 +26,8 @@ const getPlantValidator = Joi.object({
     search: Joi.string(),
     pageNumber: Joi.number().default(1),
     tags: Joi.array().items(Joi.string()),
-    type: Joi.valid('search', 'list')
+    type: Joi.valid('search', 'list'),
+    limit: Joi.number().max(20)
 })
 
 

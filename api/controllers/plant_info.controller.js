@@ -135,9 +135,8 @@ const getPlantInfoByProcurementId = async (req, res) => {
 const getPlantInfoList = async (req, res) => {
     try {
         
-        const { search, pageNumber = 1, tags, type } = req.body
+        const { search, pageNumber = 1, tags, type, limit=10 } = req.body
         const role = req?.token?.role;
-        const limit = 10
         const skip = (pageNumber - 1) * limit
 
         let query = {}
