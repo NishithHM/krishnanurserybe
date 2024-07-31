@@ -10,7 +10,6 @@ const payments = new mongoose.Schema(
     },
     invoiceId: {
       type: String,
-      unique: true,
     },
     amount: {
       type: Number,
