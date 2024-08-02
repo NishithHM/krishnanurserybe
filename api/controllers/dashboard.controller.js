@@ -3,6 +3,7 @@ const metaDataModel = require("../models/metaData.model")
 const procurmentModel = require("../models/procurment.model")
 const { default: mongoose } = require("mongoose")
 const _ = require('lodash')
+const vendorModel = require("../models/vendor.model")
 
 exports.dahboardMetaData = async (req, res) => {
   const { startDate, endDate, categories, plants } = req.body
@@ -229,9 +230,27 @@ exports.dahboardMetaData = async (req, res) => {
     },
   ]
   console.log(JSON.stringify(pipelinePayments))
+   
+  const vendorPipeline = [
+    {
+      $group:
+        /**
+         * _id: The id of the group.
+         * fieldN: The first field name.
+         */
+        {
+          _id: null,
+          deviation: {
+            $sum: "$deviation",
+          },
+        },
+    },
+  ]
+  
   const metaData = await metaDataModel.aggregate(pipelineMeta)
   const plantsData = await metaDataModel.aggregate(pipelinePlants)
   const metaPayments = await metaDataModel.aggregate(pipelinePayments)
+  const vendors = await vendorModel.aggregate(vendorPipeline)
   const roundOffPipeline = [
     {
       $match: {
@@ -279,13 +298,20 @@ exports.dahboardMetaData = async (req, res) => {
   console.log(timeData)
   const percentages = caluclatePercentagesAll(timeData, startDate, endDate)
   let payments = {payments:0}
+  let vendorDevaition = {deviation: 0}
+  if(plantIds.length===0){
+    vendorDevaition = vendors[0]
+  }
   if(!_.isEmpty(metaPayments)){
     payments = metaPayments[0]
   }
   const resp = { ...metaData[0], ...payments, ...quantity[0], ...roundOffs[0], plants: plantsData, variants, ...percentages }
   resp.sales = resp.sales - _.get(resp, "roundOff", 0)
-  resp.profit = resp.profit - _.get(resp, "roundOff", 0)
+  resp.profit = resp.profit - _.get(resp, "roundOff", 0) - payments.payments
+
   resp.inventory = resp.underMaintenanceQuantity + resp.remainingQuantity
+
+  resp.investment = resp.investment + vendorDevaition.deviation;
   // console.log(resp)
 
   res.json(resp)

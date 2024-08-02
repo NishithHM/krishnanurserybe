@@ -71,7 +71,7 @@ const clearS3 = ()=>{
 
 const dbCon = ()=>{
     const env = 'dev'
-    mongoose.connect(`mongodb+srv://sknProd:1ONEvuYlmiexoPA7@sknprod.fionm1o.mongodb.net/nursery_mgmt_${env}?retryWrites=true&w=majority`, {
+    mongoose.connect(`/nursery_mgmt_${env}?retryWrites=true&w=majority`, {
         useNewUrlParser: true,
         useUnifiedTopology: true,
     }).then(() => console.log("Database connected! ", env))
@@ -228,13 +228,46 @@ const correctBillData = async()=>{
 
 }
 
+const migrateProcurementPayments = async () => {
+  const procurementHistoryModel = require('../api/models/procurementHistory.model')
+  const paymentModel = require('../api/models/payment.model')
+
+  const procurements = await procurementHistoryModel.find({ totalPrice: { $gt: 0 }, status:"VERIFIED" })
+  console.log(procurements.length)
+
+  for (const procurement of procurements) {
+
+      const newPayment = new paymentModel({
+        name: procurement.vendorName || 'Unknown Vendor',
+        contact: procurement.vendorContact || '',
+        amount: procurement.totalPrice,
+        type: 'VENDOR',
+        transferType: 'ONLINE', // Assuming default transfer type
+        comment: `Migrated from procurement history: ${procurement.descriptionProc || ''}`,
+        onlineAmount: procurement.totalPrice,
+        vendorId: procurement.vendorId || null,
+        businessType: 'NURSERY', // Assuming default business type
+        createdAt: procurement.createdAt,
+        updatedAt: procurement.updatedAt
+      })
+
+      await newPayment.save()
+      
+  }
+
+  console.log(`Migrated ${procurements.length} procurement payments`)
+}
+
+
+
 const startScripts =async()=>{
     await dbCon()
     
     await new Promise(res=> setTimeout(()=>res(1), 1000))
     // testApi()
     console.log('db connected')
-    caluclateMetaDataAll()
+    await migrateProcurementPayments()
+    console.log('done')
 }
 
 startScripts()
