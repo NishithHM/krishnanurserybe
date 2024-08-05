@@ -11,7 +11,8 @@ var fs = require("fs");
 const dayjs = require("dayjs");
 const { caluclateMetaData } = require("../crons/dailyCron");
 
-const excelFilePath = "Sample-Add-Plants-DEV.xlsx";
+const exl = require("convert-excel-to-json");
+const excelFilePath = "plat-data.xlsx";
 
 const addInvoiceToProcHistory = async () => {
   const res = await ProcurementHistory.updateMany(
@@ -204,51 +205,6 @@ const caluclateMetaDataAll = async () => {
   }
 };
 
-const readXlAndStore = () => {
-  const options = {
-    sheet: "Plant Info", // Specify the sheet name
-    header: {
-      rows: 1, // Indicates that the first row contains headers
-    },
-  };
-
-  // Convert Excel to JSON
-  excelToJson(options, excelFilePath, (err, result) => {
-    if (err) {
-      console.error("Error converting Excel to JSON:", err);
-      return;
-    }
-
-    const jsonData = result["Plant Info"];
-    const parsedData = [];
-    let currentData = null;
-
-    jsonData.forEach((row) => {
-      if (row["SL.No"]) {
-        if (currentData) {
-          parsedData.push(currentData);
-        }
-        currentData = {};
-        Object.keys(row).forEach((key) => {
-          currentData[key] = [row[key]];
-        });
-      } else if (currentData) {
-        Object.keys(row).forEach((key) => {
-          if (row[key]) {
-            currentData[key].push(row[key]);
-          }
-        });
-      }
-    });
-
-    if (currentData) {
-      parsedData.push(currentData);
-    }
-
-    console.log(parsedData); // Output the structured data
-  });
-};
-
 const correctBillData = async () => {
   const mismatchPipelines = [
     {
@@ -313,14 +269,220 @@ const correctBillData = async () => {
   }
 };
 
-readXlAndStore();
+const readXlAndStore = () => {
+  const columnToKey = {
+    A: "SLNO",
+    B: "name",
+    C: "nameForCustomer",
+    D: "sellingPrice",
+    E: "discountedSellingPrice",
+    F: "coverImages",
+    G: "tips",
+    H: "moreInfo",
+    I: "tags",
+    // J: "sectionName",
+    // K: "sectionInfo",
+    L: "sections",
+  };
 
+  const result = exl({
+    source: fs.readFileSync(excelFilePath),
+    columnToKey,
+  });
+
+  return new Promise((resolve, reject) => {
+    // console.log(result, "result");
+    if (!result["Plant Info"]?.length) reject(new Error("No data found"));
+    resolve(result["Plant Info"].slice(1));
+  });
+};
+
+readXlAndStore().then((data) => {
+  //   console.log(data, "data");
+
+  const mergeDuplicates = (data) => {
+    const mergedData = [];
+
+    data.forEach((item) => {
+      const lastItem = mergedData[mergedData.length - 1];
+
+      if (lastItem && lastItem.SLNO === item.SLNO) {
+        Object.keys(item).forEach((key) => {
+          if (key !== "SLNO") {
+            if (lastItem[key]) {
+              if (!Array.isArray(lastItem[key])) {
+                lastItem[key] = [lastItem[key]];
+              }
+              lastItem[key].push(item[key]);
+            } else {
+              lastItem[key] = item[key];
+            }
+          }
+        });
+      } else {
+        mergedData.push({ ...item });
+      }
+    });
+
+    return mergedData;
+  };
+
+  let convertedData = processArray(mergeDuplicates(data));
+
+  // console.log(convertedData[0].sections, "convertedData");
+
+  // let dataToSend = {};
+
+  convertedData.forEach(async (ele) => {
+    const procId = await procurmentModel
+      .findOne({
+        "names.en.name": ele?.name,
+      })
+      .select("_id");
+
+    // console.log(procId._id?.toString(), "procId");
+    const dataToSend = {
+      nameForCustomer: ele.nameForCustomer,
+      sellingPrice: ele.sellingPrice,
+      discountedSellingPrice: ele.discountedSellingPrice,
+      coverImages: ele.coverImages,
+      tips: ele.tips,
+      moreInfo: ele.moreInfo,
+      tags: ele.tags,
+      sections: ele.sections,
+      procurementId: procId._id?.toString(),
+    };
+
+    const res = await fetch(
+      "http://15.207.187.17:8000/api/customer/plant-info/add",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          authorization:
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY0NDk0NzM2ZWUwNjE1ZWY2Mzc3MjU2MyIsIm5hbWUiOiJhZG1pbjEiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3MjI4Nzg2NTEsImV4cCI6MTcyMjk2NTA1MX0.iRTRrPcwpI25fBPSBW0W57tWPuEQrP0q5ifBGAHIpSk",
+        },
+        body: JSON.stringify(dataToSend),
+      }
+    );
+    console.log(await res.json());
+  });
+});
+
+function processArray(arr) {
+  const result = {};
+  const arrayProperties = {};
+
+  function processSections(sections) {
+    if (typeof sections === "string") {
+      return [{ image: sections, text: "section1.png" }];
+    } else if (Array.isArray(sections)) {
+      return sections.map((section, index) => ({
+        image: section,
+        text: `section${index + 1}.png`,
+      }));
+    }
+    return [];
+  }
+
+  function ensureArray(value) {
+    return Array.isArray(value) ? value : value ? [value] : [];
+  }
+
+  // First pass: Separate objects with SLNO and collect array properties
+  arr.forEach((obj) => {
+    if (obj.SLNO) {
+      result[obj.SLNO] = { ...obj };
+      result[obj.SLNO].sections = processSections(obj.sections);
+      // Ensure tags and tips are arrays
+      result[obj.SLNO].tags = ensureArray(obj.tags);
+      result[obj.SLNO].tips = ensureArray(obj.tips);
+    } else {
+      Object.entries(obj).forEach(([key, value]) => {
+        if (
+          Array.isArray(value) ||
+          key === "sections" ||
+          key === "tags" ||
+          key === "tips"
+        ) {
+          if (!arrayProperties[key]) {
+            arrayProperties[key] = [];
+          }
+          if (key === "sections") {
+            arrayProperties[key].push(...processSections(value));
+          } else if (key === "tags" || key === "tips") {
+            arrayProperties[key].push(...ensureArray(value));
+          } else {
+            arrayProperties[key].push(...value);
+          }
+        }
+      });
+    }
+  });
+
+  // Remove duplicates from collected array properties
+  Object.keys(arrayProperties).forEach((key) => {
+    if (key === "sections") {
+      // For sections, remove duplicates based on data
+      arrayProperties[key] = arrayProperties[key].filter(
+        (obj, index, self) =>
+          index === self.findIndex((t) => t.data === obj.data)
+      );
+    } else {
+      arrayProperties[key] = [...new Set(arrayProperties[key])];
+    }
+  });
+
+  // Second pass: Merge array properties into objects with SLNO
+  Object.values(result).forEach((obj) => {
+    Object.entries(arrayProperties).forEach(([key, value]) => {
+      if (key === "sections") {
+        obj[key] = [...(obj[key] || []), ...value];
+      } else if (key === "tags" || key === "tips") {
+        obj[key] = [...ensureArray(obj[key]), ...value];
+      } else if (Array.isArray(obj[key])) {
+        obj[key] = [...obj[key], ...value];
+      } else if (obj[key]) {
+        obj[key] = [obj[key], ...value];
+      } else {
+        obj[key] = value;
+      }
+    });
+
+    // Remove duplicates from all array properties in the final object
+    Object.keys(obj).forEach((key) => {
+      if (Array.isArray(obj[key])) {
+        if (key === "sections") {
+          // For sections, remove duplicates based on data
+          obj[key] = obj[key].filter(
+            (item, index, self) =>
+              index === self.findIndex((t) => t.data === item.data)
+          );
+        } else {
+          obj[key] = [...new Set(obj[key])];
+        }
+      }
+    });
+
+    // Ensure sections is always an array with the correct structure
+    if (!obj.sections) {
+      obj.sections = [];
+    }
+
+    // Ensure tags and tips are always arrays
+    obj.tags = ensureArray(obj.tags);
+    obj.tips = ensureArray(obj.tips);
+  });
+
+  return Object.values(result);
+}
 const startScripts = async () => {
   await dbCon();
 
   await new Promise((res) => setTimeout(() => res(1), 1000));
   // testApi()
   console.log("db connected");
-  caluclateMetaDataAll();
+  await readXlAndStore();
+  // caluclateMetaDataAll();
 };
-// startScripts();
+startScripts();
