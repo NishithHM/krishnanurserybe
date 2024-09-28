@@ -1,10 +1,16 @@
 // add api routes
-const express = require('express');
+const express = require("express");
 const router = express.Router();
 const multer = require('multer')
 const path = require('path');
+//const videoRender = require('../controllers/videoController');
 
-const uuid = require('uuid')
+
+const cartcontroller = require('./controllers/cartcontroller');
+//const cartValidator= require("./validators/cartValidator");
+
+
+
 const { register, singIn, getAllUsers, deleteUserById } = require('./controllers/user.controller');
 const { authWall, bodyValidator, paramsToBody } = require('./middlewares/auth.middleware')
 const { createUserSchema, loginUserSchema, deleteUserSchema, getUsersSchema } = require('./validators/user.validators')
@@ -183,10 +189,15 @@ router.get('/api/customer/section/:id', [paramsToBody(['id'], "params")], getPla
 
 
 
+
 //offers
 router.post('/api/customer/offers/add', [authWall(['admin']),  bodyValidator(addOfferValidator)], addOffer)
 router.get('/api/customer/offers', [], getAllOffers)
 router.get('/api/customer/offers/:id', [paramsToBody(['id'], "params")], getPlantsFromOffers)
 
-// router.get('/video', videoRender)
+
+router.post('/cart', cartcontroller.addToCart); 
+
+router.get('/video', videoRender)
+
 module.exports = router

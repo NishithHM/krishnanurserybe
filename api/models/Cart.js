@@ -1,30 +1,31 @@
 
-module.exports = mongoose.model('Cart', CartSchema);
+
 const mongoose = require('mongoose');
-const { Schema } = mongoose;
+const { v4: uuidv4 } = require('uuid'); 
+
+const Schema = mongoose.Schema;
+
+const CartItemSchema = new Schema({
+  plantId: { type: Schema.Types.ObjectId, ref: 'PlantInfo', required: true },
+  name: { type: String, required: true },
+  price: { type: Number, required: true },
+  discountedPrice: { type: Number, required: true },
+  qty: { type: Number, required: true },
+  tips: { type: [String] }, 
+  moreInfo: { type: String },
+  tags: [{ type: String }]
+});
+
 
 const CartSchema = new Schema({
-    uuid: {
-        type: String,
-        required: true,
-        unique: true,
-        default: () => require('crypto').randomUUID()
-    },
-    items: [
-        {
-            plantId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'PlantInfo' },  // Plant info reference
-            name: { type: String, required: true },  // Plant name
-            price: { type: Number, required: true }, // Selling price of the plant
-            discountedPrice: { type: Number, required: true }, // Discounted price if available
-            qty: { type: Number, required: true },  // Quantity of the plant
-            tips: [String],  // Array of tips for plant care
-            moreInfo: { type: String },  // Additional plant information
-            tags: [String],  // Array of tag names
-        }
-    ],
-    totalDiscount: { type: Number, default: 0 },   // Total discount applied
-    totalAmount: { type: Number, required: true }, // Final total amount after discount
-    couponCode: { type: String, default: null }    // Optional coupon code
-}, { timestamps: true });
+  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  items: [CartItemSchema],
+  totalAmount: { type: Number, required: true },
+  totalDiscount: { type: Number, default: 0 },
+  couponCode: { type: String },
+  uuid: { type: String, unique: true, default: uuidv4 }, 
+}, {
+  timestamps: true 
+});
 
 module.exports = mongoose.model('Cart', CartSchema);
