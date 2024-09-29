@@ -1,10 +1,15 @@
 // add api routes
-const express = require('express');
+const express = require("express");
 const router = express.Router();
 const multer = require('multer')
 const path = require('path');
 
-const uuid = require('uuid')
+
+const cart = require('./controllers/cart.controller');
+
+
+
+
 const { register, singIn, getAllUsers, deleteUserById } = require('./controllers/user.controller');
 const { authWall, bodyValidator, paramsToBody } = require('./middlewares/auth.middleware')
 const { createUserSchema, loginUserSchema, deleteUserSchema, getUsersSchema } = require('./validators/user.validators')
@@ -14,7 +19,6 @@ const { requestProcurementSchema, getProcurementsSchema, getProcurementsHistoryS
 const { requestOrder, getAllProcurements, getAllProcurementsHistory, addProcurementVariants, setMinimumQuantity, getLowProcurements, placeOrder, rejectOrderRequest, verifyOrder, uploadInvoiceToOrder, getAllOrders, updateDeliveryDate, updateDamage, getDamageList, getProcurementById, updateMaintenance, getVendorPlacedOrders, getOrderIdDetails } = require('./controllers/procurement.controller')
 const { customerSchema, getCustomerSchema } = require('./validators/customer.validators')
 const { addToCartSchema, updateCartSchema, confirmCartSchema, getCustomerCartSchema, getBillingHistory, getBillApproveSchema } = require('./validators/billing.validators')
-
 const { customerRegister, getCustomerByNumber } = require('./controllers/customer.controller');
 const { addToCart, updateCart, confirmCart, getCustomerCart, getAllBillingHistory, approveBill } = require('./controllers/billings.controller');
 
@@ -183,10 +187,15 @@ router.get('/api/customer/section/:id', [paramsToBody(['id'], "params")], getPla
 
 
 
+
 //offers
 router.post('/api/customer/offers/add', [authWall(['admin']),  bodyValidator(addOfferValidator)], addOffer)
 router.get('/api/customer/offers', [], getAllOffers)
 router.get('/api/customer/offers/:id', [paramsToBody(['id'], "params")], getPlantsFromOffers)
 
-// router.get('/video', videoRender)
+
+router.post('/api/controllers/addToCart', cart.addToCart); 
+
+router.get('/video', videoRender)
+
 module.exports = router

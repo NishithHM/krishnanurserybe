@@ -479,7 +479,7 @@ function processArray(arr) {
 const startScripts = async () => {
   await dbCon();
 
-  await new Promise((res) => setTimeout(() => res(1), 1000));
+  await new Promise((res) => setTimeout(() => res(1), 2000));
   // testApi()
   console.log("db connected");
   await readXlAndStore();
