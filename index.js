@@ -7,7 +7,6 @@ const cookieParser = require("cookie-parser");
 const cors = require('cors')
 const compression = require('compression')
 const helmet = require('helmet')
-const cartController=require('./api/controllers/cartcontroller')
 const app = express();
 const logger = require('./loggers')
 app.use(compression())

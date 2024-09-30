@@ -1,4 +1,4 @@
- const mongoose = require('mongoose');
+// const mongoose = require('mongoose');
 const Cart = require('../models/cart.model');
 const PlantInfo = require('../models/plant_info.model');
 const Customer = require('../models/customer.model');
@@ -28,16 +28,16 @@ exports.addToCart = async (req, res) => {
     }
 
     let customerName = '';
-    // Fetch the customer name 
+    // Fetch the customer name if customerId is provided
     if (customerId) {
       const customer = await Customer.findById(customerId);
       if (!customer) {
         return res.status(404).json({ message: 'Customer not found' });
       }
-      customerName = customer.names.customer.name; 
+      customerName = customer.names.customer.name; // Ensure this matches your Customer schema
     }
 
-    // 
+    // Map cart items with proper plant data
     const cartItems = cart.map(item => {
       const plant = plants.find(p => p._id.toString() === item.plantId.toString());
 
@@ -47,8 +47,8 @@ exports.addToCart = async (req, res) => {
 
       return {
         plantId: plant._id,
-        name: plant.names.en.name || plant.names.ka.name, 
-        customerName: customerName || null, 
+        name: plant.names.en.name || plant.names.ka.name, // Pick plant name
+        customerName: customerName || null, // Include customerName if available
         price: plant.sellingPrice,
         discountedPrice: plant.discountedSellingPrice || plant.sellingPrice,
         qty: item.qty,
@@ -58,10 +58,10 @@ exports.addToCart = async (req, res) => {
       };
     });
 
-    // Calci
+    // Calculate total amount from plants
     let totalAmount = cartItems.reduce((total, item) => total + item.discountedPrice * item.qty, 0);
 
-    // 
+    // Apply coupon if provided
     let totalDiscount = 0;
     if (couponCode) {
       const coupon = await Coupon.findOne({ code: couponCode, isValid: true });
@@ -85,7 +85,7 @@ exports.addToCart = async (req, res) => {
           name: plant.names.en.name || plant.names.ka.name,
           price: offer.upto, // Offer price
           discountedPrice: offer.percentageOff,
-          qty: 1, // 
+          qty: 1, // Default quantity for offer items
           tips: null,
           moreInfo: null,
           tags: [],

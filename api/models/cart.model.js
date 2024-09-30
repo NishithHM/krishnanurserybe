@@ -1,5 +1,5 @@
-const mongoose = require('mongoose');
 
+const mongoose = require('mongoose');
 
 const CartSchema = new mongoose.Schema({
   uuid: {
@@ -20,7 +20,7 @@ const CartSchema = new mongoose.Schema({
         },
         price: {
           type: Number,
-          required: true, 
+          required: true, // Original price of the plant
         },
         discountedPrice: {
           type: Number, 
@@ -42,15 +42,15 @@ const CartSchema = new mongoose.Schema({
         },
       },
     ],
-    default: [], 
+    default: [], // Initialize with an empty array if no items
   },
   totalAmount: {
     type: Number,
-    required: true, 
+    required: true, // Total price after discounts
   },
   totalDiscount: {
     type: Number,
-    default: 0, 
+    default: 0, // Default discount is 0
   },
   couponCode: {
     type: String,
@@ -59,5 +59,6 @@ const CartSchema = new mongoose.Schema({
 }, {
   timestamps: true, 
 });
+
 
 module.exports = mongoose.model('Cart', CartSchema);
