@@ -15,7 +15,7 @@ const CartSchema = new mongoose.Schema({
           required: true, 
         },
         name: {
-          type: String,
+          type: Object,
           required: true, 
         },
         price: {
@@ -42,7 +42,7 @@ const CartSchema = new mongoose.Schema({
         },
       },
     ],
-    default: [], // Initialize with an empty array if no items
+    default: [], 
   },
   totalAmount: {
     type: Number,
@@ -50,7 +50,7 @@ const CartSchema = new mongoose.Schema({
   },
   totalDiscount: {
     type: Number,
-    default: 0, // Default discount is 0
+    default: 0, //  
   },
   couponCode: {
     type: String,
