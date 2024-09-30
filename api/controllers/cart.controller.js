@@ -2,16 +2,20 @@
 // const mongoose = require('mongoose');
 const Cart = require('../models/cart.model');
 const PlantInfo = require('../models/plant_info.model');
+const Customer = require('../models/customer.model');
+const Offer = require('../models/offers.models');
 const crypto = require('crypto');
 
 // Add or update the cart
 exports.addToCart = async (req, res) => {
   try {
-    const { cart, uuid, customerId } = req.body;
+    const { cart,uuid, customerId } = req.body;
 
+    
     if (!Array.isArray(cart) || cart.length === 0) {
       return res.status(400).json({ message: 'Cart must be a non-empty array' });
     }
+
 
     const plantIds = cart.map(item => item.plantId);
     const plants = await PlantInfo.find({
@@ -24,6 +28,17 @@ exports.addToCart = async (req, res) => {
       return res.status(404).json({ message: 'Some plants are invalid or inactive' });
     }
 
+    let customerName = '';
+    // Fetch the customer name 
+    if (customerId) {
+      const customer = await Customer.findById(customerId);
+      if (!customer) {
+        return res.status(404).json({ message: 'Customer not found' });
+      }
+     // customerName = customer.names.customer.name; 
+    }
+
+    
     const cartItems = cart.map(item => {
       const plant = plants.find(p => p._id.toString() === item.plantId.toString());
 
@@ -33,8 +48,8 @@ exports.addToCart = async (req, res) => {
 
       return {
         plantId: plant._id,
-       name: plant.names,
-       // name: plant.names.en.name || plant.names.ka.name,
+        name: plant.names, //  plant name
+      
         price: plant.sellingPrice,
         discountedPrice: plant.discountedSellingPrice || plant.sellingPrice,
         qty: item.qty,
@@ -44,6 +59,9 @@ exports.addToCart = async (req, res) => {
       };
     });
 
+    
+ 
+  
     // Calc
     let totalAmount = cartItems.reduce((total, item) => total + item.discountedPrice * item.qty, 0);
 
@@ -69,6 +87,8 @@ exports.addToCart = async (req, res) => {
       }
     }
 
+
+
     // Save the cart
     const savedCart = await cartData.save();
     return res.status(200).json({ message: 'Cart updated successfully', cart: savedCart });
@@ -76,4 +96,5 @@ exports.addToCart = async (req, res) => {
     console.error('Error in addToCart:', error.message);
     return res.status(500).json({ message: 'Error updating cart', error: error.message });
   }
-};
+}; 
+
