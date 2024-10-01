@@ -9,7 +9,7 @@ const crypto = require('crypto');
 // Add or update the cart
 exports.addToCart = async (req, res) => {
   try {
-    const { cart,uuid, customerId } = req.body;
+    const { cart,uuid } = req.body;
 
     
     if (!Array.isArray(cart) || cart.length === 0) {
@@ -28,16 +28,6 @@ exports.addToCart = async (req, res) => {
       return res.status(404).json({ message: 'Some plants are invalid or inactive' });
     }
 
-    let customerName = '';
-    // Fetch the customer name 
-    if (customerId) {
-      const customer = await Customer.findById(customerId);
-      if (!customer) {
-        return res.status(404).json({ message: 'Customer not found' });
-      }
-     // customerName = customer.names.customer.name; 
-    }
-
     
     const cartItems = cart.map(item => {
       const plant = plants.find(p => p._id.toString() === item.plantId.toString());
@@ -49,7 +39,6 @@ exports.addToCart = async (req, res) => {
       return {
         plantId: plant._id,
         name: plant.names, //  plant name
-      
         price: plant.sellingPrice,
         discountedPrice: plant.discountedSellingPrice || plant.sellingPrice,
         qty: item.qty,

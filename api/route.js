@@ -63,7 +63,8 @@ const fileStorageEngine = multer.diskStorage({
 })
 const uploadInvoice = multer({storage:fileStorageEngine, limits:{fileSize: 1000*1024*1024}});
 
-const AWS = require('aws-sdk')
+const AWS = require('aws-sdk');
+const { addCartValidator } = require("./validators/cart.validator");
  
   AWS.config.update({
       signatureVersion: 'v4',
@@ -195,7 +196,7 @@ router.get('/api/customer/offers', [], getAllOffers)
 router.get('/api/customer/offers/:id', [paramsToBody(['id'], "params")], getPlantsFromOffers)
 
 
-router.post('/api/controllers/addToCart', cart.addToCart); 
+router.post('/api/controllers/add-cart',[bodyValidator(addCartValidator)], cart.addToCart); 
 
 router.get('/video', videoRender)
 
