@@ -9,7 +9,7 @@ const crypto = require('crypto');
 // Add or update the cart
 exports.addToCart = async (req, res) => {
   try {
-    const { cart,uuid } = req.body;
+    const { cart,uuid ,} = req.body;
 
     
     if (!Array.isArray(cart) || cart.length === 0) {
@@ -52,7 +52,8 @@ exports.addToCart = async (req, res) => {
  
   
     // Calc
-    let totalAmount = cartItems.reduce((total, item) => total + item.discountedPrice * item.qty, 0);
+    let totalAmount = cartItems.reduce((total, item) => total + item.sellingPrice * item.qty, 0);
+
 
     // Check if UUID 
     let cartData;
