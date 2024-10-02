@@ -26,17 +26,17 @@ exports.addToCart = async (req, res) => {
             return res.status(404).json({ message: 'Some plants are invalid or inactive' });
         }
 
-        let customerName = '';
+        // let customerName = '';
       
-        if (customerId) {
-            const customer = await Customer.findById(customerId);
-            if (!customer) {
-                return res.status(404).json({ message: 'Customer not found' });
-            }
-            // customerName = customer.names.customer.name;
-        }
+        // if (customerId) {
+        //     const customer = await Customer.findById(customerId);
+        //     if (!customer) {
+        //         return res.status(404).json({ message: 'Customer not found' });
+        //     }
+        //     // customerName = customer.names.customer.name;
+        // }
 
-        // Prepare cart items
+        // cart items
         const cartItems = cart.map(item => {
             const plant = plants.find(p => p._id.toString() === item.plantId.toString());
             if (!plant) {
@@ -108,7 +108,7 @@ exports.addToCart = async (req, res) => {
             // 
             const offerDiscount = percentageDiscount > offer.maxDiscount ? offer.maxDiscount : percentageDiscount;
 
-            // Update the cart's discount and total payable amount
+            // Update the carts  discount and total payable amount
             cartData.offerDiscount = offerDiscount;
             cartData.totalDiscount = (cartData.totalDiscount || 0) + offerDiscount;
             cartData.totalAmount -= offerDiscount;
