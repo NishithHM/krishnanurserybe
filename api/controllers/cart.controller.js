@@ -7,8 +7,13 @@ const Offer = require('../models/offers.models');
 const crypto = require('crypto');
 
 exports.addToCart = async (req, res) => {
+<<<<<<< HEAD
     try {
         const { cart, uuid, offerId, customerId } = req.body;
+=======
+  try {
+    const { cart,uuid ,} = req.body;
+>>>>>>> b4673699ebd2698c740df21ac81aaac58472bbec
 
         if (!Array.isArray(cart) || cart.length === 0) {
             return res.status(400).json({ message: 'Cart must be a non-empty array' });
@@ -26,6 +31,7 @@ exports.addToCart = async (req, res) => {
             return res.status(404).json({ message: 'Some plants are invalid or inactive' });
         }
 
+<<<<<<< HEAD
         let customerName = '';
       
         if (customerId) {
@@ -53,6 +59,38 @@ exports.addToCart = async (req, res) => {
                 tags: plant.tags.map(tag => tag.name),
             };
         });
+=======
+    if (plants.length !== cart.length) {
+      return res.status(404).json({ message: 'Some plants are invalid or inactive' });
+    }
+
+    
+    const cartItems = cart.map(item => {
+      const plant = plants.find(p => p._id.toString() === item.plantId.toString());
+
+      if (!plant) {
+        throw new Error(`Plant with ID ${item.plantId} not found`);
+      }
+
+      return {
+        plantId: plant._id,
+        name: plant.names, //  plant name
+        price: plant.sellingPrice,
+        discountedPrice: plant.discountedSellingPrice || plant.sellingPrice,
+        qty: item.qty,
+        tips: plant.tips.join(', '),
+        moreInfo: plant.moreInfo,
+        tags: plant.tags.map(tag => tag.name),
+      };
+    });
+
+    
+ 
+  
+    // Calc
+    let totalAmount = cartItems.reduce((total, item) => total + item.sellingPrice * item.qty, 0);
+
+>>>>>>> b4673699ebd2698c740df21ac81aaac58472bbec
 
         // Calci
         let totalAmount = cartItems.reduce((total, item) => total + item.discountedPrice * item.qty, 0);
