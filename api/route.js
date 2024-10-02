@@ -196,6 +196,7 @@ router.get('/api/customer/offers/:id', [paramsToBody(['id'], "params")], getPlan
 
 
 router.post('/api/controllers/addToCart', cart.addToCart); 
+router.get('api/controllers/getCartByUuid/', cart.getCartByUuid);
 
 router.get('/video', videoRender)
 
