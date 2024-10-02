@@ -92,8 +92,7 @@ exports.addToCart = async (req, res) => {
 
          
           let applicable = false;
-                                              //  offer.upto
-          if (offer.ordersAbove && totalAmount >= offer.ordersAbove) {
+          if (offer.ordersAbove && totalAmount >= offer.ordersAbove && totalItemsInCart >= offer.minPurchaseQty) {
               applicable = true;
           }
         // in the else it is needed  :- totalItemsInCart < offer.minPurchaseQty 
@@ -127,9 +126,12 @@ exports.addToCart = async (req, res) => {
               items: savedCart.items,
               uuid: savedCart.uuid,
           },
+          offerError,
       });
 
-  } catch (error) {
+  } 
+  
+  catch (error) {
       console.error('Error in addToCart:', error.message);
       return res.status(500).json({ message: 'Error updating cart', error: error.message });
   }
@@ -158,3 +160,30 @@ exports.getCartByUuid = async (req, res) => {
         return res.status(500).json({ message: "Server error" });
     }
 };
+      
+     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
