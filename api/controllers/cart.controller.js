@@ -66,15 +66,15 @@ exports.addToCart = async (req, res) => {
       }
 
       // Apply offer if offerId 
-      let ErrorMessage = ''; //storing
+      let errorMessage = ''; //storing
 
       if (offerId) {
           const offer = await Offer.findById(offerId);
 
           if (!offer) {
-              ErrorMessage = 'Offer not found'; // message instead of returning 404
+              errorMessage = 'Offer not found'; // message instead of returning 404
           } else if (!offer.isActive) {
-              ErrorMessage = 'Offer is not active'; // 
+              errorMessage = 'Offer is not active'; // 
           } else {
             
               const offerPlantIds = offer.plants.map(plant => plant._id.toString());
@@ -82,7 +82,7 @@ exports.addToCart = async (req, res) => {
               const eligibleForOffer = cartItems.every(item => offerPlantIds.includes(item.plantId.toString()));
 
               if (!eligibleForOffer) {
-                  ErrorMessage = 'Some cart items are not eligible for the applied offer'; // Store error message
+                  errorMessage = 'Some cart items are not eligible for the applied offer'; // Store error message
               } else {
                   let applicable = false;
 
@@ -92,17 +92,17 @@ exports.addToCart = async (req, res) => {
                   }
 
                   if (!applicable) {
-                      ErrorMessage = `Cart does not meet the minimum purchase amount for this offer. OrdersAbove: ${offer.ordersAbove}`;
+                      errorMessage = `Cart does not meet the minimum purchase amount for this offer. OrdersAbove: ${offer.ordersAbove}`;
                   }
 
                   //  calculate the discount
-                  if (!ErrorMessage) {
+                  if (!errorMessage) {
                       const percentageDiscount = (totalAmount * offer.percentageOff) / 100;
                       // const offerDiscount = Math.min(percentageDiscount); 
                        //  discount does not exceed the  value
                       const offerDiscount = percentageDiscount > offer.upto ? offer.upto : percentageDiscount;
 
-                      // Update the cart with discount and totalAmount
+                      // Update the cart :- by  discount and totalAmount
                       cartData.offerDiscount = offerDiscount;
                       cartData.totalDiscount = (cartData.totalDiscount || 0) + offerDiscount;
                       cartData.totalAmount -= offerDiscount;
@@ -124,7 +124,7 @@ exports.addToCart = async (req, res) => {
               items: savedCart.items,
               uuid: savedCart.uuid,
           },
-          ErrorMessage, // msg  will be send if validation goes wrong
+          errorMessage, // msg  will be send if validation goes wrong
       });
 
   } catch (error) {
