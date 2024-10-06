@@ -53,7 +53,7 @@ exports.addToCart = async (req, res) => {
                 items: cartItems,
                 totalAmount,
                 uuid: crypto.randomUUID(), // Generate UUID
-                status: 'cart', // Set initial status to "cart"
+                status: 'cart', // initial status to cart
             });
         } else {
             // If UUID exists, update the cart
@@ -68,7 +68,7 @@ exports.addToCart = async (req, res) => {
             }
         }
 
-        // Apply offer if offerId is provided
+        // Apply offer if it is there
         let errorMessage = '';
 
         if (offerId) {
@@ -102,7 +102,7 @@ exports.addToCart = async (req, res) => {
                         const percentageDiscount = (totalAmount * offer.percentageOff) / 100;
                         const offerDiscount = Math.min(percentageDiscount, offer.upto);
 
-                        // Update the cart with discount and totalAmount
+                        // Update the cart : - by  discount and totalAmount
                         cartData.offerDiscount = offerDiscount;
                         cartData.totalDiscount = (cartData.totalDiscount || 0) + offerDiscount;
                         cartData.totalAmount -= offerDiscount;
@@ -131,13 +131,12 @@ exports.addToCart = async (req, res) => {
         return res.status(500).json({ message: 'Error updating cart', error: error.message });
     }
 };
-
 // Checkout Cart function
 exports.checkoutCart = async (req, res) => {
     try {
-        const { uuid, customer } = req.body; // to Retrieve :- UUID and customer details
+        const { uuid, customer } = req.body; // Retrieve  :- UUID and customer details
 
-        // Validate :- UUID and customer 
+        // Validate :-  UUID & customer 
         if (!uuid) {
             return res.status(400).json({ message: 'We need a UUID to process your checkout.' });
         }
@@ -145,13 +144,15 @@ exports.checkoutCart = async (req, res) => {
             return res.status(400).json({ message: 'Please provide your customer details for checkout.' });
         }
 
-        // 
+        
         const { name, phone, pinCode, address, locality, state, city, landmark, alternateMobileNumber } = customer;
         if (!name || !phone || !pinCode || !address || !locality || !state || !city) {
-            return res.status(400).json({ message: 'It looks like some customer details are missing. Please provide all required fields.' });
+            return res.status(400).json({ message: 'customer details are missing. Please provide all required fields.' });
         }
 
-        // Fetch cart information by UUID
+      
+        const pinCodeAsNumber = Number(pinCode);//number
+
         const cart = await Cart.findOne({ uuid });
 
         // Check if cart exists
@@ -159,11 +160,11 @@ exports.checkoutCart = async (req, res) => {
             return res.status(404).json({ message: "We couldn't find your cart. Please check the UUID." });
         }
 
-        // Update cart --> by customer details
+        // Update cart 
         cart.customer = {
             name,
             phone,
-            pinCode,
+            pinCode: pinCodeAsNumber, 
             address,
             locality,
             state,
@@ -171,11 +172,10 @@ exports.checkoutCart = async (req, res) => {
             landmark, // optional
             alternateMobileNumber // optional
         };
-        cart.status = 'placed'; // Change the status to "placed"
+        cart.status = 'placed'; 
 
         // Checkout details
         cart.checkoutDetails = {
-        
             items: cart.items.map(item => ({ 
                 plantId: item._id, 
                 name: item.name, 
@@ -191,13 +191,14 @@ exports.checkoutCart = async (req, res) => {
 
         return res.status(200).json({
             message: "Thank you for your order! Your checkout was successful.",
-            cart: updatedCart // Return the entire updated cart
+            cart: updatedCart // Return cart
         });
     } catch (error) {
         console.error("Error in checkoutCart:", error);
         return res.status(500).json({ message: "Something went wrong. Please try again later." });
     }
 };
+
 
 
 // Get Cart by UUID Function

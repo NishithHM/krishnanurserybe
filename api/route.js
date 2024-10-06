@@ -9,6 +9,8 @@ const cart = require('./controllers/cart.controller');
 //const cartValidator= require("./validators/cartValidator");
 
 
+const { addToCartValidator } = require('./validators/cart.validator');
+const { checkoutCartValidator } = require('./validators/checkoutCart.validator');
 
 const { register, singIn, getAllUsers, deleteUserById } = require('./controllers/user.controller');
 const { authWall, bodyValidator, paramsToBody } = require('./middlewares/auth.middleware')
@@ -195,10 +197,15 @@ router.get('/api/customer/offers', [], getAllOffers)
 router.get('/api/customer/offers/:id', [paramsToBody(['id'], "params")], getPlantsFromOffers)
 
 
-router.post('/api/controllers/addToCart', cart.addToCart); 
-router.post('/api/controllers/checkoutCart',cart.checkoutCart);
-router.get('api/controllers/getCartByUuid', cart.getCartByUuid);
+// router.post('/api/controllers/addToCart', cart.addToCart); 
+// router.post('/api/controllers/checkoutCart',cart.checkoutCart);
+// router.get('api/controllers/getCartByUuid', cart.getCartByUuid);
+ 
+router.post('/api/controllers/addToCart', [bodyValidator(addToCartValidator)], cart.addToCart);
+router.post('/api/controllers/checkoutCart', [bodyValidator(checkoutCartValidator)], cart.checkoutCart); 
 
+
+router.get('/api/controllers/getCartByUuid', cart.getCartByUuid);
 router.get('/video', videoRender)
 
 module.exports = router
