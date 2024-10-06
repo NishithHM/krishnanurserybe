@@ -121,9 +121,9 @@ exports.addToCart = async (req, res) => {
                 offerDiscount: savedCart.offerDiscount,
                 items: savedCart.items,
                 uuid: savedCart.uuid,
-                status: savedCart.status // Include status in the response
+                status: savedCart.status 
             },
-            errorMessage, // Return any error messages
+            errorMessage, 
         });
 
     } catch (error) {
@@ -133,14 +133,11 @@ exports.addToCart = async (req, res) => {
 };
 
 // Checkout Cart function
-
-// Checkout Cart function
-// Checkout Cart function
 exports.checkoutCart = async (req, res) => {
     try {
-        const { uuid, customer } = req.body; // Retrieve UUID and customer details
+        const { uuid, customer } = req.body; // to Retrieve :- UUID and customer details
 
-        // Validate UUID and customer 
+        // Validate :- UUID and customer 
         if (!uuid) {
             return res.status(400).json({ message: 'We need a UUID to process your checkout.' });
         }
@@ -148,7 +145,7 @@ exports.checkoutCart = async (req, res) => {
             return res.status(400).json({ message: 'Please provide your customer details for checkout.' });
         }
 
-        // Destructure customer details
+        // 
         const { name, phone, pinCode, address, locality, state, city, landmark, alternateMobileNumber } = customer;
         if (!name || !phone || !pinCode || !address || !locality || !state || !city) {
             return res.status(400).json({ message: 'It looks like some customer details are missing. Please provide all required fields.' });
@@ -162,7 +159,7 @@ exports.checkoutCart = async (req, res) => {
             return res.status(404).json({ message: "We couldn't find your cart. Please check the UUID." });
         }
 
-        // Update cart with customer details
+        // Update cart --> by customer details
         cart.customer = {
             name,
             phone,
