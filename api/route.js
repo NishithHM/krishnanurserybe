@@ -1,10 +1,17 @@
 // add api routes
-const express = require('express');
+const express = require("express");
 const router = express.Router();
 const multer = require('multer')
 const path = require('path');
+//const videoRender = require('../controllers/videoController');
+const cart = require('./controllers/cart.controller');
 
-const uuid = require('uuid')
+//const cartValidator= require("./validators/cartValidator");
+
+
+const { addToCartValidator } = require('./validators/cart.validator');
+const { checkoutCartValidator } = require('./validators/checkoutCart.validator');
+
 const { register, singIn, getAllUsers, deleteUserById } = require('./controllers/user.controller');
 const { authWall, bodyValidator, paramsToBody } = require('./middlewares/auth.middleware')
 const { createUserSchema, loginUserSchema, deleteUserSchema, getUsersSchema } = require('./validators/user.validators')
@@ -14,7 +21,6 @@ const { requestProcurementSchema, getProcurementsSchema, getProcurementsHistoryS
 const { requestOrder, getAllProcurements, getAllProcurementsHistory, addProcurementVariants, setMinimumQuantity, getLowProcurements, placeOrder, rejectOrderRequest, verifyOrder, uploadInvoiceToOrder, getAllOrders, updateDeliveryDate, updateDamage, getDamageList, getProcurementById, updateMaintenance, getVendorPlacedOrders, getOrderIdDetails, uploadPhamplet } = require('./controllers/procurement.controller')
 const { customerSchema, getCustomerSchema } = require('./validators/customer.validators')
 const { addToCartSchema, updateCartSchema, confirmCartSchema, getCustomerCartSchema, getBillingHistory, getBillApproveSchema } = require('./validators/billing.validators')
-
 const { customerRegister, getCustomerByNumber } = require('./controllers/customer.controller');
 const { addToCart, updateCart, confirmCart, getCustomerCart, getAllBillingHistory, approveBill } = require('./controllers/billings.controller');
 
@@ -58,7 +64,8 @@ const fileStorageEngine = multer.diskStorage({
 })
 const uploadInvoice = multer({storage:fileStorageEngine, limits:{fileSize: 1000*1024*1024}});
 
-const AWS = require('aws-sdk')
+const AWS = require('aws-sdk');
+const { addCartValidator } = require("./validators/cart.validator");
  
   AWS.config.update({
       signatureVersion: 'v4',
@@ -183,10 +190,22 @@ router.get('/api/customer/section/:id', [paramsToBody(['id'], "params")], getPla
 
 
 
+
 //offers
 router.post('/api/customer/offers/add', [authWall(['admin']),  bodyValidator(addOfferValidator)], addOffer)
 router.get('/api/customer/offers', [], getAllOffers)
 router.get('/api/customer/offers/:id', [paramsToBody(['id'], "params")], getPlantsFromOffers)
 
-// router.get('/video', videoRender)
+
+// router.post('/api/controllers/addToCart', cart.addToCart); 
+// router.post('/api/controllers/checkoutCart',cart.checkoutCart);
+// router.get('api/controllers/getCartByUuid', cart.getCartByUuid);
+ 
+router.post('/api/controllers/addToCart', [bodyValidator(addToCartValidator)], cart.addToCart);
+router.post('/api/controllers/checkoutCart', [bodyValidator(checkoutCartValidator)], cart.checkoutCart); 
+
+
+router.get('/api/controllers/getCartByUuid', cart.getCartByUuid);
+router.get('/video', videoRender)
+
 module.exports = router
