@@ -11,7 +11,7 @@ const cart = require('./controllers/cart.controller');
 
 const { addToCartValidator } = require('./validators/cart.validator');
 const { checkoutCartValidator } = require('./validators/checkoutCart.validator');
-
+const { placedCartValidator } = require('./validators/placedCart.validator');
 const { register, singIn, getAllUsers, deleteUserById } = require('./controllers/user.controller');
 const { authWall, bodyValidator, paramsToBody } = require('./middlewares/auth.middleware')
 const { createUserSchema, loginUserSchema, deleteUserSchema, getUsersSchema } = require('./validators/user.validators')
@@ -197,14 +197,13 @@ router.get('/api/customer/offers', [], getAllOffers)
 router.get('/api/customer/offers/:id', [paramsToBody(['id'], "params")], getPlantsFromOffers)
 
 
-// router.post('/api/controllers/addToCart', cart.addToCart); 
-// router.post('/api/controllers/checkoutCart',cart.checkoutCart);
-// router.get('api/controllers/getCartByUuid', cart.getCartByUuid);
+
  
 router.post('/api/controllers/addToCart', [bodyValidator(addToCartValidator)], cart.addToCart);
 router.post('/api/controllers/checkoutCart', [bodyValidator(checkoutCartValidator)], cart.checkoutCart); 
 
 
+router.post('/api/controllers/getPlacedCart',  authWall(['admin', 'sales']),  bodyValidator(placedCartValidator), cart.getplacedCart);
 router.get('/api/controllers/getCartByUuid', cart.getCartByUuid);
 router.get('/video', videoRender)
 
