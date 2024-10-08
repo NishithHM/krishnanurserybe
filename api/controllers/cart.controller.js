@@ -4,6 +4,7 @@ const PlantInfo = require('../models/plant_info.model');
 const Offer = require('../models/offers.models');
 const crypto = require('crypto');
 
+
 // Add or update cart function
 exports.addToCart = async (req, res) => {
     try {
@@ -198,6 +199,47 @@ exports.checkoutCart = async (req, res) => {
         return res.status(500).json({ message: "Something went wrong. Please try again later." });
     }
 };
+
+exports.getplacedCart = async (req, res) => {
+    try {
+        const { startDate, endDate, sortBy, sortType } = req.body;
+
+        
+        const fromDate = new Date(startDate);
+        const toDate = new Date(endDate);
+
+        if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
+            return res.status(400).json({ message: 'Invalid date format. Expected YYYY-MM-DD.' });
+        }
+
+        // query :- finding orders with status 'PLACED' within the date range
+        const query = {
+            status: 'PLACED',
+            createdAt: { $gte: fromDate, $lte: toDate },
+        };
+
+        // sort type 1 - ascending and -1 for descending
+        const sortOptions = {};
+        if (sortBy === 'createdOn') {
+            sortOptions.createdAt = sortType === -1 ? -1 : 1;
+        } else if (sortBy === 'totalPrice') {
+            sortOptions.totalAmount = sortType === -1 ? -1 : 1;
+        }
+
+        // Fetch the placed carts
+        const carts = await Cart.find(query).sort(sortOptions);
+
+        // Return the response with the fetched carts
+        return res.status(200).json({
+            message: 'Placed carts fetched successfully',
+            data: carts,
+        });
+    } catch (error) {
+        console.error('Error in getPlacedCarts:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
 
 
 
