@@ -221,9 +221,9 @@ exports.getplacedCart = async (req, res) => {
         // sort type 1 - ascending and -1 for descending
         const sortOptions = {};
         if (sortBy === 'createdOn') {
-            sortOptions.createdAt = sortType === -1 ? -1 : 1;
+            sortOptions.createdAt = sortType; // 
         } else if (sortBy === 'totalPrice') {
-            sortOptions.totalAmount = sortType === -1 ? -1 : 1;
+            sortOptions.totalAmount = sortType; //
         }
 
         // Fetch the placed carts
