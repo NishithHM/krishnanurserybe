@@ -1,4 +1,3 @@
-
 const mongoose = require('mongoose');
 
 const CartSchema = new mongoose.Schema({
@@ -50,15 +49,18 @@ const CartSchema = new mongoose.Schema({
   },
   totalDiscount: {
     type: Number,
-    default: 0, //  
+    default: 0, 
   },
   couponCode: {
     type: String,
     default: null, 
   },
+    status: {
+    type: String,
+    default: 'cart',
+  },
 }, {
   timestamps: true, 
 });
-
 
 module.exports = mongoose.model('Cart', CartSchema);
