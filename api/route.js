@@ -3,12 +3,14 @@ const express = require("express");
 const router = express.Router();
 const multer = require('multer')
 const path = require('path');
-//const videoRender = require('../controllers/videoController');
 const cart = require('./controllers/cart.controller');
+const {approvecart} = require('./controllers/approvecart.controller');
 
+//const videoRender = require('../controllers/videoController');
+//const { checkAdminOrSales } = require('../middlewares/auth.middleware');
 //const cartValidator= require("./validators/cartValidator");
 
-
+const { getCartByUuid } = require('./controllers/cart.controller');
 const { addToCartValidator } = require('./validators/cart.validator');
 const { checkoutCartValidator } = require('./validators/checkoutCart.validator');
 const { placedCartValidator } = require('./validators/placedCart.validator');
@@ -197,14 +199,14 @@ router.get('/api/customer/offers', [], getAllOffers)
 router.get('/api/customer/offers/:id', [paramsToBody(['id'], "params")], getPlantsFromOffers)
 
 
-
- 
+//router.post('/api/controllers/approvecart', authWall(['admin', 'sales']), bodyValidator(approveCartValidator), cartController.approvecart);
+router.post('/api/controllers/approvecart/:uuid', approvecart);
 router.post('/api/controllers/addToCart', [bodyValidator(addToCartValidator)], cart.addToCart);
 router.post('/api/controllers/checkoutCart', [bodyValidator(checkoutCartValidator)], cart.checkoutCart); 
-
-
 router.post('/api/controllers/getPlacedCart',  authWall(['admin', 'sales']),  bodyValidator(placedCartValidator), cart.getplacedCart);
-router.get('/api/controllers/getCartByUuid', cart.getCartByUuid);
+router.get('/api/controllers/:uuid', cart.getCartByUuid); // the change done here ':uuid ' rather tahn using getcartByuuid 
+ // : before uuid shows that uuid is a dynamic part of means it can  vary 
 router.get('/video', videoRender)
+
 
 module.exports = router

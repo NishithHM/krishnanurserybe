@@ -1,3 +1,4 @@
+
 const mongoose = require('mongoose');
 
 const CartSchema = new mongoose.Schema({
@@ -6,6 +7,7 @@ const CartSchema = new mongoose.Schema({
     required: true,
     unique: true, 
   },
+ 
   items: {
     type: [
       {
@@ -19,7 +21,7 @@ const CartSchema = new mongoose.Schema({
         },
         price: {
           type: Number,
-          required: true, // Original price of the plant
+          required: true,
         },
         discountedPrice: {
           type: Number, 
@@ -55,7 +57,7 @@ const CartSchema = new mongoose.Schema({
     type: String,
     default: null, 
   },
-    status: {
+  status: {
     type: String,
     default: 'cart',
   },
