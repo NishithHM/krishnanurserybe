@@ -31,6 +31,14 @@ const AgriOrders = new mongoose.Schema({
         type: Number,
         default: 0
     },
+    gst: {
+        type: Number,
+        default: 0
+    },
+    totalPriceWithoutGst: {
+        type: Number,
+        default: 0
+    },
     currentPaidAmount: {
         type: Number,
         default: 0

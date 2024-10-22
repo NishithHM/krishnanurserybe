@@ -92,12 +92,9 @@ const clearS3 = () => {
   };
 };
 
-const dbCon = () => {
-  const env = "dev";
-  mongoose
-    .connect(
-      `mongodb+srv://admin:admin123@cluster0.t2cxv.mongodb.net/nursery_mgmt_${env}?retryWrites=true&w=majority`,
-      {
+const dbCon = ()=>{
+    const env = 'dev'
+    mongoose.connect(`/nursery_mgmt_${env}?retryWrites=true&w=majority`, {
         useNewUrlParser: true,
         useUnifiedTopology: true,
       }
@@ -478,21 +475,19 @@ const migrateProcurementPayments = async () => {
   const procurementHistoryModel = require('../api/models/procurementHistory.model')
   const paymentModel = require('../api/models/payment.model')
 
-  const procurements = await procurementHistoryModel.find({ currentPaidAmount: { $gt: 0 } })
+  const procurements = await procurementHistoryModel.find({ totalPrice: { $gt: 0 }, status:"VERIFIED" })
+  console.log(procurements.length)
 
   for (const procurement of procurements) {
-    const existingPayment = await paymentModel.findOne({ invoiceId: procurement._id.toString() })
 
-    if (!existingPayment) {
       const newPayment = new paymentModel({
         name: procurement.vendorName || 'Unknown Vendor',
         contact: procurement.vendorContact || '',
-        invoiceId: procurement._id.toString(),
-        amount: procurement.currentPaidAmount,
+        amount: procurement.totalPrice,
         type: 'VENDOR',
         transferType: 'ONLINE', // Assuming default transfer type
         comment: `Migrated from procurement history: ${procurement.descriptionProc || ''}`,
-        onlineAmount: procurement.currentPaidAmount,
+        onlineAmount: procurement.totalPrice,
         vendorId: procurement.vendorId || null,
         businessType: 'NURSERY', // Assuming default business type
         createdAt: procurement.createdAt,
@@ -501,7 +496,6 @@ const migrateProcurementPayments = async () => {
 
       await newPayment.save()
       
-    }
   }
 
   console.log(`Migrated ${procurements.length} procurement payments`)
