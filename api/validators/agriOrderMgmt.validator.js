@@ -80,7 +80,10 @@ exports.addInvoiceAgriSchema = Joi.object().keys({
     id: Joi.string().required(),
     orderData: Joi.object(),
     finalAmountPaid: Joi.number().required(),
-    invoiceId: Joi.string().required()
+    invoiceId: Joi.string().required(),
+    cashAmount: Joi.number().required(),
+    onlineAmount: Joi.number().required(),
+    comments: Joi.string().required()
 });
 
 exports.getAgriOrderIdSchema = Joi.object().keys({

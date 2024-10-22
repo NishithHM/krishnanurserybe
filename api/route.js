@@ -5,6 +5,7 @@ const multer = require('multer')
 const path = require('path');
 //const videoRender = require('../controllers/videoController');
 const cart = require('./controllers/cart.controller');
+const uuid = require('uuid')
 
 //const cartValidator= require("./validators/cartValidator");
 
