@@ -8,6 +8,7 @@ const { default: mongoose } = require("mongoose");
 const AgriProcurementModel = require("../models/AgriProcurement.model");
 const uuid = require("uuid");
 const dayjs = require("dayjs");
+const agriVariantsModel = require("../models/agriVariants.model");
 exports.requestAgriOrder = async (req, res) => {
   try {
     const { orders, descrption } = req.body;
@@ -72,9 +73,10 @@ exports.placeAgriOrder = async (req, res) => {
     };
 
     for (let i = 0; i < orders.length; i++) {
-      const { totalQuantity, type, name, variant, id, totalPrice } = orders[i];
+      const { totalQuantity, type, name, variant, id, totalPrice, typeName } = orders[i];
       if (id) {
         const data = await AgriOrders.findById(id);
+        const variantData = await agriVariantsModel.findOne({type, name: typeName})
         if (data) {
           data.orderedQuantity = totalQuantity;
           data.placedBy = placedBy;
@@ -88,6 +90,8 @@ exports.placeAgriOrder = async (req, res) => {
             data.currentPaidAmount = currentPaidAmount;
           }
           data.totalPrice = totalPrice;
+          data.totalPriceWithoutGst = totalPrice - totalPrice*variantData.gst/100
+          data.gst = totalPrice*variantData.gst/100
           await data.save();
         }
       } else {
