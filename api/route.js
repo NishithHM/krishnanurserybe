@@ -3,7 +3,16 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer')
 const path = require('path');
+//const videoRender = require('../controllers/videoController');
+const cart = require('./controllers/cart.controller');
 const uuid = require('uuid')
+
+//const cartValidator= require("./validators/cartValidator");
+
+
+const { addToCartValidator } = require('./validators/cart.validator');
+const { checkoutCartValidator } = require('./validators/checkoutCart.validator');
+
 const { register, singIn, getAllUsers, deleteUserById } = require('./controllers/user.controller');
 const { authWall, bodyValidator, paramsToBody } = require('./middlewares/auth.middleware')
 const { createUserSchema, loginUserSchema, deleteUserSchema, getUsersSchema } = require('./validators/user.validators')

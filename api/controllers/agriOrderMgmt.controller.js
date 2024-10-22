@@ -73,10 +73,10 @@ exports.placeAgriOrder = async (req, res) => {
     };
 
     for (let i = 0; i < orders.length; i++) {
-      const { totalQuantity, type, name, variant, id, totalPrice, typeName } = orders[i];
+      const { totalQuantity, type, name, variant, id, totalPrice } = orders[i];
+      const variantData = await agriVariantsModel.findOne({type, name})
       if (id) {
         const data = await AgriOrders.findById(id);
-        const variantData = await agriVariantsModel.findOne({type, name: typeName})
         if (data) {
           data.orderedQuantity = totalQuantity;
           data.placedBy = placedBy;
@@ -90,8 +90,8 @@ exports.placeAgriOrder = async (req, res) => {
             data.currentPaidAmount = currentPaidAmount;
           }
           data.totalPrice = totalPrice;
-          data.totalPriceWithoutGst = totalPrice - totalPrice*variantData.gst/100
-          data.gst = totalPrice*variantData.gst/100
+          data.totalPriceWithoutGst = (totalPrice/(1+variantData.gst/100)).toFixed(2)
+          data.gst = totalPrice - (totalPrice/(1+variantData.gst/100)).toFixed(2)
           await data.save();
         }
       } else {
@@ -116,6 +116,8 @@ exports.placeAgriOrder = async (req, res) => {
           type,
           typeName:name,
           currentPaidAmount: i === 0 ? currentPaidAmount : 0,
+          totalPriceWithoutGst: (totalPrice/(1+variantData.gst/100)).toFixed(2),
+          gst :totalPrice - (totalPrice/(1+variantData.gst/100)).toFixed(2)
         });
         await orderData.save();
       }
@@ -124,7 +126,7 @@ exports.placeAgriOrder = async (req, res) => {
       message: "Order Placed Succesfully",
     });
   } catch (error) {
-    console.log(`agriOrderPlace-error, ${JSON.stringify(error)}`);
+    console.log(`agriOrderPlace-error`, error);
     loggers.info(`agriOrderPlace-error, ${JSON.stringify(error)}`);
     const err = handleMongoError(error);
     res.status(500).send(err);
@@ -506,7 +508,7 @@ exports.getAllAgriProcurements = async (req, res) => {
     } else {
       const procurementsWithAvg = procurements.map((procurement) => {
         const sum = procurement?.procurementHistory?.reduce((acc, ele) => {
-          return acc + ele.totalPrice / ele.quantity;
+          return acc + ele.totalPriceWithoutGst / ele.quantity;
         }, 0);
         const averagePrice = (
           sum / procurement.procurementHistory.length
