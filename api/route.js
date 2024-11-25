@@ -199,11 +199,11 @@ router.get('/api/customer/offers/:id', [paramsToBody(['id'], "params")], getPlan
 // router.post('/api/controllers/checkoutCart',cart.checkoutCart);
 // router.get('api/controllers/getCartByUuid', cart.getCartByUuid);
  
-router.post('/api/controllers/addToCart', [bodyValidator(addToCartValidator)], cart.addToCart);
-router.post('/api/controllers/checkoutCart', [bodyValidator(checkoutCartValidator)], cart.checkoutCart); 
+// router.post('/api/controllers/addToCart', [bodyValidator(addToCartValidator)], cart.addToCart);
+// router.post('/api/controllers/checkoutCart', [bodyValidator(checkoutCartValidator)], cart.checkoutCart); 
 
 
-router.get('/api/controllers/getCartByUuid', cart.getCartByUuid);
+// router.get('/api/controllers/getCartByUuid', cart.getCartByUuid);
 router.get('/video', videoRender)
 
 module.exports = router
