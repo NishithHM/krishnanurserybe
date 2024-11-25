@@ -63,7 +63,7 @@ const fileStorageEngine = multer.diskStorage({
 const uploadInvoice = multer({storage:fileStorageEngine, limits:{fileSize: 1000*1024*1024}});
 
 const AWS = require('aws-sdk');
-const { addCartValidator } = require("./validators/cart.validator");
+const { addCartValidator, addToCartValidator } = require("./validators/cart.validator");
  
   AWS.config.update({
       signatureVersion: 'v4',
