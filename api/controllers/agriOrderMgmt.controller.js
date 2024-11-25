@@ -329,14 +329,14 @@ exports.verifyAgriOrder = async (req, res) => {
         names: order.names,
       });
       if (!isEmpty(agriProc)) {
-        agriProc.remainingQuantity = agriProc.remainingQuantity + quantity;
+        agriProc.remainingQuantity = parseInt(agriProc.remainingQuantity) + parseInt(quantity);
         agriProc.lastProcuredOn = new Date();
         await agriProc.save();
       } else {
         const newAgriProc = new AgriProcurementModel({
           names: order.names,
           type: order.type,
-          remainingQuantity: quantity,
+          remainingQuantity: parseInt(quantity),
           lastProcuredOn: new Date(),
           variant: order.variant,
           typeName: order.typeName
