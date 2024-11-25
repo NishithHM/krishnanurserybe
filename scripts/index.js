@@ -6,10 +6,12 @@ const Tracker = require("../api/models/tracker.model");
 const Vendors = require("../api/models/vendor.model");
 const excelToJson = require("convert-excel-to-json");
 
-var request = require("request");
-var fs = require("fs");
-const dayjs = require("dayjs");
-const { caluclateMetaData } = require("../crons/dailyCron");
+var request = require('request');
+var fs = require('fs');
+const dayjs = require("dayjs")
+const { caluclateMetaData } = require("../crons/dailyCron")
+const agriOrderMgmtModel = require("../api/models/agriOrderMgmt.model")
+const AgriProcurementModel = require("../api/models/AgriProcurement.model")
 
 const exl = require("convert-excel-to-json");
 const excelFilePath = "plat-data.xlsx";
@@ -501,17 +503,57 @@ const migrateProcurementPayments = async () => {
   console.log(`Migrated ${procurements.length} procurement payments`)
 }
 
+const correctAgriRemQty = async()=>{
+  const pipeline = [
+    {
+      $match:
+        /**
+         * query: The query in MQL.
+         */
+        {
+          status: "VERIFIED",
+        },
+    },
+    {
+      $group:
+        /**
+         * _id: The id of the group.
+         * fieldN: The first field name.
+         */
+        {
+          _id: "$names",
+          sum: {
+            $sum: "$quantity",
+          },
+        },
+    },
+  ]
+  const procHistory = await agriOrderMgmtModel.aggregate(pipeline)
+
+  for (let i = 0; i < procHistory.length; i++) {
+    const record = procHistory[i]
+    // Process each record as needed
+    console.log(record)
+    const proc = await AgriProcurementModel.findOne({names:record._id})
+    proc.remainingQuantity = record.sum
+    await proc.save()
+  }
+}  
 
 
-const startScripts = async () => {
-  await dbCon();
 
-  await new Promise((res) => setTimeout(() => res(1), 2000));
-  // testApi()
-  console.log("db connected");
-  await readXlAndStore();
+const startScripts =async()=>{
+    await dbCon()
+    
+    await new Promise(res=> setTimeout(()=>res(1), 1000))
+    // testApi()
+    console.log('db connected')
+    await correctAgriRemQty()
+    console.log('done')
+}
+
   // caluclateMetaDataAll();
 };
 
 startScripts();
-}
+
