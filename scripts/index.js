@@ -11,6 +11,7 @@ const dayjs = require("dayjs")
 const { caluclateMetaData } = require("../crons/dailyCron")
 const agriOrderMgmtModel = require("../api/models/agriOrderMgmt.model")
 const AgriProcurementModel = require("../api/models/AgriProcurement.model")
+const agriVariantsModel = require("../api/models/agriVariants.model")
 
 const addInvoiceToProcHistory = async ()=>{
     const res = await ProcurementHistory.updateMany({}, {$set: {invoice: 'null'}}, {upsert: false})
@@ -73,7 +74,7 @@ const clearS3 = ()=>{
 
 const dbCon = ()=>{
     const env = 'dev'
-    mongoose.connect(`/nursery_mgmt_${env}?retryWrites=true&w=majority`, {
+    mongoose.connect(`mongodb+srv://sknProd:1ONEvuYlmiexoPA7@sknprod.fionm1o.mongodb.net/nursery_mgmt_${env}?retryWrites=true&w=majority`, {
         useNewUrlParser: true,
         useUnifiedTopology: true,
     }).then(() => console.log("Database connected! ", env))
@@ -297,6 +298,23 @@ const correctAgriRemQty = async()=>{
   }
 }  
 
+const totalPriceWithoutGst = async ()=>{
+  const procHistory = await agriOrderMgmtModel.find({gst:0})
+
+  for (let i = 0; i < procHistory.length; i++) {
+    const record = procHistory[i]
+    // Process each record as needed
+    console.log(record)
+    const variantData = await agriVariantsModel.findOne({type: record.type, name: record.typeName})
+    if(variantData?.gst){
+    record.totalPriceWithoutGst = (record.totalPrice/(1+variantData?.gst/100)).toFixed(2)
+    record.gst = (record.totalPrice - (record.totalPrice/(1+variantData?.gst/100))).toFixed(2)
+    console.log(record)
+    await record.save()
+    }
+  }
+}
+
 
 
 const startScripts =async()=>{
@@ -305,7 +323,7 @@ const startScripts =async()=>{
     await new Promise(res=> setTimeout(()=>res(1), 1000))
     // testApi()
     console.log('db connected')
-    await correctAgriRemQty()
+    await totalPriceWithoutGst()
     console.log('done')
 }
 
