@@ -3,6 +3,9 @@ const Cart = require('../models/cart.model');
 const PlantInfo = require('../models/plant_info.model');
 const Offer = require('../models/offers.models');
 const crypto = require('crypto');
+const Procurements = require('../models/procurment.model');
+const { isEmpty } = require('lodash');
+const Tracker = require('../models/tracker.model');
 
 // Add or update cart function
 exports.addToCart = async (req, res) => {
@@ -169,24 +172,13 @@ exports.checkoutCart = async (req, res) => {
         };
         cart.status = 'placed'; //  status to placed
 
-        // Checkout details
-        cart.checkoutDetails = {
-            items: cart.items.map(item => ({
-                plantId: item.plantId, // 
-                name: item.name,
-                quantity: item.qty, // 
-            })),
-            totalAmount: cart.totalAmount,
-            totalDiscount: cart.totalDiscount,
-            finalAmount: cart.totalAmount - cart.totalDiscount,
-        };
 
         // Save the updated cart
         const updatedCart = await cart.save();
 
         return res.status(200).json({
             message: "Thank you for your order! Your checkout was successful.",
-            cart: updatedCart 
+            cart: updatedCart.toJSON() 
         });
     } catch (error) {
         console.error("Error in checkoutCart:", error);
@@ -258,3 +250,112 @@ exports.getCartByUuid = async (req, res) => {
         return res.status(500).json({ message: "Server error" });
     }
 };
+
+
+exports.approveCart = async (req,res)=>{
+    const {uuid, extraFee} = req.body
+    const cart = await Cart.findOne({uuid, status:'placed'})
+    cart.totalAmount = cart.totalAmount + extraFee;
+    cart.extraFee = extraFee;
+    cart.status = 'approved'
+    const plantIds = cart.map(item => item.plantId);
+    console.log('Plant IDs:', plantIds);
+    
+    // checking correct filter for plants
+    const plants = await PlantInfo.find({
+        _id: { $in: plantIds },
+        status: 'PUBLISH',
+        isActive: true,
+    });
+    const items = cart.items.map(ele=> ({...ele, procurementId: plants.find(p=> p._id === ele.plantId)?.procurementId}))
+    const {errors} = validatePricesAndQuantityAndFormatItems(items)
+    if(isEmpty(errors)){
+        const procurementQuantityMapping = {}
+        items?.forEach(ele => {
+            if (procurementQuantityMapping[ele.procurementId.toString()]) {
+                procurementQuantityMapping[ele.procurementId.toString()] = procurementQuantityMapping[ele.procurementId.toString()] + ele.quantity
+            } else {
+                procurementQuantityMapping[ele.procurementId.toString()] = ele.quantity
+            }
+        })
+        await updateRemainingQuantity(procurementQuantityMapping)
+
+        const trackerVal = await Tracker.findOne({name:"customerInvoiceId"})
+        cart.invoiceId = `NUR_${trackerVal.number}`
+        trackerVal.number = trackerVal.number + 1
+        await cart.save()
+        await trackerVal.save()
+        res.send({
+            cart: cart.toJSON()
+        })
+
+    }else{
+        res.status(400).send({ error: errors.join(' ') })
+    }
+}
+
+const validatePricesAndQuantityAndFormatItems = async (items) => {
+    const procurements = uniq(items.map(ele => new mongoose.mongo.ObjectId(ele.procurementId)))
+    const errors = []
+    const pipeline = [
+        {
+            '$match': {
+                '_id': {
+                    '$in': procurements
+                }
+            }
+        }, {
+            '$unwind': {
+                'path': '$variants',
+                'preserveNullAndEmptyArrays': true
+            }
+        }, {
+            '$group': {
+                '_id': {
+                    'procurementId': '$_id',
+                    'variantId': '$variants._id'
+                },
+                'val': {
+                    $first: { $mergeObjects: ["$$ROOT.variants", { remainingQuantity: {$subtract:[ "$$ROOT.remainingQuantity", "$$ROOT.underMaintenanceQuantity" ]}, }, { pNames: "$$ROOT.names" }] }
+                }
+            }
+        }, {
+            '$replaceRoot': {
+                'newRoot': {
+                    '$mergeObjects': [
+                        '$_id', '$val'
+                    ]
+                }
+            }
+        }
+    ]
+    console.log("validatePricesAndQuantity", JSON.stringify(pipeline))
+    loggers.info(`validatePricesAndQuantity, ${pipeline}`)
+    const results = await Procurements.aggregate(pipeline)
+    for (const element of results) {
+        const {
+            procurementId: resultProcurementId,
+            variantId: resultVariantId,
+            pNames: procurementNames,
+            remainingQuantity,
+        } = element
+
+        const { quantity } = items.find((ele) => ele.procurementId === resultProcurementId.toString()) || {}
+        
+        if (quantity > remainingQuantity) {
+            errors.push(`Ooops!! stock of "${procurementNames?.en?.name}" is low, maximum order can be "${remainingQuantity}"`)
+        }
+    }
+
+    return { errors }
+}
+
+const updateRemainingQuantity = async (object) => {
+    const listValues = Object.entries(object);
+    for (const [key, value] of listValues) {
+        const procurment = await Procurements.findById(key)
+        procurment.remainingQuantity = procurment.remainingQuantity - value
+        procurment.soldQuantity = value
+        await procurment.save()
+    }
+}

@@ -199,13 +199,12 @@ router.get('/api/customer/offers', [], getAllOffers)
 router.get('/api/customer/offers/:id', [paramsToBody(['id'], "params")], getPlantsFromOffers)
 
 
-//router.post('/api/controllers/approvecart', authWall(['admin', 'sales']), bodyValidator(approveCartValidator), cartController.approvecart);
-router.post('/api/controllers/approvecart/:uuid', approvecart);
-router.post('/api/controllers/addToCart', [bodyValidator(addToCartValidator)], cart.addToCart);
-router.post('/api/controllers/checkoutCart', [bodyValidator(checkoutCartValidator)], cart.checkoutCart); 
-router.post('/api/controllers/getPlacedCart',  authWall(['admin', 'sales']),  bodyValidator(placedCartValidator), cart.getplacedCart);
-router.get('/api/controllers/:uuid', cart.getCartByUuid); // the change done here ':uuid ' rather tahn using getcartByuuid 
- // : before uuid shows that uuid is a dynamic part of means it can  vary 
+router.post('/api/controllers/customer/cart/addToCart', [bodyValidator(addToCartValidator)], cart.addToCart);
+router.post('/api/controllers/customer/cart/checkoutCart', [bodyValidator(checkoutCartValidator)], cart.checkoutCart); 
+router.post('/api/controllers/customer/cart/getPlacedCart',  authWall(['admin', 'sales']),  bodyValidator(placedCartValidator), cart.getplacedCart);
+router.get('/api/controllers/customer/cart/:uuid', cart.getCartByUuid); // the change done here ':uuid ' rather tahn using getcartByuuid 
+ // : before uuid shows that uuid is a dynamic part of means it can  vary
+router.get('/api/controllers/cart/approve:uuid', [authWall('admin'), paramsToBody(['uuid'], "params")], cart.approveCart); 
 router.get('/video', videoRender)
 
 
