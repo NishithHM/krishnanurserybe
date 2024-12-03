@@ -10,6 +10,15 @@ const uuid = require('uuid')
 
 
 
+const cart = require('./controllers/cart.controller');
+
+//const videoRender = require('../controllers/videoController');
+//const { checkAdminOrSales } = require('../middlewares/auth.middleware');
+//const cartValidator= require("./validators/cartValidator");
+
+const { addToCartValidator } = require('./validators/cart.validator');
+const { checkoutCartValidator } = require('./validators/checkoutCart.validator');
+const { placedCartValidator } = require('./validators/placedCart.validator');
 const { register, singIn, getAllUsers, deleteUserById } = require('./controllers/user.controller');
 const { authWall, bodyValidator, paramsToBody } = require('./middlewares/auth.middleware')
 const { createUserSchema, loginUserSchema, deleteUserSchema, getUsersSchema } = require('./validators/user.validators')
@@ -63,7 +72,7 @@ const fileStorageEngine = multer.diskStorage({
 const uploadInvoice = multer({storage:fileStorageEngine, limits:{fileSize: 1000*1024*1024}});
 
 const AWS = require('aws-sdk');
-const { addCartValidator, addToCartValidator } = require("./validators/cart.validator");
+const { addCartValidator } = require("./validators/cart.validator");
  
   AWS.config.update({
       signatureVersion: 'v4',
@@ -195,15 +204,13 @@ router.get('/api/customer/offers', [], getAllOffers)
 router.get('/api/customer/offers/:id', [paramsToBody(['id'], "params")], getPlantsFromOffers)
 
 
-// router.post('/api/controllers/addToCart', cart.addToCart); 
-// router.post('/api/controllers/checkoutCart',cart.checkoutCart);
-// router.get('api/controllers/getCartByUuid', cart.getCartByUuid);
- 
-// router.post('/api/controllers/addToCart', [bodyValidator(addToCartValidator)], cart.addToCart);
-// router.post('/api/controllers/checkoutCart', [bodyValidator(checkoutCartValidator)], cart.checkoutCart); 
-
-
-// router.get('/api/controllers/getCartByUuid', cart.getCartByUuid);
+router.post('/api/controllers/customer/cart/addToCart', [bodyValidator(addToCartValidator)], cart.addToCart);
+router.post('/api/controllers/customer/cart/checkoutCart', [bodyValidator(checkoutCartValidator)], cart.checkoutCart); 
+router.post('/api/controllers/customer/cart/getPlacedCart',  authWall(['admin', 'sales']),  bodyValidator(placedCartValidator), cart.getplacedCart);
+router.get('/api/controllers/customer/cart/:uuid', cart.getCartByUuid); // the change done here ':uuid ' rather tahn using getcartByuuid 
+ // : before uuid shows that uuid is a dynamic part of means it can  vary
+router.get('/api/controllers/cart/approve:uuid', [authWall('admin'), paramsToBody(['uuid'], "params")], cart.approveCart); 
 router.get('/video', videoRender)
+
 
 module.exports = router

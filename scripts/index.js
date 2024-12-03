@@ -6,12 +6,10 @@ const Tracker = require("../api/models/tracker.model");
 const Vendors = require("../api/models/vendor.model");
 const excelToJson = require("convert-excel-to-json");
 
-var request = require('request');
-var fs = require('fs');
-const dayjs = require("dayjs")
-const { caluclateMetaData } = require("../crons/dailyCron")
-const agriOrderMgmtModel = require("../api/models/agriOrderMgmt.model")
-const AgriProcurementModel = require("../api/models/AgriProcurement.model")
+var request = require("request");
+var fs = require("fs");
+const dayjs = require("dayjs");
+const { caluclateMetaData } = require("../crons/dailyCron");
 
 const exl = require("convert-excel-to-json");
 const excelFilePath = "plat-data.xlsx";
@@ -94,9 +92,12 @@ const clearS3 = () => {
   };
 };
 
-const dbCon = ()=>{
-    const env = 'dev'
-    mongoose.connect(`/nursery_mgmt_${env}?retryWrites=true&w=majority`, {
+const dbCon = () => {
+  const env = "dev";
+  mongoose
+    .connect(
+      `mongodb+srv://admin:admin123@cluster0.t2cxv.mongodb.net/nursery_mgmt_${env}?retryWrites=true&w=majority`,
+      {
         useNewUrlParser: true,
         useUnifiedTopology: true,
       }
@@ -472,6 +473,7 @@ function processArray(arr) {
     obj.tags = ensureArray(obj.tags);
     obj.tips = ensureArray(obj.tips);
   });
+}
 
 const migrateProcurementPayments = async () => {
   const procurementHistoryModel = require('../api/models/procurementHistory.model')
@@ -550,10 +552,8 @@ const startScripts =async()=>{
     console.log('db connected')
     await correctAgriRemQty()
     console.log('done')
+
+  return Object.values(result);
 }
 
-  // caluclateMetaDataAll();
-};
-
 startScripts();
-

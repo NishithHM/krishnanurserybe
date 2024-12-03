@@ -7,6 +7,7 @@ const CartSchema = new mongoose.Schema({
     required: true,
     unique: true, 
   },
+ 
   items: {
     type: [
       {
@@ -20,7 +21,7 @@ const CartSchema = new mongoose.Schema({
         },
         price: {
           type: Number,
-          required: true, // Original price of the plant
+          required: true,
         },
         discountedPrice: {
           type: Number, 
@@ -50,15 +51,26 @@ const CartSchema = new mongoose.Schema({
   },
   totalDiscount: {
     type: Number,
-    default: 0, //  
+    default: 0, 
   },
   couponCode: {
     type: String,
     default: null, 
   },
+  status: {
+    type: String,
+    enum: ['placed', 'approved', 'cart'],
+    default: 'cart',
+  },
+  extraFee:{
+    type:Number,
+    default:0
+  },
+  invoiceId:{
+    type: String
+  }
 }, {
   timestamps: true, 
 });
-
 
 module.exports = mongoose.model('Cart', CartSchema);

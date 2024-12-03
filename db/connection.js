@@ -8,6 +8,7 @@ exports.connect = () => {
     mongoose.connect(`${db}/nursery_mgmt_${env}?retryWrites=true&w=majority`, {
         useNewUrlParser: true,
         useUnifiedTopology: true,
+    
     }).then(() => console.log("Database connected! "))
         .catch(err => console.log(err));
 }

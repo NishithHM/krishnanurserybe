@@ -1,7 +1,8 @@
+
 const Joi = require('joi');
 
 const addToCartValidator = Joi.object({
-    uuid: Joi.string().optional().label('UUID'),
+    uuid: Joi.string().allow(null, '').optional().label('UUID'),  
     
     cart: Joi.array().items(
         Joi.object({

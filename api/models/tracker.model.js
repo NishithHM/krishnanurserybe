@@ -41,8 +41,17 @@ const createDefaults =async ()=>{
      }
      const dataCapital = await Tracker.findOne({name:'capital'})
      if(isEmpty(dataCapital)){
+          try {
+               const initial = new Tracker({name:'capital', number:0})
+          }
+          catch (error) {
+               console.log(error)
+          }
+     }
+     const dataCustomer= await Tracker.findOne({name:'customerInvoiceId'})
+     if(isEmpty(dataCustomer)){
      try {
-          const initial = new Tracker({name:'capital', number:0})
+          const initial = new Tracker({name:'agriInvoiceId', number:00001})
           initial.save()
                
           } catch (error) {
