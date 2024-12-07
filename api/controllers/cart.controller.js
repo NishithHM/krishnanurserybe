@@ -4,9 +4,11 @@ const PlantInfo = require('../models/plant_info.model');
 const Offer = require('../models/offers.models');
 const crypto = require('crypto');
 const Procurements = require('../models/procurment.model');
-const { isEmpty } = require('lodash');
+const { isEmpty, uniq } = require('lodash');
 const Tracker = require('../models/tracker.model');
 const { convertCoverImagesToPresignedUrls } = require('./plant_info.controller');
+const { default: mongoose } = require('mongoose');
+const loggers = require('../../loggers');
 
 // Add or update cart function
 exports.addToCart = async (req, res) => {
@@ -201,38 +203,49 @@ exports.checkoutCart = async (req, res) => {
 
 exports.getplacedCart = async (req, res) => {
     try {
-        const { startDate, endDate, sortBy, sortType } = req.body;
+        const { startDate, endDate, sortBy, sortType, search, pageNumber, isCount } = req.body;
 
         
         const fromDate = new Date(startDate);
         const toDate = new Date(endDate);
 
-        if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
-            return res.status(400).json({ message: 'Invalid date format. Expected YYYY-MM-DD.' });
-        }
+        // if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
+        //     return res.status(400).json({ message: 'Invalid date format. Expected YYYY-MM-DD.' });
+        // }
 
         // query :- finding orders with status pllaced within the date range
         const query = {
             status: 'placed',
-            createdAt: { $gte: fromDate, $lte: toDate },
         };
+
+        if(startDate && endDate){
+            query.createdAt = { $gte: fromDate, $lte: toDate }
+        }
 
         // sort type 1 - ascending and -1 for descending
         const sortOptions = {};
-        if (sortBy === 'createdOn') {
-            sortOptions.createdAt = sortType; // 
-        } else if (sortBy === 'totalPrice') {
-            sortOptions.totalAmount = sortType; //
+        if (sortBy) {
+            sortOptions[sortBy] = sortType; // 
         }
 
         // Fetch the placed carts
-        const carts = await Cart.find(query).sort(sortOptions);
+        if(isCount=='true'){
+            const count = await Cart.count(query)
+            // Return the response with the fetched carts
+            return res.status(200).json({
+                message: 'Placed carts fetched successfully',
+                count: count,
+            });
+        }else{
+            const carts = await Cart.find(query).sort(sortOptions).skip(10*(pageNumber-1)).limit(10);
 
-        // Return the response with the fetched carts
-        return res.status(200).json({
-            message: 'Placed carts fetched successfully',
-            data: carts,
-        });
+            // Return the response with the fetched carts
+            return res.status(200).json({
+                message: 'Placed carts fetched successfully',
+                data: carts,
+            });
+        }
+        
     } catch (error) {
         console.error('Error in getPlacedCarts:', error);
         res.status(500).json({ message: 'Internal server error' });
@@ -279,10 +292,10 @@ exports.getCartByUuid = async (req, res) => {
 exports.approveCart = async (req,res)=>{
     const {uuid, extraFee} = req.body
     const cart = await Cart.findOne({uuid, status:'placed'})
-    cart.totalAmount = cart.totalAmount + extraFee;
+    cart.totalAmount = cart.totalAmount + parseInt(extraFee, 10);
     cart.extraFee = extraFee;
     cart.status = 'approved'
-    const plantIds = cart.map(item => item.plantId);
+    const plantIds = cart?.items.map(item => item.plantId);
     console.log('Plant IDs:', plantIds);
     
     // checking correct filter for plants
@@ -290,22 +303,23 @@ exports.approveCart = async (req,res)=>{
         _id: { $in: plantIds },
         status: 'PUBLISH',
         isActive: true,
-    });
-    const items = cart.items.map(ele=> ({...ele, procurementId: plants.find(p=> p._id === ele.plantId)?.procurementId}))
+    }).lean();
+    const items = cart.items.map(ele=> ({...ele, procurementId: plants.find(p=> p._id.toString() === ele.plantId.toString())?.procurementId, qty: ele.qty}))
     const {errors} = validatePricesAndQuantityAndFormatItems(items)
     if(isEmpty(errors)){
         const procurementQuantityMapping = {}
         items?.forEach(ele => {
             if (procurementQuantityMapping[ele.procurementId.toString()]) {
-                procurementQuantityMapping[ele.procurementId.toString()] = procurementQuantityMapping[ele.procurementId.toString()] + ele.quantity
+                procurementQuantityMapping[ele.procurementId.toString()] = procurementQuantityMapping[ele.procurementId.toString()] + ele.qty
             } else {
-                procurementQuantityMapping[ele.procurementId.toString()] = ele.quantity
+                procurementQuantityMapping[ele.procurementId.toString()] = ele.qty
             }
         })
+        console.log(procurementQuantityMapping, 'mappring')
         await updateRemainingQuantity(procurementQuantityMapping)
 
         const trackerVal = await Tracker.findOne({name:"customerInvoiceId"})
-        cart.invoiceId = `NUR_${trackerVal.number}`
+        cart.invoiceId = `CUS_${trackerVal.number}`
         trackerVal.number = trackerVal.number + 1
         await cart.save()
         await trackerVal.save()

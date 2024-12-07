@@ -72,6 +72,9 @@ const CartSchema = new mongoose.Schema({
   },
   invoiceId:{
     type: String
+  },
+  customer:{
+    type: Object
   }
 }, {
   timestamps: true, 

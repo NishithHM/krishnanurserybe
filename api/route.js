@@ -201,10 +201,10 @@ router.get('/api/customer/offers/:id', [paramsToBody(['id'], "params")], getPlan
 
 router.post('/api/controllers/customer/cart/addToCart', [bodyValidator(addToCartValidator)], cart.addToCart);
 router.post('/api/controllers/customer/cart/checkoutCart', [bodyValidator(checkoutCartValidator)], cart.checkoutCart); 
-router.post('/api/controllers/customer/cart/getPlacedCart',  authWall(['admin', 'sales']),  bodyValidator(placedCartValidator), cart.getplacedCart);
+router.get('/api/controllers/customer/cart/getPlacedCart',  authWall(['admin', 'sales']), paramsToBody(['pageNumber', 'isCount', 'search', 'startDate', 'endDate', 'sortBy', 'sortType'], "query"),  bodyValidator(placedCartValidator), cart.getplacedCart);
 router.get('/api/controllers/customer/cart/:uuid', cart.getCartByUuid); // the change done here ':uuid ' rather tahn using getcartByuuid 
  // : before uuid shows that uuid is a dynamic part of means it can  vary
-router.get('/api/controllers/cart/approve:uuid', [authWall('admin'), paramsToBody(['uuid'], "params")], cart.approveCart); 
+router.get('/api/controllers/customer/cart/approve/:uuid', [authWall(['admin', 'sales']), paramsToBody(['uuid'], "params"), paramsToBody(['extraFee'], "query")], cart.approveCart); 
 router.get('/video', videoRender)
 
 
