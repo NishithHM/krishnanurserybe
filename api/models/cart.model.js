@@ -53,6 +53,10 @@ const CartSchema = new mongoose.Schema({
     type: Number,
     default: 0, 
   },
+  offerDiscount: {
+    type: Number,
+    default: 0, 
+  },
   couponCode: {
     type: String,
     default: null, 
@@ -68,6 +72,9 @@ const CartSchema = new mongoose.Schema({
   },
   invoiceId:{
     type: String
+  },
+  customer:{
+    type: Object
   }
 }, {
   timestamps: true, 

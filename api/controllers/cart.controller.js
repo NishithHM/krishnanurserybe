@@ -4,8 +4,11 @@ const PlantInfo = require('../models/plant_info.model');
 const Offer = require('../models/offers.models');
 const crypto = require('crypto');
 const Procurements = require('../models/procurment.model');
-const { isEmpty } = require('lodash');
+const { isEmpty, uniq } = require('lodash');
 const Tracker = require('../models/tracker.model');
+const { convertCoverImagesToPresignedUrls } = require('./plant_info.controller');
+const { default: mongoose } = require('mongoose');
+const loggers = require('../../loggers');
 
 // Add or update cart function
 exports.addToCart = async (req, res) => {
@@ -33,7 +36,7 @@ exports.addToCart = async (req, res) => {
             return res.status(404).json({ message: 'Some plants are invalid or inactive' });
         }
 
-        // Cart items
+        // 
         const cartItems = cart.map(item => {
             const plant = plants.find(p => p._id.toString() === item.plantId.toString());
             if (!plant) {
@@ -48,11 +51,17 @@ exports.addToCart = async (req, res) => {
                 tips: plant.tips.join(', '),
                 moreInfo: plant.moreInfo,
                 tags: plant.tags.map(tag => tag.name),
+                procurementId: plant.procurementId
             };
         });
 
+        console.log('Plant IDs:', cartItems);
+
         // Calculate total amount
         let totalAmount = cartItems.reduce((total, item) => total + item.discountedPrice * item.qty, 0);
+        let totalDiscount= cartItems.reduce((total, item) => total + (item.price - item.discountedPrice )* item.qty, 0);
+        let totalQty= cartItems.reduce((total, item) => total + item.qty, 0);
+        console.log('Plant IDs:', cartItems);
 
         let cartData;
         if (!uuid) {
@@ -60,16 +69,19 @@ exports.addToCart = async (req, res) => {
             cartData = new Cart({
                 items: cartItems,
                 totalAmount,
+                totalDiscount,
                 uuid: crypto.randomUUID(), // Generate UUID
                 status: 'cart', // bydefault status to cart
             });
         } else {
             // If UUID exists, update the cart
-            cartData = await Cart.findOneAndUpdate(
+              await Cart.findOneAndUpdate(
                 { uuid },
-                { items: cartItems, totalAmount },
-                { new: false } 
+                { items: cartItems, totalAmount, totalDiscount },
+                { new: false, returnDocument:'after'} 
             );
+
+             cartData = await Cart.findOne({uuid})
 
             if (!cartData) {
                 return res.status(404).json({ message: 'Cart not found' });
@@ -88,24 +100,18 @@ exports.addToCart = async (req, res) => {
                 errorMessage = 'Offer is not active';
             } else {
                 const offerPlantIds = offer.plants.map(plant => plant._id.toString());
-                const eligibleForOffer = cartItems.every(item => offerPlantIds.includes(item.plantId.toString()));
+                const eligibleForOffer = cartItems.every(item => offerPlantIds.includes(item.procurementId.toString()));
+
+                console.log(offerPlantIds, cartItems)
 
                 if (!eligibleForOffer) {
                     errorMessage = 'Some cart items are not eligible for the applied offer';
                 } else {
-                    let applicable = false;
-
-                    // Check if cart meets offer requirements
-                    if (offer.ordersAbove && totalAmount >= offer.ordersAbove && cartItems.length >= offer.minPurchaseQty) {
-                        applicable = true;
-                    }
-
-                    if (!applicable) {
                     // Checking if cart meets offer requirements or not
-                    const meetsOfferRequirements = offer.ordersAbove && totalAmount >= offer.ordersAbove && cartItems.length >= offer.minPurchaseQty;
+                    const meetsOfferRequirements = offer.ordersAbove && totalAmount >= offer.ordersAbove && totalQty >= (offer.minPurchaseQty || 0);
 
                     if (!meetsOfferRequirements) {
-                        errorMessage = `Cart does not meet the minimum purchase amount for this offer. OrdersAbove: ${offer.ordersAbove}`;
+                        errorMessage = `Cart does not meet the minimum purchase amount for this offer. Orders Above: ${offer.ordersAbove}`;
                     }
 
                     // Calculate the discount
@@ -113,16 +119,17 @@ exports.addToCart = async (req, res) => {
                         const percentageDiscount = (totalAmount * offer.percentageOff) / 100;
                         const offerDiscount = Math.min(percentageDiscount, offer.upto);
                         cartData.offerDiscount = offerDiscount;
-                        cartData.totalDiscount = (cartData.totalDiscount || 0) + offerDiscount;
-                        cartData.totalAmount -= offerDiscount;
+                        cartData.totalAmount = totalAmount - offerDiscount;
                     }
                 }
             }
+        }else{
+            cartData.offerDiscount = 0;
         }
 
         const savedCart = await cartData.save();
 
-        res.status(200).json({
+         res.status(200).json({
             message: 'Cart updated successfully',
             cart: {
                 totalAmount: savedCart.totalAmount,
@@ -134,7 +141,6 @@ exports.addToCart = async (req, res) => {
             },
             errorMessage,
         });
-    }
     } catch (error) {
         console.error('Error in addToCart:', error.message);
         return res.status(500).json({ message: 'Error updating cart', error: error.message });
@@ -197,38 +203,49 @@ exports.checkoutCart = async (req, res) => {
 
 exports.getplacedCart = async (req, res) => {
     try {
-        const { startDate, endDate, sortBy, sortType } = req.body;
+        const { startDate, endDate, sortBy, sortType, search, pageNumber, isCount } = req.body;
 
         
         const fromDate = new Date(startDate);
         const toDate = new Date(endDate);
 
-        if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
-            return res.status(400).json({ message: 'Invalid date format. Expected YYYY-MM-DD.' });
-        }
+        // if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
+        //     return res.status(400).json({ message: 'Invalid date format. Expected YYYY-MM-DD.' });
+        // }
 
         // query :- finding orders with status pllaced within the date range
         const query = {
             status: 'placed',
-            createdAt: { $gte: fromDate, $lte: toDate },
         };
+
+        if(startDate && endDate){
+            query.createdAt = { $gte: fromDate, $lte: toDate }
+        }
 
         // sort type 1 - ascending and -1 for descending
         const sortOptions = {};
-        if (sortBy === 'createdOn') {
-            sortOptions.createdAt = sortType; // 
-        } else if (sortBy === 'totalPrice') {
-            sortOptions.totalAmount = sortType; //
+        if (sortBy) {
+            sortOptions[sortBy] = sortType; // 
         }
 
         // Fetch the placed carts
-        const carts = await Cart.find(query).sort(sortOptions);
+        if(isCount=='true'){
+            const count = await Cart.count(query)
+            // Return the response with the fetched carts
+            return res.status(200).json({
+                message: 'Placed carts fetched successfully',
+                count: count,
+            });
+        }else{
+            const carts = await Cart.find(query).sort(sortOptions).skip(10*(pageNumber-1)).limit(10);
 
-        // Return the response with the fetched carts
-        return res.status(200).json({
-            message: 'Placed carts fetched successfully',
-            data: carts,
-        });
+            // Return the response with the fetched carts
+            return res.status(200).json({
+                message: 'Placed carts fetched successfully',
+                data: carts,
+            });
+        }
+        
     } catch (error) {
         console.error('Error in getPlacedCarts:', error);
         res.status(500).json({ message: 'Internal server error' });
@@ -242,17 +259,28 @@ exports.getCartByUuid = async (req, res) => {
         const { uuid } = req.params; // Take UUID 
 
         // Fetch the cart by UUID
-        const cart = await Cart.findOne({ uuid });
+        const cart = await Cart.findOne({ uuid }).lean();
 
         // Check if cart exists
         if (!cart) {
             return res.status(404).json({ message: "Cart not found" });
         }
+        const plantIds = cart.items.map(ele=> ele.plantId)
+
+        const plants = await PlantInfo.find({
+            _id: { $in: plantIds },
+            status: 'PUBLISH',
+            isActive: true,
+        }).lean();
+         cart.plants =  await Promise.all(plants.map(async ele=> {
+            const s3Urls = await convertCoverImagesToPresignedUrls(ele.coverImages);
+            return {...ele, coverImages: s3Urls, qty:cart.items.find(p=> p.plantId.toString() === ele._id.toString()).qty}
+            }));
 
         // Return the cart details
         return res.status(200).json({
             message: "Cart retrieved successfully",
-            cart,
+            cart
         });
     } catch (error) {
         console.error("Error retrieving cart:", error);
@@ -264,10 +292,10 @@ exports.getCartByUuid = async (req, res) => {
 exports.approveCart = async (req,res)=>{
     const {uuid, extraFee} = req.body
     const cart = await Cart.findOne({uuid, status:'placed'})
-    cart.totalAmount = cart.totalAmount + extraFee;
+    cart.totalAmount = cart.totalAmount + parseInt(extraFee, 10);
     cart.extraFee = extraFee;
     cart.status = 'approved'
-    const plantIds = cart.map(item => item.plantId);
+    const plantIds = cart?.items.map(item => item.plantId);
     console.log('Plant IDs:', plantIds);
     
     // checking correct filter for plants
@@ -275,22 +303,23 @@ exports.approveCart = async (req,res)=>{
         _id: { $in: plantIds },
         status: 'PUBLISH',
         isActive: true,
-    });
-    const items = cart.items.map(ele=> ({...ele, procurementId: plants.find(p=> p._id === ele.plantId)?.procurementId}))
+    }).lean();
+    const items = cart.items.map(ele=> ({...ele, procurementId: plants.find(p=> p._id.toString() === ele.plantId.toString())?.procurementId, qty: ele.qty}))
     const {errors} = validatePricesAndQuantityAndFormatItems(items)
     if(isEmpty(errors)){
         const procurementQuantityMapping = {}
         items?.forEach(ele => {
             if (procurementQuantityMapping[ele.procurementId.toString()]) {
-                procurementQuantityMapping[ele.procurementId.toString()] = procurementQuantityMapping[ele.procurementId.toString()] + ele.quantity
+                procurementQuantityMapping[ele.procurementId.toString()] = procurementQuantityMapping[ele.procurementId.toString()] + ele.qty
             } else {
-                procurementQuantityMapping[ele.procurementId.toString()] = ele.quantity
+                procurementQuantityMapping[ele.procurementId.toString()] = ele.qty
             }
         })
+        console.log(procurementQuantityMapping, 'mappring')
         await updateRemainingQuantity(procurementQuantityMapping)
 
         const trackerVal = await Tracker.findOne({name:"customerInvoiceId"})
-        cart.invoiceId = `NUR_${trackerVal.number}`
+        cart.invoiceId = `CUS_${trackerVal.number}`
         trackerVal.number = trackerVal.number + 1
         await cart.save()
         await trackerVal.save()
