@@ -35,7 +35,8 @@ const plantInfoSchema = new Schema({
     }],
     sections: [{
         image: { type: String, required: true },
-        text: { type: String, required: true }
+        text: { type: String, required: true },
+        info: {type: String, required: true}
     }],
     status: {
         type: String,

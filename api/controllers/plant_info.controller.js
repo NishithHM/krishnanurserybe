@@ -45,7 +45,7 @@ const addPlantInfo = async (req, res) => {
 
         const sections = []
         for(let i=0; i<value.sections.length; i++){
-            sections.push({image: sectionS3s[i], text: value.sections[i]?.text})
+            sections.push({image: sectionS3s[i], text: value.sections[i]?.text, info: value.sections[i]?.info})
         }
 
         console.log(sections)
