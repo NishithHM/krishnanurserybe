@@ -5,14 +5,15 @@ const billingsModel = require("../api/models/billings.model");
 const Tracker = require("../api/models/tracker.model");
 const Vendors = require("../api/models/vendor.model");
 const excelToJson = require("convert-excel-to-json");
-
+const axios = require('axios')
 var request = require("request");
 var fs = require("fs");
 const dayjs = require("dayjs");
 const { caluclateMetaData } = require("../crons/dailyCron");
 
 const exl = require("convert-excel-to-json");
-const excelFilePath = "plat-data.xlsx";
+const path = require("path");
+const excelFilePath = "Sample-Add-Plants-DEV.xlsx";
 
 const addInvoiceToProcHistory = async () => {
   const res = await ProcurementHistory.updateMany(
@@ -280,13 +281,13 @@ const readXlAndStore = () => {
     G: "tips",
     H: "moreInfo",
     I: "tags",
-    // J: "sectionName",
-    // K: "sectionInfo",
+    J: "sectionName",
+    K: "sectionInfo",
     L: "sections",
   };
 
   const result = exl({
-    source: fs.readFileSync(excelFilePath),
+    source: fs.readFileSync( path.join(__dirname, excelFilePath)),
     columnToKey,
   });
 
@@ -297,182 +298,89 @@ const readXlAndStore = () => {
   });
 };
 
-readXlAndStore().then((data) => {
-  //   console.log(data, "data");
+const convertImgaeToBase64 =(arr)=>{
+  return arr.map(ele=> fs.readFileSync(ele, {encoding: 'base64'}));
+}
 
-  const mergeDuplicates = (data) => {
-    const mergedData = [];
+const excelImport= async ()=>{
 
-    data.forEach((item) => {
-      const lastItem = mergedData[mergedData.length - 1];
+    readXlAndStore().then((data) => {
 
-      if (lastItem && lastItem.SLNO === item.SLNO) {
-        Object.keys(item).forEach((key) => {
-          if (key !== "SLNO") {
-            if (lastItem[key]) {
-              if (!Array.isArray(lastItem[key])) {
-                lastItem[key] = [lastItem[key]];
-              }
-              lastItem[key].push(item[key]);
-            } else {
-              lastItem[key] = item[key];
-            }
-          }
-        });
-      } else {
-        mergedData.push({ ...item });
-      }
-    });
 
-    return mergedData;
-  };
+      // console.log(convertedData[0].sections, "convertedData");
 
-  let convertedData = processArray(mergeDuplicates(data));
-
-  // console.log(convertedData[0].sections, "convertedData");
-
-  // let dataToSend = {};
-
-  convertedData.forEach(async (ele) => {
-    const procId = await procurmentModel
-      .findOne({
-        "names.en.name": ele?.name,
-      })
-      .select("_id");
-
-    // console.log(procId._id?.toString(), "procId");
-    const dataToSend = {
-      nameForCustomer: ele.nameForCustomer,
-      sellingPrice: ele.sellingPrice,
-      discountedSellingPrice: ele.discountedSellingPrice,
-      coverImages: ele.coverImages,
-      tips: ele.tips,
-      moreInfo: ele.moreInfo,
-      tags: ele.tags,
-      sections: ele.sections,
-      procurementId: procId._id?.toString(),
-    };
-
-    const res = await fetch(
-      "http://15.207.187.17:8000/api/customer/plant-info/add",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          authorization:
-            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY0NDk0NzM2ZWUwNjE1ZWY2Mzc3MjU2MyIsIm5hbWUiOiJhZG1pbjEiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3MjI4Nzg2NTEsImV4cCI6MTcyMjk2NTA1MX0.iRTRrPcwpI25fBPSBW0W57tWPuEQrP0q5ifBGAHIpSk",
-        },
-        body: JSON.stringify(dataToSend),
-      }
-    );
-    console.log(await res.json());
-  });
-});
-
-function processArray(arr) {
-  const result = {};
-  const arrayProperties = {};
-
-  function processSections(sections) {
-    if (typeof sections === "string") {
-      return [{ image: sections, text: "section1.png" }];
-    } else if (Array.isArray(sections)) {
-      return sections.map((section, index) => ({
-        image: section,
-        text: `section${index + 1}.png`,
-      }));
-    }
-    return [];
-  }
-
-  function ensureArray(value) {
-    return Array.isArray(value) ? value : value ? [value] : [];
-  }
-
-  // First pass: Separate objects with SLNO and collect array properties
-  arr.forEach((obj) => {
-    if (obj.SLNO) {
-      result[obj.SLNO] = { ...obj };
-      result[obj.SLNO].sections = processSections(obj.sections);
-      // Ensure tags and tips are arrays
-      result[obj.SLNO].tags = ensureArray(obj.tags);
-      result[obj.SLNO].tips = ensureArray(obj.tips);
-    } else {
-      Object.entries(obj).forEach(([key, value]) => {
-        if (
-          Array.isArray(value) ||
-          key === "sections" ||
-          key === "tags" ||
-          key === "tips"
-        ) {
-          if (!arrayProperties[key]) {
-            arrayProperties[key] = [];
-          }
-          if (key === "sections") {
-            arrayProperties[key].push(...processSections(value));
-          } else if (key === "tags" || key === "tips") {
-            arrayProperties[key].push(...ensureArray(value));
-          } else {
-            arrayProperties[key].push(...value);
+      // let dataToSend = {};
+      const convertedData = []
+      for(let i=0;i<data.length; i++){
+        const row = data[i]
+        if(typeof row['SLNO']=== "number"){
+          row.coverImages = [row.coverImages]
+          row.tags = [row.tags]
+          row.sections = [{image: convertImgaeToBase64([row.sections])[0], text: row.sectionName, info: row.sectionInfo}]
+          row.tips = [row.tips]
+          delete row.sectionName;
+          delete row.sectionInfo
+          convertedData.push(row)
+        }else if(row.coverImages || row.tags || row.sections || row.tips || row.sectionName || row.sectionInfo){
+          const rowPrev = convertedData.pop()
+          if(rowPrev){
+            if(row.coverImages)
+              rowPrev.coverImages = [...rowPrev.coverImages, row.coverImages ]
+            if(row.tags)
+              rowPrev.tags = [...rowPrev.tags, row.tags ]
+            if(row.sections && row.sectionName && row.sectionInfo)
+              rowPrev.sections = [...rowPrev.sections, {image: convertImgaeToBase64([row.sections])[0], text: row.sectionName, info: row.sectionInfo} ]
+            if(row.tips)
+              rowPrev.tips = [...rowPrev.tips, row.tips ]  
+            convertedData.push(rowPrev)
           }
         }
+      }
+
+      convertedData.forEach(async (ele) => {
+        const procId = await procurmentModel
+          .findOne({
+            "names.en.name": ele?.name,
+          })
+          .select("_id");
+
+        console.log(procId._id?.toString(), "procId");
+        const dataToSend = {
+          nameForCustomer: ele.nameForCustomer,
+          sellingPrice: ele.sellingPrice,
+          discountedSellingPrice: ele.discountedSellingPrice,
+          coverImages: convertImgaeToBase64(ele.coverImages),
+          tips: ele.tips,
+          moreInfo: ele.moreInfo,
+          tags: ele.tags,
+          sections: ele.sections,
+          procurementId: procId._id?.toString(),
+        };
+        console.log(JSON.stringify(dataToSend))
+        const res = await axios.post(
+          "http://localhost:8000/api/customer/plant-info/add",
+          dataToSend,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              authorization:
+                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY0NDk0NzM2ZWUwNjE1ZWY2Mzc3MjU2MyIsIm5hbWUiOiJhZG1pbjEiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3MzQ1OTYzMTgsImV4cCI6MTczNDY4MjcxOH0.PQKA1tIiG8ICol-aa5zgTbhRpZE67rulV65sTJ7GZrc",
+            },
+          }
+        );
+        const plantData = await res.data;
+        console.log(plantData)
+        const pubRes = axios.get(`http://localhost:8000/api/customer/plant-info/publish/${plantData?.data?.procurementId}`, {
+          headers: {
+            "Content-Type": "application/json",
+            authorization:
+              "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY0NDk0NzM2ZWUwNjE1ZWY2Mzc3MjU2MyIsIm5hbWUiOiJhZG1pbjEiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3MzQ1OTYzMTgsImV4cCI6MTczNDY4MjcxOH0.PQKA1tIiG8ICol-aa5zgTbhRpZE67rulV65sTJ7GZrc",
+          },
+        })
+        console.log('succesfully added')
       });
-    }
-  });
-
-  // Remove duplicates from collected array properties
-  Object.keys(arrayProperties).forEach((key) => {
-    if (key === "sections") {
-      // For sections, remove duplicates based on data
-      arrayProperties[key] = arrayProperties[key].filter(
-        (obj, index, self) =>
-          index === self.findIndex((t) => t.data === obj.data)
-      );
-    } else {
-      arrayProperties[key] = [...new Set(arrayProperties[key])];
-    }
-  });
-
-  // Second pass: Merge array properties into objects with SLNO
-  Object.values(result).forEach((obj) => {
-    Object.entries(arrayProperties).forEach(([key, value]) => {
-      if (key === "sections") {
-        obj[key] = [...(obj[key] || []), ...value];
-      } else if (key === "tags" || key === "tips") {
-        obj[key] = [...ensureArray(obj[key]), ...value];
-      } else if (Array.isArray(obj[key])) {
-        obj[key] = [...obj[key], ...value];
-      } else if (obj[key]) {
-        obj[key] = [obj[key], ...value];
-      } else {
-        obj[key] = value;
-      }
     });
-
-    // Remove duplicates from all array properties in the final object
-    Object.keys(obj).forEach((key) => {
-      if (Array.isArray(obj[key])) {
-        if (key === "sections") {
-          // For sections, remove duplicates based on data
-          obj[key] = obj[key].filter(
-            (item, index, self) =>
-              index === self.findIndex((t) => t.data === item.data)
-          );
-        } else {
-          obj[key] = [...new Set(obj[key])];
-        }
-      }
-    });
-
-    // Ensure sections is always an array with the correct structure
-    if (!obj.sections) {
-      obj.sections = [];
-    }
-
-    // Ensure tags and tips are always arrays
-    obj.tags = ensureArray(obj.tags);
-    obj.tips = ensureArray(obj.tips);
-  });
+    
 }
 
 const migrateProcurementPayments = async () => {
@@ -550,10 +458,10 @@ const startScripts =async()=>{
     await new Promise(res=> setTimeout(()=>res(1), 1000))
     // testApi()
     console.log('db connected')
-    await correctAgriRemQty()
+   await excelImport()
     console.log('done')
 
-  return Object.values(result);
 }
+
 
 startScripts();

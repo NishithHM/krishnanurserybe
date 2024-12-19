@@ -11,7 +11,8 @@ const addPlantInfoValidator = Joi.object({
     sections: Joi.array().items(
         Joi.object({
             image: Joi.string(),
-            text: Joi.string()
+            text: Joi.string(),
+            info: Joi.string()
         })
     ).required(),
     nameForCustomer: Joi.string(),
