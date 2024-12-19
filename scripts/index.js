@@ -339,11 +339,9 @@ const excelImport= async ()=>{
 
       convertedData.forEach(async (ele) => {
         const procId = await procurmentModel
-          .findOne({
-            "names.en.name": ele?.name,
-          })
+          .findOne({"names.en.name":{$regex:ele?.name, $options:'i'}})
           .select("_id");
-
+        console.log(ele?.name, procId)
         console.log(procId._id?.toString(), "procId");
         const dataToSend = {
           nameForCustomer: ele.nameForCustomer,
@@ -356,7 +354,6 @@ const excelImport= async ()=>{
           sections: ele.sections,
           procurementId: procId._id?.toString(),
         };
-        console.log(JSON.stringify(dataToSend))
         const res = await axios.post(
           "http://localhost:8000/api/customer/plant-info/add",
           dataToSend,
@@ -377,6 +374,7 @@ const excelImport= async ()=>{
               "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY0NDk0NzM2ZWUwNjE1ZWY2Mzc3MjU2MyIsIm5hbWUiOiJhZG1pbjEiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3MzQ1OTYzMTgsImV4cCI6MTczNDY4MjcxOH0.PQKA1tIiG8ICol-aa5zgTbhRpZE67rulV65sTJ7GZrc",
           },
         })
+        await new Promise(res=> setTimeout(()=> res(), 200))
         console.log('succesfully added')
       });
     });

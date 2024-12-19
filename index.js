@@ -20,7 +20,7 @@ if(process.env.ENV==='dev' || process.env.ENV==='qa'){
     app.use(cors())
 }
 app.use(cookieParser())
-app.use(bodyParser.json({ limit: '10mb' }))
+app.use(bodyParser.json({ limit: '20mb' }))
 app.use(router)
 // app.get("/", function (req, res) {
 //     res.sendFile(__dirname + "/index.html");
