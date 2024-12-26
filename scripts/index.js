@@ -13,6 +13,7 @@ const { caluclateMetaData } = require("../crons/dailyCron");
 
 const exl = require("convert-excel-to-json");
 const path = require("path");
+const plant_infoModel = require("../api/models/plant_info.model");
 const excelFilePath = "Sample-Add-Plants-DEV.xlsx";
 
 const addInvoiceToProcHistory = async () => {
@@ -270,21 +271,34 @@ const correctBillData = async () => {
   }
 };
 
-const readXlAndStore = () => {
-  const columnToKey = {
-    A: "SLNO",
-    B: "name",
-    C: "nameForCustomer",
-    D: "sellingPrice",
-    E: "discountedSellingPrice",
-    F: "coverImages",
-    G: "tips",
-    H: "moreInfo",
-    I: "tags",
-    J: "sectionName",
-    K: "sectionInfo",
-    L: "sections",
-  };
+const readXlAndStore = (sheetName) => {
+  let columnToKey;
+  if(sheetName==='Plant Info'){
+    columnToKey = {
+      A: "SLNO",
+      B: "name",
+      C: "nameForCustomer",
+      D: "sellingPrice",
+      E: "discountedSellingPrice",
+      F: "coverImages",
+      G: "tips",
+      H: "moreInfo",
+      I: "tags",
+      J: "sectionName",
+      K: "sectionInfo",
+      L: "sections",
+    };
+  }
+
+  if(sheetName==='Section'){
+    // Section Name	Type	Stack	Plants
+    columnToKey = {
+      A: "Section Name",
+      B: "Type",
+      C: "Stack",
+      D: "Plants",
+    };
+  }
 
   const result = exl({
     source: fs.readFileSync( path.join(__dirname, excelFilePath)),
@@ -293,8 +307,8 @@ const readXlAndStore = () => {
 
   return new Promise((resolve, reject) => {
     // console.log(result, "result");
-    if (!result["Plant Info"]?.length) reject(new Error("No data found"));
-    resolve(result["Plant Info"].slice(1));
+    if (!result[sheetName]?.length) reject(new Error("No data found"));
+    resolve(result[sheetName].slice(1));
   });
 };
 
@@ -302,9 +316,9 @@ const convertImgaeToBase64 =(arr)=>{
   return arr.map(ele=> fs.readFileSync(ele, {encoding: 'base64'}));
 }
 
-const excelImport= async ()=>{
+const excelImport= async (sheetName)=>{
 
-    readXlAndStore().then((data) => {
+    readXlAndStore(sheetName).then((data) => {
 
 
       // console.log(convertedData[0].sections, "convertedData");
@@ -339,11 +353,9 @@ const excelImport= async ()=>{
 
       convertedData.forEach(async (ele) => {
         const procId = await procurmentModel
-          .findOne({
-            "names.en.name": ele?.name,
-          })
+          .findOne({"names.en.name":{$regex:ele?.name, $options:'i'}})
           .select("_id");
-
+        console.log(ele?.name, procId)
         console.log(procId._id?.toString(), "procId");
         const dataToSend = {
           nameForCustomer: ele.nameForCustomer,
@@ -356,7 +368,6 @@ const excelImport= async ()=>{
           sections: ele.sections,
           procurementId: procId._id?.toString(),
         };
-        console.log(JSON.stringify(dataToSend))
         const res = await axios.post(
           "http://localhost:8000/api/customer/plant-info/add",
           dataToSend,
@@ -377,11 +388,40 @@ const excelImport= async ()=>{
               "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY0NDk0NzM2ZWUwNjE1ZWY2Mzc3MjU2MyIsIm5hbWUiOiJhZG1pbjEiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3MzQ1OTYzMTgsImV4cCI6MTczNDY4MjcxOH0.PQKA1tIiG8ICol-aa5zgTbhRpZE67rulV65sTJ7GZrc",
           },
         })
+        await new Promise(res=> setTimeout(()=> res(), 200))
         console.log('succesfully added')
       });
     });
     
 }
+
+const sectionImport = async(sheetName)=>{
+  readXlAndStore(sheetName).then(async (data) => {
+    for(let i=0; i<data.length;i++){
+      const {Plants, Type, Stack,} = data[i]
+     const plantData = await plant_infoModel.find({"names.customer.name":{$in:Plants.split(',')}}, {procurementId:1})
+     const body = {
+      type: Type,
+      plants: plantData.map(e=> e.procurementId.toString()),
+      stack: Stack,
+      name: data[i]['Section Name']
+     }
+     console.log(body)
+     const res = await axios.post(
+      "http://localhost:8000/api/customer/section/add",
+      body,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          authorization:
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY0NDk0NzM2ZWUwNjE1ZWY2Mzc3MjU2MyIsIm5hbWUiOiJhZG1pbjEiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3MzQ3NTMyMDIsImV4cCI6MTczNDgzOTYwMn0.1FgGwqm-xnT47y_S-NlZz-jn_mYTCHsly6J7R66a-H8",
+        },
+      }
+    );
+    }
+  })
+}
+
 
 const migrateProcurementPayments = async () => {
   const procurementHistoryModel = require('../api/models/procurementHistory.model')
@@ -458,7 +498,8 @@ const startScripts =async()=>{
     await new Promise(res=> setTimeout(()=>res(1), 1000))
     // testApi()
     console.log('db connected')
-   await excelImport()
+  //  await excelImport("Plant Info")
+      await sectionImport('Section')
     console.log('done')
 
 }
