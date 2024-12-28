@@ -98,7 +98,7 @@ const dbCon = () => {
   const env = "dev";
   mongoose
     .connect(
-      `mongodb+srv://admin:admin123@cluster0.t2cxv.mongodb.net/nursery_mgmt_${env}?retryWrites=true&w=majority`,
+      `mongodb+srv://admit/nursery_mgmt_${env}?retryWrites=true&w=majority`,
       {
         useNewUrlParser: true,
         useUnifiedTopology: true,
@@ -375,7 +375,7 @@ const excelImport= async (sheetName)=>{
             headers: {
               "Content-Type": "application/json",
               authorization:
-                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY0NDk0NzM2ZWUwNjE1ZWY2Mzc3MjU2MyIsIm5hbWUiOiJhZG1pbjEiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3MzQ1OTYzMTgsImV4cCI6MTczNDY4MjcxOH0.PQKA1tIiG8ICol-aa5zgTbhRpZE67rulV65sTJ7GZrc",
+                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY0NDk0NzM2ZWUwNjE1ZWY2Mzc3MjU2MyIsIm5hbWUiOiJhZG1pbjEiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3MzUzNzE3NjcsImV4cCI6MTczNTQ1ODE2N30.jOTv1x4GBhbj8JG4Ld-B2qfxk6HngX7aM7QQPae6yJw",
             },
           }
         );
@@ -385,7 +385,7 @@ const excelImport= async (sheetName)=>{
           headers: {
             "Content-Type": "application/json",
             authorization:
-              "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY0NDk0NzM2ZWUwNjE1ZWY2Mzc3MjU2MyIsIm5hbWUiOiJhZG1pbjEiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3MzQ1OTYzMTgsImV4cCI6MTczNDY4MjcxOH0.PQKA1tIiG8ICol-aa5zgTbhRpZE67rulV65sTJ7GZrc",
+              "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY0NDk0NzM2ZWUwNjE1ZWY2Mzc3MjU2MyIsIm5hbWUiOiJhZG1pbjEiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3MzUzNzE3NjcsImV4cCI6MTczNTQ1ODE2N30.jOTv1x4GBhbj8JG4Ld-B2qfxk6HngX7aM7QQPae6yJw",
           },
         })
         await new Promise(res=> setTimeout(()=> res(), 200))
@@ -414,7 +414,7 @@ const sectionImport = async(sheetName)=>{
         headers: {
           "Content-Type": "application/json",
           authorization:
-            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY0NDk0NzM2ZWUwNjE1ZWY2Mzc3MjU2MyIsIm5hbWUiOiJhZG1pbjEiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3MzQ3NTMyMDIsImV4cCI6MTczNDgzOTYwMn0.1FgGwqm-xnT47y_S-NlZz-jn_mYTCHsly6J7R66a-H8",
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY0NDk0NzM2ZWUwNjE1ZWY2Mzc3MjU2MyIsIm5hbWUiOiJhZG1pbjEiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3MzUzNzE3NjcsImV4cCI6MTczNTQ1ODE2N30.jOTv1x4GBhbj8JG4Ld-B2qfxk6HngX7aM7QQPae6yJw",
         },
       }
     );
