@@ -63,7 +63,7 @@ const CartSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['placed', 'approved', 'cart'],
+    enum: ['placed', 'approved', 'cart', 'rejected'],
     default: 'cart',
   },
   extraFee:{

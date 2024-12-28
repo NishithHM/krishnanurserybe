@@ -122,6 +122,8 @@ const getPlantInfoByProcurementId = async (req, res) => {
         const plantInfo = await PlantInfo.findOne({ procurementId: id, status: role==='admin' ? 'PUBLISHED' : {$ne: ""}})
         plantInfo.coverImages = await convertCoverImagesToPresignedUrls(plantInfo.coverImages)
         plantInfo.sections = await convertSectionImagesToPresignedUrls(plantInfo.sections)
+        console.log(plantInfo.sections)
+
         if (!plantInfo) {
             return res.status(404).json({ message: 'Plant info not found' })
         }

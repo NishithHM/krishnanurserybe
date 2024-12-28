@@ -210,6 +210,8 @@ router.get('/api/controllers/customer/cart/getPlacedCart',  authWall(['admin', '
 router.get('/api/controllers/customer/cart/:uuid', cart.getCartByUuid); // the change done here ':uuid ' rather tahn using getcartByuuid 
  // : before uuid shows that uuid is a dynamic part of means it can  vary
 router.get('/api/controllers/customer/cart/approve/:uuid', [authWall(['admin', 'sales']), paramsToBody(['uuid'], "params"), paramsToBody(['extraFee'], "query")], cart.approveCart); 
+router.get('/api/controllers/customer/cart/reject/:uuid', [authWall(['admin', 'sales']), paramsToBody(['uuid'], "params")], cart.rejectCart); 
+
 router.get('/video', videoRender)
 
 

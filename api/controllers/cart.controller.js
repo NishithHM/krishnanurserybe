@@ -332,6 +332,19 @@ exports.approveCart = async (req,res)=>{
     }
 }
 
+exports.rejectCart = async (req,res)=>{
+    const {uuid} = req.body
+    const cart = await Cart.findOne({uuid, status:'placed'})
+    cart.status = 'rejected'
+    
+    await cart.save()
+    res.send({
+        cart: cart.toJSON()
+    })
+
+}
+
+
 const validatePricesAndQuantityAndFormatItems = async (items) => {
     const procurements = uniq(items.map(ele => new mongoose.mongo.ObjectId(ele.procurementId)))
     const errors = []
