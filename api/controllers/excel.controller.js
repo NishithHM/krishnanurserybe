@@ -211,26 +211,26 @@ exports.downloadBillingXML = async (req, res) => {
         },
        
     },
-    // { $skip:208,
-    //     },
-    //     {
-    //         $limit:1000
-    //     }
+    { $skip:0,
+        },
+        {
+            $limit:1000
+        }
     ]
-    // const customers = await customerModel.aggregate(newCustomerPipeline)
-    // console.log(customers.map(ele=> ele?.name))
-    // await createLegderXML(customers)
-    console.log(bills.length, bills[0])
-    const items = bills.map(ele=> ele.items.map(i=> i.procurementName)).flat()
+    const customers = await customerModel.aggregate(newCustomerPipeline)
+    console.log(customers.map(ele=> ele?.name).length)
+    await createLegderXML(customers)
+    console.log(bills?.length, bills[0])
+    const items = bills?.map(ele=> ele.items.map(i=> i.procurementName)).flat()
     console.log(JSON.stringify(uniq(items)))
     await createXML(bills)
     res.header("Content-Disposition",
-    "attachment; filename=billing_txn.xml");
+    "attachment; filename=ledger_xml.xml");
     res.header("Access-Control-Expose-Headers", "*")
     res.header("Content-Type","xml")
     res.header("count",count)
     res.header("isNext",(count-1000*1) > 0)
-    res.sendFile('billing_xml.xml', { root: __dirname });
+    res.sendFile('ledger_xml.xml', { root: __dirname });
 }
 
 exports.downloadWasteMgmtExcel = async (req, res) => {
