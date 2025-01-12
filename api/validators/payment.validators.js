@@ -17,7 +17,8 @@ exports.addPaymentScheme = Joi.object().keys({
     comment: Joi.string(),
     cashAmount: Joi.number(),
     onlineAmount: Joi.number(),
-    vendorId: Joi.string()
+    vendorId: Joi.string(),
+    date: Joi.string().pattern(new RegExp(/\d{4}-\d{2}-\d{2}/))
 });
 
 exports.getPaymentHistorySchema = Joi.object().keys({

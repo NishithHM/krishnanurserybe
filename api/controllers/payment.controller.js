@@ -28,7 +28,8 @@ exports.addPayment = async (req, res) => {
       cashAmount,
       onlineAmount,
       vendorId,
-      businessType
+      businessType,
+      date
     } = req.body;
     const role = req?.token?.role;
     let broker;
@@ -82,7 +83,7 @@ exports.addPayment = async (req, res) => {
 
     paymentData.amount = amount;
     paymentData.businessType = businessType;
-    paymentData
+    paymentData.date = date
     if(type==='VENDOR'){
       paymentData.vendorId = vendorId;
       const vendor = await vendorModel.findById(vendorId);
