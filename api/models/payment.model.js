@@ -57,6 +57,9 @@ const payments = new mongoose.Schema(
       type: String,
       enum: ["AGRI", "NURSERY"],
       required: true
+    },
+    date:{
+      type: Date
     }
   },
   {

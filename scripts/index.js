@@ -15,6 +15,13 @@ const exl = require("convert-excel-to-json");
 const path = require("path");
 const plant_infoModel = require("../api/models/plant_info.model");
 const excelFilePath = "Sample-Add-Plants-DEV.xlsx";
+var request = require('request');
+var fs = require('fs');
+const dayjs = require("dayjs")
+const { caluclateMetaData } = require("../crons/dailyCron")
+const agriOrderMgmtModel = require("../api/models/agriOrderMgmt.model")
+const AgriProcurementModel = require("../api/models/AgriProcurement.model")
+const agriVariantsModel = require("../api/models/agriVariants.model")
 
 const addInvoiceToProcHistory = async () => {
   const res = await ProcurementHistory.updateMany(
@@ -94,12 +101,11 @@ const clearS3 = () => {
   };
 };
 
-const dbCon = () => {
-  const env = "dev";
-  mongoose
-    .connect(
-      `mongodb+srv://admit/nursery_mgmt_${env}?retryWrites=true&w=majority`,
-      {
+
+
+const dbCon = ()=>{
+    const env = 'dev'
+    mongoose.connect(`mongodb+srv:///nursery_mgmt_${env}?retryWrites=true&w=majority`, {
         useNewUrlParser: true,
         useUnifiedTopology: true,
       }
@@ -489,6 +495,23 @@ const correctAgriRemQty = async()=>{
     await proc.save()
   }
 }  
+
+const totalPriceWithoutGst = async ()=>{
+  const procHistory = await agriOrderMgmtModel.find({gst:0})
+
+  for (let i = 0; i < procHistory.length; i++) {
+    const record = procHistory[i]
+    // Process each record as needed
+    console.log(record)
+    const variantData = await agriVariantsModel.findOne({type: record.type, name: record.typeName})
+    if(variantData?.gst){
+    record.totalPriceWithoutGst = (record.totalPrice/(1+variantData?.gst/100)).toFixed(2)
+    record.gst = (record.totalPrice - (record.totalPrice/(1+variantData?.gst/100))).toFixed(2)
+    console.log(record)
+    await record.save()
+    }
+  }
+}
 
 
 

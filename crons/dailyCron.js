@@ -8,6 +8,7 @@ const MetaData = require('../api/models/metaData.model');
 const { default: mongoose } = require('mongoose');
 const paymentModel = require('../api/models/payment.model');
 const billingsModel = require('../api/models/billings.model');
+const { isEmpty } = require('lodash');
 exports.dailyCron = () => {
   cron.schedule("0 0 * * *", () => {
     deleteLoggers()
@@ -302,7 +303,7 @@ exports.caluclateMetaData = async (currentDate) => {
     {
       $group:
         {
-          _id: null,
+          _id: date,
           amount: {
             $sum: "$amount",
           },
@@ -341,10 +342,13 @@ exports.caluclateMetaData = async (currentDate) => {
     },
   ]
   const paymentData = await paymentModel.aggregate(paymentPipeline)
-  if(paymentData[0]?.amount){
+  if(!isEmpty(paymentData)){
     delete paymentData._id
-    const metaData = new MetaData({ ...paymentData[0], type:'PAYMENT', date:prevDate, businessType: "NURSERY"})
-    await metaData.save()
+    paymentData.forEach(async payment=>{
+      const metaData = new MetaData({ ...paymentData[0], type:'PAYMENT', date:dayjs(payment?.date).startOf('day').toDate(), businessType: "NURSERY"})
+      await metaData.save()
+    })
+    
     // console.log(JSON.stringify(metaData))
   }
   const roundOffsData = await billingsModel.aggregate(roundOffPipeline)

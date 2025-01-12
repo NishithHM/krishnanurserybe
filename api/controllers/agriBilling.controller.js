@@ -21,8 +21,7 @@ exports.getAgriItemDetails = async (req, res) => {
                 }
             });
             variantName = `${variantName}(${variantAttributes.join(" ")})`;
-            console.log(variantName)
-            const agriProc = await AgriProcurementModel.findOne({ type, names: variantName, minimumQuantity:{$gt:1}, minPrice:{$gt:1} ,maxPrice:{$gt:1} }, { maxPrice: 1, minPrice: 1, remainingQuantity: 1 })
+            const agriProc = await AgriProcurementModel.findOne({ type, names: variantName, minimumQuantity:{$gte:1}, minPrice:{$gte:1} ,maxPrice:{$gte:1} }, { maxPrice: 1, minPrice: 1, remainingQuantity: 1 })
             if (isEmpty(agriProc)) {
                   res.status(404).json({
                         message: `${variantName} not found, please contact admin`
