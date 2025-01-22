@@ -257,7 +257,7 @@ exports.downloadOrderMgmtExcel = async (req, res) => {
 }
 
 exports.downloadPaymentExcel = async (req, res) => {
-    const { pageNumber = 1, startDate, endDate, type } = req.body
+    const { pageNumber = 1, startDate, endDate, type:businessType } = req.body
 
     
     const headers = [   
@@ -278,7 +278,7 @@ exports.downloadPaymentExcel = async (req, res) => {
             $gte: dayjs(startDate, 'YYYY-MM-DD').toDate(),
             $lte: dayjs(endDate, 'YYYY-MM-DD').endOf('day').toDate()
         },
-        type
+        businessType
     }
     const match = {
         $match: query
