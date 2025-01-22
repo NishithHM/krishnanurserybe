@@ -278,7 +278,7 @@ exports.downloadPaymentExcel = async (req, res) => {
             $gte: dayjs(startDate, 'YYYY-MM-DD').toDate(),
             $lte: dayjs(endDate, 'YYYY-MM-DD').endOf('day').toDate()
         },
-        // type
+        type
     }
     const match = {
         $match: query
