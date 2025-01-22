@@ -303,7 +303,7 @@ exports.caluclateMetaData = async (currentDate) => {
     {
       $group:
         {
-          _id: date,
+          _id: "$date",
           amount: {
             $sum: "$amount",
           },
@@ -342,10 +342,12 @@ exports.caluclateMetaData = async (currentDate) => {
     },
   ]
   const paymentData = await paymentModel.aggregate(paymentPipeline)
+  console.log(paymentData, JSON.stringify(paymentPipeline))
   if(!isEmpty(paymentData)){
-    delete paymentData._id
     paymentData.forEach(async payment=>{
-      const metaData = new MetaData({ ...paymentData[0], type:'PAYMENT', date:dayjs(payment?.date).startOf('day').toDate(), businessType: "NURSERY"})
+      const date = payment?._id
+      delete payment?._id
+      const metaData = new MetaData({ ...payment, type:'PAYMENT', date:dayjs(date).startOf('day').toDate(), businessType: "NURSERY"})
       await metaData.save()
     })
     
