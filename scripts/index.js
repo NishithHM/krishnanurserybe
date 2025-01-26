@@ -7,11 +7,10 @@ const Vendors = require("../api/models/vendor.model")
 
 var request = require('request');
 var fs = require('fs');
-const dayjs = require("dayjs")
-const { caluclateMetaData } = require("../crons/dailyCron")
 const agriOrderMgmtModel = require("../api/models/agriOrderMgmt.model")
 const AgriProcurementModel = require("../api/models/AgriProcurement.model")
-const agriVariantsModel = require("../api/models/agriVariants.model")
+const agriVariantsModel = require("../api/models/agriVariants.model");
+const paymentModel = require("../api/models/payment.model");
 
 const addInvoiceToProcHistory = async ()=>{
     const res = await ProcurementHistory.updateMany({}, {$set: {invoice: 'null'}}, {upsert: false})
@@ -63,6 +62,15 @@ const addImagesToProcurements = async ()=>{
     bulk.execute()
 
 }
+const updateDate =async ()=>{
+  const payments =await paymentModel.find({date:null})
+  for(let i=0; i< payments.length; i++){
+    const payment = payments[i]
+    payment.date = dayjs(payment.createdAt).format('YYYY-MM-DD')
+    await payment.save({timestamps: false})
+  }
+}
+
 
 const clearS3 = ()=>{
     const AWS = require('aws-sdk')
@@ -74,11 +82,62 @@ const clearS3 = ()=>{
 
 const dbCon = ()=>{
     const env = 'dev'
-    mongoose.connect(`mongodb+srv://sknProd:1ONEvuYlmiexoPA7@sknprod.fionm1o.mongodb.net/nursery_mgmt_${env}?retryWrites=true&w=majority`, {
+    mongoose.connect(`mongodb+srv://admin:admin123@cluster0.t2cxv.mongodb.net/nursery_mgmt_${env}?retryWrites=true&w=majority`, {
         useNewUrlParser: true,
         useUnifiedTopology: true,
-    }).then(() => console.log("Database connected! ", env))
-        .catch(err => console.log(err));
+      }
+    )
+    .then(() => console.log("Database connected! ", env))
+    .catch((err) => console.log(err));
+};
+
+
+
+
+
+const readXlAndStore = (sheetName) => {
+  let columnToKey;
+  if(sheetName==='Plant Info'){
+    columnToKey = {
+      A: "SLNO",
+      B: "name",
+      C: "nameForCustomer",
+      D: "sellingPrice",
+      E: "discountedSellingPrice",
+      F: "coverImages",
+      G: "tips",
+      H: "moreInfo",
+      I: "tags",
+      J: "sectionName",
+      K: "sectionInfo",
+      L: "sections",
+    };
+  }
+
+  if(sheetName==='Section'){
+    // Section Name	Type	Stack	Plants
+    columnToKey = {
+      A: "Section Name",
+      B: "Type",
+      C: "Stack",
+      D: "Plants",
+    };
+  }
+
+  const result = exl({
+    source: fs.readFileSync( path.join(__dirname, excelFilePath)),
+    columnToKey,
+  });
+
+  return new Promise((resolve, reject) => {
+    // console.log(result, "result");
+    if (!result[sheetName]?.length) reject(new Error("No data found"));
+    resolve(result[sheetName].slice(1));
+  });
+};
+
+const convertImgaeToBase64 =(arr)=>{
+  return arr.map(ele=> fs.readFileSync(ele, {encoding: 'base64'}));
 }
 
 const addInvoiceIdToBillingHistory = async ()=>{
@@ -182,7 +241,6 @@ const correctBillData = async()=>{
             {
               status: "BILLED",
               cashAmount: {
-                $exists: true,
               },
             },
         },
@@ -325,6 +383,12 @@ const startScripts =async()=>{
     console.log('db connected')
     await totalPriceWithoutGst()
     console.log('done')
+    // await updateDate()
+    await caluclateMetaDataAll()
+  //  await excelImport("Plant Info")
+      // await sectionImport('Section')
+    // console.log('done')
+
 }
 
 startScripts()
