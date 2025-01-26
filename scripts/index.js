@@ -4,7 +4,7 @@ const procurmentModel = require("../api/models/procurment.model")
 const billingsModel = require("../api/models/billings.model")
 const Tracker = require("../api/models/tracker.model")
 const Vendors = require("../api/models/vendor.model")
-
+const dayjs = require('dayjs')
 var request = require('request');
 var fs = require('fs');
 const agriOrderMgmtModel = require("../api/models/agriOrderMgmt.model")
@@ -82,7 +82,7 @@ const clearS3 = ()=>{
 
 const dbCon = ()=>{
     const env = 'dev'
-    mongoose.connect(`mongodb+srv://admin:admin123@cluster0.t2cxv.mongodb.net/nursery_mgmt_${env}?retryWrites=true&w=majority`, {
+    mongoose.connect(`mongodb+srv://sknProd:1ONEvuYlmiexoPA7@sknprod.fionm1o.mongodb.net/nursery_mgmt_${env}?retryWrites=true&w=majority`, {
         useNewUrlParser: true,
         useUnifiedTopology: true,
       }
@@ -381,10 +381,10 @@ const startScripts =async()=>{
     await new Promise(res=> setTimeout(()=>res(1), 1000))
     // testApi()
     console.log('db connected')
-    await totalPriceWithoutGst()
+    // await totalPriceWithoutGst()
+    await updateDate()
     console.log('done')
-    // await updateDate()
-    await caluclateMetaDataAll()
+    // await caluclateMetaDataAll()
   //  await excelImport("Plant Info")
       // await sectionImport('Section')
     // console.log('done')
