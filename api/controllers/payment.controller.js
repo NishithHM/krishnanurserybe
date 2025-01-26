@@ -97,8 +97,9 @@ exports.addPayment = async (req, res) => {
     if (brokerName && !brokerId) {
       broker.save();
     }
-    const capital = await Tracker.findOne({name:'capital'})
+    const capital = businessType==='NURSERY' ? await Tracker.findOne({name:'capital'}) : await Tracker.findOne({name:'capitalAgri'})
 
+ 
     if(type==='CAPITAL'){
       capital.number = capital.number + parseInt(amount, 10)
     }else{
@@ -152,7 +153,7 @@ exports.getPaymentHistory = async (req, res) => {
     }
 
       if (startDate && endDate) {
-        match.createdAt = {
+        match.date = {
           $gte: dayjs(startDate, "YYYY-MM-DD").toDate(),
           $lt: dayjs(endDate, "YYYY-MM-DD").add(1, "day").toDate(),
         };
@@ -237,7 +238,7 @@ exports.getPaymentHistory = async (req, res) => {
       sum = await Payment.aggregate(sumPipeline);
       sum = sum?.[0]?.amount
       if(type==='CAPITAL'){
-         const capital = await Tracker.findOne({name:'capital'})
+         const capital = businessType === 'NURSERY' ? await Tracker.findOne({name:'capital'}) : await Tracker.findOne({name:'capitalAgri'})
          remainingCapital = capital.number
       }
       if(type==='VENDOR' && vendorId){

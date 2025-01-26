@@ -6,7 +6,7 @@ const procurementHistoryModel = require("../models/procurementHistory.model");
 const paymentModel = require("../models/payment.model");
 
 exports.downloadBillingExcel = async (req, res) => {
-    const { pageNumber = 1, startDate, endDate } = req.body
+    const { pageNumber = 1, startDate, endDate, type="NURSERY" } = req.body
     const headers = [{ name: 'Customer Name', key: 'customerName' },
     { name: 'Customer Number', key: 'customerNumber' }, 
     { name: 'item name', key: 'procurementName' }, 
@@ -30,7 +30,7 @@ exports.downloadBillingExcel = async (req, res) => {
             $lte: dayjs(endDate, 'YYYY-MM-DD').endOf('day').toDate()
         },
         status: 'BILLED',
-        type: 'NURSERY'
+        type
     }
     const match = {
         $match: query
@@ -261,8 +261,8 @@ exports.downloadPaymentExcel = async (req, res) => {
 
     
     const headers = [   
-    { name: 'date', key: 'createdAt' }, 
-        
+    { name: 'Created date', key: 'createdAt' }, 
+    { name: 'Date', key: 'date' },     
         { name: 'name', key: 'name' }, 
         {name: 'phone number', key:'phoneNumber'},
     { name: 'amount', key: 'amount' },
@@ -274,7 +274,7 @@ exports.downloadPaymentExcel = async (req, res) => {
     ]
 
     const query = {
-        createdAt: {
+        date: {
             $gte: dayjs(startDate, 'YYYY-MM-DD').toDate(),
             $lte: dayjs(endDate, 'YYYY-MM-DD').endOf('day').toDate()
         },

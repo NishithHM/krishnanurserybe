@@ -17,11 +17,10 @@ const plant_infoModel = require("../api/models/plant_info.model");
 const excelFilePath = "Sample-Add-Plants-DEV.xlsx";
 var request = require('request');
 var fs = require('fs');
-const dayjs = require("dayjs")
-const { caluclateMetaData } = require("../crons/dailyCron")
 const agriOrderMgmtModel = require("../api/models/agriOrderMgmt.model")
 const AgriProcurementModel = require("../api/models/AgriProcurement.model")
-const agriVariantsModel = require("../api/models/agriVariants.model")
+const agriVariantsModel = require("../api/models/agriVariants.model");
+const paymentModel = require("../api/models/payment.model");
 
 const addInvoiceToProcHistory = async () => {
   const res = await ProcurementHistory.updateMany(
@@ -102,6 +101,16 @@ const clearS3 = () => {
 };
 
 
+const updateDate =async ()=>{
+  const payments =await paymentModel.find({date:null})
+  for(let i=0; i< payments.length; i++){
+    const payment = payments[i]
+    payment.date = dayjs(payment.createdAt).format('YYYY-MM-DD')
+    await payment.save({timestamps: false})
+  }
+}
+
+
 
 const dbCon = ()=>{
     const env = 'dev'
@@ -113,6 +122,55 @@ const dbCon = ()=>{
     .then(() => console.log("Database connected! ", env))
     .catch((err) => console.log(err));
 };
+
+
+
+
+
+const readXlAndStore = (sheetName) => {
+  let columnToKey;
+  if(sheetName==='Plant Info'){
+    columnToKey = {
+      A: "SLNO",
+      B: "name",
+      C: "nameForCustomer",
+      D: "sellingPrice",
+      E: "discountedSellingPrice",
+      F: "coverImages",
+      G: "tips",
+      H: "moreInfo",
+      I: "tags",
+      J: "sectionName",
+      K: "sectionInfo",
+      L: "sections",
+    };
+  }
+
+  if(sheetName==='Section'){
+    // Section Name	Type	Stack	Plants
+    columnToKey = {
+      A: "Section Name",
+      B: "Type",
+      C: "Stack",
+      D: "Plants",
+    };
+  }
+
+  const result = exl({
+    source: fs.readFileSync( path.join(__dirname, excelFilePath)),
+    columnToKey,
+  });
+
+  return new Promise((resolve, reject) => {
+    // console.log(result, "result");
+    if (!result[sheetName]?.length) reject(new Error("No data found"));
+    resolve(result[sheetName].slice(1));
+  });
+};
+
+const convertImgaeToBase64 =(arr)=>{
+  return arr.map(ele=> fs.readFileSync(ele, {encoding: 'base64'}));
+}
 
 const addInvoiceIdToBillingHistory = async () => {
   const bills = await billingsModel.find({ status: { $ne: "BILLED" } });
@@ -213,114 +271,6 @@ const caluclateMetaDataAll = async () => {
   }
 };
 
-const correctBillData = async () => {
-  const mismatchPipelines = [
-    {
-      $sort:
-        /**
-         * Provide any number of field/order pairs.
-         */
-        {
-          billedDate: -1,
-        },
-    },
-    {
-      $match:
-        /**
-         * query: The query in MQL.
-         */
-        {
-          status: "BILLED",
-          cashAmount: {
-            $exists: true,
-          },
-        },
-    },
-    {
-      $addFields:
-        /**
-         * newField: The new field name.
-         * expression: The new field expression.
-         */
-        {
-          amounts: {
-            $add: ["$cashAmount", "$onlineAmount"],
-          },
-        },
-    },
-    {
-      $match:
-        /**
-         * query: The query in MQL.
-         */
-        {
-          $expr: {
-            $ne: ["$amounts", "$totalPrice"],
-          },
-        },
-    },
-  ];
-
-  const bills = await billingsModel.aggregate(mismatchPipelines);
-  console.log(bills.length, "bill", bills[0]);
-
-  for (let i = 0; i < bills.length; i++) {
-    const bill = bills[i];
-    const nBill = await billingsModel.findOne({ _id: bill._id });
-    if (bill.paymentType === "CASH") {
-      nBill.cashAmount = bill.totalPrice;
-      await nBill.save();
-    } else if (bill.paymentType === "ONLINE") {
-      nBill.onlineAmount = bill.totalPrice;
-      await nBill.save();
-    }
-  }
-};
-
-const readXlAndStore = (sheetName) => {
-  let columnToKey;
-  if(sheetName==='Plant Info'){
-    columnToKey = {
-      A: "SLNO",
-      B: "name",
-      C: "nameForCustomer",
-      D: "sellingPrice",
-      E: "discountedSellingPrice",
-      F: "coverImages",
-      G: "tips",
-      H: "moreInfo",
-      I: "tags",
-      J: "sectionName",
-      K: "sectionInfo",
-      L: "sections",
-    };
-  }
-
-  if(sheetName==='Section'){
-    // Section Name	Type	Stack	Plants
-    columnToKey = {
-      A: "Section Name",
-      B: "Type",
-      C: "Stack",
-      D: "Plants",
-    };
-  }
-
-  const result = exl({
-    source: fs.readFileSync( path.join(__dirname, excelFilePath)),
-    columnToKey,
-  });
-
-  return new Promise((resolve, reject) => {
-    // console.log(result, "result");
-    if (!result[sheetName]?.length) reject(new Error("No data found"));
-    resolve(result[sheetName].slice(1));
-  });
-};
-
-const convertImgaeToBase64 =(arr)=>{
-  return arr.map(ele=> fs.readFileSync(ele, {encoding: 'base64'}));
-}
 
 const excelImport= async (sheetName)=>{
 
@@ -429,6 +379,73 @@ const sectionImport = async(sheetName)=>{
 }
 
 
+const correctBillData = async()=>{
+    const mismatchPipelines = [
+        {
+          $sort:
+            /**
+             * Provide any number of field/order pairs.
+             */
+            {
+              billedDate: -1,
+            },
+        },
+        {
+          $match:
+            /**
+             * query: The query in MQL.
+             */
+            {
+              status: "BILLED",
+              cashAmount: {
+              },
+            },
+        },
+        {
+          $addFields:
+            /**
+             * newField: The new field name.
+             * expression: The new field expression.
+             */
+            {
+              amounts: {
+                $add: ["$cashAmount", "$onlineAmount"],
+              },
+            },
+        },
+        {
+          $match:
+            /**
+             * query: The query in MQL.
+             */
+            {
+              $expr: {
+                $ne: ["$amounts", "$totalPrice"],
+              },
+            },
+        },
+        
+      ]
+
+    const bills = await billingsModel.aggregate(mismatchPipelines)
+    console.log(bills.length, 'bill', bills[0])
+
+    for(let i=0; i< bills.length; i++){
+        const bill = bills[i]
+        const nBill = await billingsModel.findOne({_id:bill._id})
+        if(bill.paymentType==='CASH'){
+            
+            nBill.cashAmount = bill.totalPrice
+            await nBill.save()
+
+        }else if(bill.paymentType==='ONLINE'){
+            nBill.onlineAmount = bill.totalPrice
+            await nBill.save()
+        }
+    }
+
+}
+
 const migrateProcurementPayments = async () => {
   const procurementHistoryModel = require('../api/models/procurementHistory.model')
   const paymentModel = require('../api/models/payment.model')
@@ -522,8 +539,13 @@ const startScripts =async()=>{
     // testApi()
     console.log('db connected')
   //  await excelImport("Plant Info")
-      await sectionImport('Section')
+      // await sectionImport('Section')
     console.log('done')
+    // await updateDate()
+    // await caluclateMetaDataAll()
+  //  await excelImport("Plant Info")
+      // await sectionImport('Section')
+    // console.log('done')
 
 }
 
