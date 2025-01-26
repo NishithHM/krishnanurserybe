@@ -318,7 +318,8 @@ exports.caluclateMetaData = async (currentDate) => {
           $gte: prevDate,
           $lt: currentDate,
         },
-        status: "BILLED"
+        status: "BILLED",
+        type:"NURSERY"
       }
     },
     {
