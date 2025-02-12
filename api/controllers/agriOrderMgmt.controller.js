@@ -74,7 +74,7 @@ exports.placeAgriOrder = async (req, res) => {
 
     for (let i = 0; i < orders.length; i++) {
       const { totalQuantity, type, name, variant, id, totalPrice } = orders[i];
-      const extractedString = name.split('-')[1].split('(')[0].trim();
+      const extractedString = name?.split('-')[1]?.split('(')[0]?.trim();
       const variantData = await agriVariantsModel.findOne({type, extractedString})
       if (id) {
         const data = await AgriOrders.findById(id);
