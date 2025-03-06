@@ -1,7 +1,7 @@
 // const lodash = require('lodash')
 const Vendor = require("../models/vendor.model");
 const AgriOrders = require("../models/agriOrderMgmt.model");
-const { handleMongoError, uploadFile } = require("../utils");
+const { handleMongoError, uploadFile, escapeRegex } = require("../utils");
 const { isEmpty } = require("lodash");
 const loggers = require("../../loggers");
 const { default: mongoose } = require("mongoose");
@@ -236,7 +236,7 @@ exports.agriOrderList = async (req, res) => {
           },
         };
       } else {
-        matchQuery["names"] = { $regex: search, $options: "i" };
+        matchQuery["$or"] = [{names:{ $regex: escapeRegex(search), $options: "i" }}, {invoiceId:{ $regex: escapeRegex(search), $options: "i" } }];
       }
     }
     const matchPipe = [
