@@ -36,5 +36,5 @@ exports.getPaymentHistorySchema = Joi.object().keys({
 });
 
 exports.getPaymentInfoSchema = Joi.object().keys({
-    phoneNumber: Joi.string().length(10)
+    phoneNumber: Joi.string()
 });

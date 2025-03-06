@@ -13,7 +13,7 @@ exports.agriAddToCartSchema = Joi.object().keys({
     customerNumber: Joi.string().min(10).max(10).required(),
     customerName: Joi.string().pattern(new RegExp(/[A-Za-z]/)).required(),
     customerDob: Joi.date(),
-    customerGst: Joi.string().optional(),
+    customerGst: Joi.string().optional().allow(''),
     customerAddress: Joi.string().optional(),
     shippingAddress: Joi.string().optional(),
     isCustomerUpdate: Joi.boolean().default(false),

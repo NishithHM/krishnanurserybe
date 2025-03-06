@@ -183,3 +183,6 @@ exports.removeFiles = async (paths)=>{
       return null
   }
 }
+exports.escapeRegex=(input)=> {
+  return input.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // Escape special regex characters
+}
