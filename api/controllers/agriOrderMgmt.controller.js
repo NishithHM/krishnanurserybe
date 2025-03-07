@@ -426,7 +426,7 @@ exports.getAllAgriProcurements = async (req, res) => {
     const searchMatch = [
       {
         $match: {
-          names: { $regex: search, $options: "i" },
+          names: { $regex: escapeRegex(search), $options: "i" },
         },
       },
     ];
