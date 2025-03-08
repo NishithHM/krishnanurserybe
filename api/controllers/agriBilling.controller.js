@@ -22,13 +22,15 @@ exports.getAgriItemDetails = async (req, res) => {
             });
             variantName = `${variantName}(${variantAttributes.join(" ")})`;
             const agriProc = await AgriProcurementModel.findOne({ type, names: variantName, minimumQuantity:{$gte:1}, minPrice:{$gte:1} ,maxPrice:{$gte:1} }, { maxPrice: 1, minPrice: 1, remainingQuantity: 1 })
+            const variantData = await AgriVariantModel.findOne({type})
             if (isEmpty(agriProc)) {
                   res.status(404).json({
                         message: `${variantName} not found, please contact admin`
                   })
             } else {
                   res.status(200).json({
-                        ...agriProc._doc
+                        ...agriProc._doc,
+                        gst: variantData.gst
                   })
             }
       } catch (error) {
@@ -312,8 +314,8 @@ const validatePricesAndQuantityAndFormatItems =async (items)=>{
         const variantData = await AgriVariantModel.findOne({type, name: typeName})
         const currentGST = (price*quantity * variantData.gst)/100
         gstAmount =  gstAmount + currentGST 
-        formattedItems.push({ procurementId: itemProcurmentId, procurementName: {en:{name:procurementNames}}, quantity, mrp: maxPrice, rate: price, variant, type, typeName, gstAmount:currentGST, rateWithGst:parseInt(price, 10)+currentGST, hsnCode: variantData.hsnCode, gst: variantData.gst})
-        totalPrice = totalPrice + price * quantity + currentGST;
+        formattedItems.push({ procurementId: itemProcurmentId, procurementName: {en:{name:procurementNames}}, quantity, mrp: maxPrice-currentGST, rate: price-currentGST, variant, type, typeName, gstAmount:currentGST, rateWithGst:price, hsnCode: variantData.hsnCode, gst: variantData.gst})
+        totalPrice = totalPrice + price * quantity;
         discount = discount + (maxPrice - price) * quantity;
         
     }
