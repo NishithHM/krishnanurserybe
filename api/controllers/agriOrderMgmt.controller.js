@@ -384,6 +384,7 @@ exports.getAllAgriProcurements = async (req, res) => {
       "type",
       "minPrice",
       "maxPrice",
+      "gst"
     ],
     procurement: [
       "_id",
@@ -472,6 +473,29 @@ exports.getAllAgriProcurements = async (req, res) => {
       },
     ];
 
+    const lookupVariants = [
+      {
+        $lookup: {
+          from: "agri_vairants",
+          let: { type: "$type", name:"$typeName" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and:[{$eq: ["$$type", "$type"]}, {$eq: ["$$name", "$name"]}],
+                },
+              },
+            },
+            
+            {
+              $limit: 1,
+            },
+          ],
+          as: "gst",
+        },
+      },
+    ];
+
     const pipeline = [];
     pipeline.push(...match);
     if (search) {
@@ -491,6 +515,7 @@ exports.getAllAgriProcurements = async (req, res) => {
     } else {
       const role = req?.token?.role;
       pipeline.push(...lookupProcHistory);
+      pipeline.push(...lookupVariants)
       let projectFields = fields[role];
       if (projectFields) {
         const project = {};

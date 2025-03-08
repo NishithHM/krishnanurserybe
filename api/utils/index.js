@@ -89,5 +89,5 @@ exports.uploadAwsTest = async (req, res) => {
 };
 
 exports.escapeRegex=(input)=> {
-  return input.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // Escape special regex characters
+  return input?.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // Escape special regex characters
 }
