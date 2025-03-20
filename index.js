@@ -27,8 +27,8 @@ app.use(router)
 //     res.sendFile(__dirname + "/index.html");
 // });
 const server = app.listen(port, async() => {
-    // rcbCron()
-    rcb()
+    rcbCron()
+    // rcb()
 	console.log(`Server is running on port ${port}`)
     logger.info(`Server is running on port ${port}`)
 })

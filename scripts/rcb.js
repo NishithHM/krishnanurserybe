@@ -53,7 +53,7 @@ let data = JSON.stringify({
 let config = {
   method: 'post',
   maxBodyLength: Infinity,
-  url: 'http://localhost:3002/api/send-whatsapp',
+  url: 'https://api.easy-revv.com/api/send-whatsapp',
   headers: { 
     'authorization': '67ytgchbnuhgnbvsd', 
     'Content-Type': 'application/json'
