@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "aws-sdk": "^2.1320.0",
+    "axios": "^1.8.4",
     "bcrypt": "^5.1.0",
     "body-parser": "^1.20.1",
     "compression": "^1.7.4",
@@ -28,6 +29,7 @@
     "mongoose": "^6.9.0",
     "multer": "^1.4.5-lts.1",
     "node-cron": "^3.0.2",
+    "playwright": "^1.51.1",
     "request": "^2.88.2",
     "uuid": "^9.0.0",
     "validator": "^13.7.0",
