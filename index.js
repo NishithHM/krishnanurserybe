@@ -10,6 +10,8 @@ const helmet = require('helmet')
 const app = express();
 const logger = require('./loggers');
 const { mergePdfs } = require('./api/utils');
+const { takeScreenshot, uploadToS3, rcb } = require('./scripts/rcb');
+const { rcbCron } = require('./crons/rcb.cron');
 app.use(compression())
 app.use(helmet())
 dotenv.config({ path: './.env' })
@@ -25,7 +27,9 @@ app.use(router)
 // app.get("/", function (req, res) {
 //     res.sendFile(__dirname + "/index.html");
 // });
-const server = app.listen(port, () => {
+const server = app.listen(port, async() => {
+    rcbCron()
+    // rcb()
 	console.log(`Server is running on port ${port}`)
     logger.info(`Server is running on port ${port}`)
 })
