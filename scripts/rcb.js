@@ -8,7 +8,7 @@ const axios = require('axios')
 
 async function takeScreenshot() {
     try {
-        const browser = await chromium.launch({executablePath:'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'});
+        const browser = await chromium.launch({headless:true});
         const page = await browser.newPage();
         await page.goto('https://shop.royalchallengers.com/ticket', { waitUntil: 'networkidle' });
 
