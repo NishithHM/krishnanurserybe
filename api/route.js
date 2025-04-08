@@ -163,7 +163,7 @@ router.get('/api/excel/payments', [authWall(['admin', 'procurement', 'sales']), 
 
 
 router.get('/api/pincode/:pincode',[paramsToBody(['pincode'], "params"), bodyValidator(pincodeSchema)], getPincode)
-router.post('/api/customer/business/create', [authWall(['admin']),bodyValidator(businessCustomerSchema)], registerBusinessCustomer);
+router.post('/api/customer/business/create', [bodyValidator(businessCustomerSchema)], registerBusinessCustomer);
 router.get('/api/customer/list', [authWall(['admin']), paramsToBody(['pageNumber', 'isCount', 'type', 'search'], 'query')], getCustomersList);
 
 // router.get('/video', videoRender)
