@@ -6,6 +6,7 @@ const mongoose = require('mongoose');
 const dayjs = require('dayjs');
 const { handleMongoError } = require('../utils');
 const loggers = require('../../loggers');
+const { default: axios } = require('axios');
 
 exports.customerRegister = async (req, res) => {
   const { name, phoneNumber, dob, categoryList } = req.body;
@@ -29,7 +30,7 @@ exports.customerRegister = async (req, res) => {
     if (objIds.length != idMatchedInDBCount) {
       res.status(403).send("Forbidden Operation");
     } else {
-      const customer = new Customer({ name, phoneNumber, dob : dayjs(dob, 'YYYY-MM-DD').toDate(), interestedCategories })
+      const customer = new Customer({ name, phoneNumber, dob : dayjs(dob, 'YYYY-MM-DD').toDate(), interestedCategories, type: 'REGULAR' })
       await customer.save();
       res.status(201).json({ customer })
     }
@@ -107,5 +108,111 @@ exports.getCustomerByNumber = async (req, res)=>{
         res.status(400).send(err)
     }
    
+}
+
+
+exports.registerBusinessCustomer = async(req, res)=>{
+  const { 
+    name, 
+    phoneNumber, 
+    dob, 
+    categoryList,
+    businessName,
+    customerAddressLine1,
+    customerAddressLine2,
+    customerAddressPinCode,
+    customerAddressPinCodeDetails,
+    gstNumber,
+    shippingAddressLine1,
+    shippingAddressLine2,
+    shippingAddressPinCode,
+    shippingAddressPinCodeDetails,
+    latitude,
+    longitude,
+   } = req.body; 
+   const interestedCategories = categoryList.map(function (val) {
+    return {
+      _id: val.id,
+      names: {
+        en: {
+          name: val.categoryNameInEnglish
+        },
+        ka: {
+          name: val.categoryNameInKannada
+        }
+      }
+    }
+  })
+   const objIds = interestedCategories.map(function (val) { return new mongoose.mongo.ObjectId((val._id)); });
+   const idMatchedInDBCount = await Category.count({ _id: { $in: objIds } });
+   console.log(objIds, idMatchedInDBCount)
+   // checking for invalid ID's 
+   if (objIds.length != idMatchedInDBCount) {
+    res.status(403).send("Forbidden Operation");
+  } else {
+    const customer = new Customer(
+      { 
+        name,
+        phoneNumber, 
+        dob : dayjs(dob, 'YYYY-MM-DD').toDate(), 
+        interestedCategories, 
+        gst: gstNumber, 
+        businessName, 
+        address:`${customerAddressLine1}, ${customerAddressLine2}, ${customerAddressPinCodeDetails}, ${customerAddressPinCode}`,
+        shippingAddress:`${shippingAddressLine1}, ${shippingAddressLine2}, ${shippingAddressPinCodeDetails}, ${shippingAddressPinCode}`,
+        location:{latitude, longitude},
+        type:'BUSINESS'
+      })
+    await customer.save();
+    res.status(201).json({ customer })
+  }
+}
+
+
+exports.getCustomersList = async (req, res)=>{
+  const {pageNumber=1, search, type, isCount} = req.body
+  const pipeline = []
+  const matchExpr = {}
+  if(type){
+    matchExpr.type = type
+  }
+  if(search){
+    matchExpr.name  = {$regex:search,  $options: "i" }
+  }
+  const SIZE = 10
+  const skip = {
+    $skip : SIZE * (pageNumber-1)
+  }
+  const limit ={
+    $limit: SIZE
+  }
+  const match = {$match:matchExpr}
+  if(isCount){
+    const count = {
+      $count: 'count'
+    }
+    pipeline.push(...[match, count])
+  }else{
+   pipeline.push(...[match, limit, skip])
+
+  }
+  console.log("getBusinessCustomers-pipeline", JSON.stringify(pipeline));
+  const customers = await Customer.aggregate(pipeline);
+  loggers.info(`getBusinessCustomers-pipeline, ${JSON.stringify(pipeline)}`);
+  res.json(customers);
+  
+}
+
+
+exports.getPincode = async (req, res)=>{
+  const {pincode} = req.body
+  const pinData = await axios.get(`https://api.postalpincode.in/pincode/${pincode}`)
+  const pincodeDetails = pinData.data
+  if(pincodeDetails[0]?.Status==="Success"){
+    const place= `${pincodeDetails[0]?.PostOffice?.[0]?.Name},  ${pincodeDetails[0]?.PostOffice?.[0]?.Block}, ${pincodeDetails[0]?.PostOffice?.[0]?.District}, ${pincodeDetails[0]?.PostOffice?.[0]?.State} `
+    res.json({place})
+  }else{
+    res.json({place:''})
+  }
 }
 
