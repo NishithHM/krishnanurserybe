@@ -7,6 +7,11 @@ const customerSchema = new mongoose.Schema({
         required: [true, 'Name is required'],
         lowercase: true,
     },
+    businessName: {
+        type: String,
+        required: [true, 'Name is required'],
+        lowercase: true,
+    },
     phoneNumber: {
         type: Number,
         required: true,
@@ -123,7 +128,22 @@ const customerSchema = new mongoose.Schema({
         },
     }],
     required:false
-    }
+    },
+    type:{
+        type:String,
+        enum: ["BUSINESS", "REGULAR"],
+        default: "REGULAR"
+    },
+    location:{
+        type:{
+            latitude:{
+                type: Number
+            },
+            longitude:{
+                type: Number
+            }
+        }
+    },
 }, {
     timestamps: true
 })

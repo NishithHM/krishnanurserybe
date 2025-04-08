@@ -17,10 +17,10 @@ const { createCategorySchema, deleteCategorySchema, getCategorySchema } = requir
 const { createCategory, deleteCategoryById, getAllCategories } = require('./controllers/categories.controller')
 const { requestProcurementSchema, getProcurementsSchema, getProcurementsHistorySchema, addVariantsSchema, setProcurementMinQuantitySchema, getProcurementsLowSchema, getOrderIdSchema, placeOrderSchema, rejectProcurementSchema, verifyProcurementSchema, addInvoiceProcurementSchema, getOrdersProcurementSchema, updateDeliveryProcurementSchema, updateDamageProcurementSchema, getDamagesSchema, updateMaintenanceProcurementSchema, getProcurementIdSchema } = require('./validators/procurement.validators')
 const { requestOrder, getAllProcurements, getAllProcurementsHistory, addProcurementVariants, setMinimumQuantity, getLowProcurements, placeOrder, rejectOrderRequest, verifyOrder, uploadInvoiceToOrder, getAllOrders, updateDeliveryDate, updateDamage, getDamageList, getProcurementById, updateMaintenance, getVendorPlacedOrders, getOrderIdDetails } = require('./controllers/procurement.controller')
-const { customerSchema, getCustomerSchema } = require('./validators/customer.validators')
+const { customerSchema, getCustomerSchema, pincodeSchema, businessCustomerSchema } = require('./validators/customer.validators')
 const { addToCartSchema, updateCartSchema, confirmCartSchema, getCustomerCartSchema, getBillingHistory, getBillApproveSchema } = require('./validators/billing.validators')
 
-const { customerRegister, getCustomerByNumber } = require('./controllers/customer.controller');
+const { customerRegister, getCustomerByNumber, getPincode, registerBusinessCustomer, getBusinessCustomers, getCustomersList } = require('./controllers/customer.controller');
 const { addToCart, updateCart, confirmCart, getCustomerCart, getAllBillingHistory, approveBill } = require('./controllers/billings.controller');
 
 
@@ -162,6 +162,9 @@ router.get('/api/excel/order-mgmt', [authWall(['admin', 'procurement', 'sales'])
 router.get('/api/excel/payments', [authWall(['admin', 'procurement', 'sales']), paramsToBody(['pageNumber', 'isCount', 'startDate', 'endDate', 'type'], 'query'), bodyValidator(paymentExcelValidator)], downloadPaymentExcel)
 
 
+router.get('/api/pincode/:pincode',[paramsToBody(['pincode'], "params"), bodyValidator(pincodeSchema)], getPincode)
+router.post('/api/customer/business/create', [authWall(['admin']),bodyValidator(businessCustomerSchema)], registerBusinessCustomer);
+router.get('/api/customer/list', [authWall(['admin']), paramsToBody(['pageNumber', 'isCount', 'type', 'search'], 'query')], getCustomersList);
 
 // router.get('/video', videoRender)
 module.exports = router
