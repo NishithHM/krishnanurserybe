@@ -11,6 +11,7 @@ const agriOrderMgmtModel = require("../api/models/agriOrderMgmt.model")
 const AgriProcurementModel = require("../api/models/AgriProcurement.model")
 const agriVariantsModel = require("../api/models/agriVariants.model");
 const paymentModel = require("../api/models/payment.model");
+const customerModel = require("../api/models/customer.model")
 
 const addInvoiceToProcHistory = async ()=>{
     const res = await ProcurementHistory.updateMany({}, {$set: {invoice: 'null'}}, {upsert: false})
@@ -82,7 +83,7 @@ const clearS3 = ()=>{
 
 const dbCon = ()=>{
     const env = 'dev'
-    mongoose.connect(`mongodb+srv://sknProd:1ONEvuYlmiexoPA7@sknprod.fionm1o.mongodb.net/nursery_mgmt_${env}?retryWrites=true&w=majority`, {
+    mongoose.connect(`mongodb+srv://admin:admin123@cluster0.t2cxv.mongodb.net/nursery_mgmt_${env}?retryWrites=true&w=majority`, {
         useNewUrlParser: true,
         useUnifiedTopology: true,
       }
@@ -373,6 +374,12 @@ const totalPriceWithoutGst = async ()=>{
   }
 }
 
+const updateCustomer=async()=>{
+  const res = await customerModel.updateMany({type:{$ne:'BUSINESS'}}, {$set:{type:"REGULAR"}})
+  console.log(res)
+
+}
+
 
 
 const startScripts =async()=>{
@@ -382,7 +389,7 @@ const startScripts =async()=>{
     // testApi()
     console.log('db connected')
     // await totalPriceWithoutGst()
-    await updateDate()
+    await updateCustomer()
     console.log('done')
     // await caluclateMetaDataAll()
   //  await excelImport("Plant Info")
