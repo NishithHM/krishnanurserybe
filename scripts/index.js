@@ -21,6 +21,7 @@ const agriOrderMgmtModel = require("../api/models/agriOrderMgmt.model")
 const AgriProcurementModel = require("../api/models/AgriProcurement.model")
 const agriVariantsModel = require("../api/models/agriVariants.model");
 const paymentModel = require("../api/models/payment.model");
+const customerModel = require("../api/models/customer.model")
 
 const addInvoiceToProcHistory = async () => {
   const res = await ProcurementHistory.updateMany(
@@ -530,6 +531,12 @@ const totalPriceWithoutGst = async ()=>{
   }
 }
 
+const updateCustomer=async()=>{
+  const res = await customerModel.updateMany({type:{$ne:'BUSINESS'}}, {$set:{type:"REGULAR"}})
+  console.log(res)
+
+}
+
 
 
 const startScripts =async()=>{
@@ -538,8 +545,8 @@ const startScripts =async()=>{
     await new Promise(res=> setTimeout(()=>res(1), 1000))
     // testApi()
     console.log('db connected')
-  //  await excelImport("Plant Info")
-      // await sectionImport('Section')
+    // await totalPriceWithoutGst()
+    await updateCustomer()
     console.log('done')
     // await updateDate()
     // await caluclateMetaDataAll()

@@ -9,7 +9,6 @@ const customerSchema = new mongoose.Schema({
     },
     businessName: {
         type: String,
-        required: [true, 'Name is required'],
         lowercase: true,
     },
     phoneNumber: {
