@@ -193,7 +193,7 @@ exports.getCustomersList = async (req, res)=>{
     }
     pipeline.push(...[match, count])
   }else{
-   pipeline.push(...[match, limit, skip])
+   pipeline.push(...[match, skip, limit])
 
   }
   console.log("getBusinessCustomers-pipeline", JSON.stringify(pipeline));
