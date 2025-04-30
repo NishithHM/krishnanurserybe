@@ -530,6 +530,152 @@ exports.approveBill = async (req, res)=>{
     res.json(billData.toJSON())
 }
 
+exports.returnPlant = async (req, res) => {
+    try{
+        const {invoiceId, procurementId, procurementName, variantId, quantity, mrp} = req.body;
+        const retAmount = quantity * mrp; //return calculated on the basis of mrp and number of quantity
+
+        const billing = await Billing.findById(invoiceId);
+        const customerId = billing.customerId;
+        const existingReturn = billing.returnItems.map( (obj) => {
+            if (String(obj.procurementId) === String(procurementId)){
+                return obj;
+            }
+        })[0];
+
+        if (existingReturn){
+            existingReturn.quantity = quantity;
+            existingReturn.mrp = mrp;
+            existingReturn.variant = variantId;
+            
+            await billing.save();
+        }
+
+        else{
+            billing.returnItems.push({
+                procurementId,
+                procurementName,
+                variant: variantId,
+                quantity, 
+                mrp
+            })
+
+            await billing.save();
+        }
+
+        //updating customer model
+
+        const customer = await Customer.findById(customerId);
+        let flag = true;
+
+        for (const obj of customer.returnHistory){
+            for (const item of obj.items){
+                if (String(item.procurementId) === String(procurementId)){
+                    item.quantity = quantity;
+                    item.mrp = mrp;
+                    item.variant = variantId;
+                    item.returnAmount = retAmount;
+
+                    await customer.save();
+                    flag = false;
+                    break;
+                }
+            }
+            obj.totalreturnAmount += retAmount;
+            await customer.save();
+
+            break;
+        }
+
+        if (flag){
+            const itemDict = {
+                procurementId,
+                procurementName,
+                variant: variantId,
+                quantity: quantity,
+                mrp: mrp,
+                returnAmount: retAmount
+            }
+
+            customer.returnHistory.push(
+                {
+                    items: [itemDict],
+                    totalreturnAmount: retAmount
+                }
+            )
+            await customer.save();
+        }
+
+        const procurements = await Procurements.findById(procurementId);
+        procurements.remainingQuantity += quantity;
+
+        await procurements.save();
+
+        return res.status(200).json(
+            {
+                message: "successfully filed return",
+                success: true
+            }
+        )
+    }catch(error){
+        return res.status(500).json(
+            {
+                message: "some error occurred",
+                error: error.message,
+                success: false
+            }
+        )
+    }
+}
+
+exports.fetchAllReturns = async(req, res) => {
+    try{
+        const invoiceId = req.params.invoiceId;
+        const billing = await Billing.findById(invoiceId);
+
+        const returns = billing.returnItems;
+        return res.status(200).json(
+            {
+                message: "successfully fetched data",
+                data: returns,
+                success: true
+            }
+        )
+    }catch(error){
+        return res.status(500).json(
+            {
+                message: "some error occurred",
+                error: error.message,
+                success: false
+            }
+        )
+    }
+}
+
+exports.fetchReturnsByCustomer = async (req, res) => {
+    try{
+        const customerId = req.params.customerId;
+        const customer = await Customer.findById(customerId);
+
+        const returns = customer.returnHistory;
+        return res.status(200).json(
+            {
+                message: "successfully fetched data",
+                data: returns,
+                success: true
+            }
+        )
+    }catch(error){
+        return res.status(500).json(
+            {
+                message: "some error occurred",
+                error: error.message,
+                success: false
+            }
+        )
+    }
+}
+
 
 
 
