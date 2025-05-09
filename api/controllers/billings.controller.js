@@ -530,12 +530,21 @@ exports.approveBill = async (req, res)=>{
     res.json(billData.toJSON())
 }
 
-exports.returnPlant = async (req, res) => {
+const implementReturn = async(invoiceId, procurementId, quantity) => {
     try{
-        const {invoiceId, procurementId, procurementName, variantId, quantity, mrp} = req.body;
-        const retAmount = quantity * mrp; //return calculated on the basis of mrp and number of quantity
-
         const billing = await Billing.findById(invoiceId);
+        
+        const itemList = billing.items.type || billing.items;
+        const plantObj = itemList.map( (obj) => {
+            if (String(obj.procurementId) === String(procurementId)){
+                return obj;
+            }
+        })[0];
+        const procurementName = plantObj.procurementName;
+        const variantId = plantObj.variant;
+        const mrp = plantObj.mrp;
+
+        const retAmount = quantity * mrp; //return calculated on the basis of mrp and number of quantity
         const customerId = billing.customerId;
         const existingReturn = billing.returnItems.map( (obj) => {
             if (String(obj.procurementId) === String(procurementId)){
@@ -546,9 +555,10 @@ exports.returnPlant = async (req, res) => {
         if (existingReturn){
             existingReturn.quantity = quantity;
             existingReturn.mrp = mrp;
-            existingReturn.variant = variantId;
-            
+
             await billing.save();
+            // existingReturn.variant = variantId;
+            
         }
 
         else{
@@ -610,10 +620,42 @@ exports.returnPlant = async (req, res) => {
         procurements.remainingQuantity += quantity;
 
         await procurements.save();
+        return true;
+    }catch(error){
+        console.log(error.message);
+        return false;
+    }
+}
+
+exports.returnPlant = async (req, res) => {
+    try{
+        const {invoiceId, items} = req.body;
+        let numCorrect = 0;
+        
+        for (const item of items){
+            console.log(item)
+            const response = await implementReturn(invoiceId, item.procurementId, item.quantity);
+            if(!response){
+                console.log("Error in: ");
+                console.log(item);
+            }
+            else{
+                numCorrect ++;
+            }
+        }
+
+        if (numCorrect === 0 && items.length > 0){
+            return res.status(500).json(
+                {
+                    message: "internal server error",
+                    success: false
+                }
+            )
+        }
 
         return res.status(200).json(
             {
-                message: "successfully filed return",
+                message: `successfully filed return for ${numCorrect} items`,
                 success: true
             }
         )
