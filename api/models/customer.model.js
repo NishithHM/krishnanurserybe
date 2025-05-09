@@ -143,6 +143,49 @@ const customerSchema = new mongoose.Schema({
             }
         }
     },
+    returnHistory: [
+        {
+            items: [{
+                procurementId: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    required: true
+                },
+                procurementName: {
+                    en: {
+                        name: {
+                            type: String,
+                            required: true,
+                        }
+                    },
+                    ka: {
+                        name: {
+                            type: String,
+                        }
+                    }
+                },
+                variant: {
+                    type: mongoose.Schema.Types.Mixed,
+                },
+                quantity: {
+                    type: Number,
+                    required: true,
+                },
+                mrp: {
+                    type: Number, 	// saving this bcz, admin might increase/decrease price later
+                    required: true,
+                },
+                returnAmount: {
+                    type: Number,
+                    required: true
+                }
+            }],
+            totalreturnAmount: {
+                type: Number,
+                // required: true,
+                default: 0
+            },
+        }
+    ]
 }, {
     timestamps: true
 })

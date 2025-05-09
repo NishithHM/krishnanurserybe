@@ -52,3 +52,10 @@ exports.getBillingHistory = Joi.object().keys({
     search: Joi.string().pattern(new RegExp(/[A-Za-z0-9]/)),
     type: Joi.string().valid('NURSERY', 'AGRI')
 });
+
+exports.returnInvoiceSchema = Joi.object().keys(
+    {
+        invoiceId: Joi.string(),
+        items: Joi.array()
+    }
+)
