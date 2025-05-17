@@ -5,6 +5,7 @@ const multer = require('multer')
 const path = require('path');
 //const videoRender = require('../controllers/videoController');
 const uuid = require('uuid')
+const fs = require('fs');
 
 //const cartValidator= require("./validators/cartValidator");
 
@@ -60,16 +61,22 @@ const { addOffer, getAllOffers, getPlantsFromOffers } = require('./controllers/o
 const { addPlantInfoValidator, getPlantByIdValidator, getPlantValidator } = require('./validators/plantInfo.validator');
 const { addPlantInfo, getPlantInfoByProcurementId, getPlantInfoList, publishPlantInfo } = require('./controllers/plant_info.controller');
 
+const uploadDir = path.join(__dirname, './uploads');
+
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
 const fileStorageEngine = multer.diskStorage({
-	destination:(req,file,cb) =>{
-		cb(null,path.join(__dirname, './uploads'))
+  destination: (req, file, cb) => {
+    cb(null, uploadDir); // now safe to use
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `${uuid.v4()}${ext}`);
+  }
+});
 
-	},
-	filename:(req,file,cb)=>{
-		cb(null,uuid.v4() + path.extname(file.originalname))
-
-	}
-})
 const uploadInvoice = multer({storage:fileStorageEngine, limits:{fileSize: 1000*1024*1024}});
 
 const AWS = require('aws-sdk');

@@ -44,10 +44,10 @@ exports.businessCustomerSchema = Joi.object().keys({
     customerAddressPinCode: Joi.number().max(999999).min(100000),
     customerAddressPinCodeDetails: Joi.string(),
     shippingAddressPinCodeDetails: Joi.string(),
-    gstNumber:Joi.string(),
-    shippingAddressLine1: Joi.string(),
+    gstNumber:Joi.string().optional().default(''),
+    shippingAddressLine1: Joi.string().optional().default(''),
     shippingAddressLine2: Joi.string().optional().default(''),
-    shippingAddressPinCode: Joi.string(),
+    shippingAddressPinCode: Joi.string().optional().default(''),
     latitude: Joi.number(),
     longitude: Joi.number()
 });
