@@ -530,135 +530,80 @@ exports.approveBill = async (req, res)=>{
     res.json(billData.toJSON())
 }
 
-const implementReturn = async(invoiceId, procurementId, quantity) => {
-    try{
-        const billing = await Billing.findById(invoiceId);
-        
-        const itemList = billing.items.type || billing.items;
-        const plantObj = itemList.map( (obj) => {
-            if (String(obj.procurementId) === String(procurementId)){
-                return obj;
-            }
-        })[0];
-        const procurementName = plantObj.procurementName;
-        const variantId = plantObj.variant;
-        const mrp = plantObj.mrp;
-
-        const retAmount = quantity * mrp; //return calculated on the basis of mrp and number of quantity
-        const customerId = billing.customerId;
-        const existingReturn = billing.returnItems.map( (obj) => {
-            if (String(obj.procurementId) === String(procurementId)){
-                return obj;
-            }
-        })[0];
-
-        if (existingReturn){
-            existingReturn.quantity = quantity;
-            existingReturn.mrp = mrp;
-
-            await billing.save();
-            // existingReturn.variant = variantId;
-            
-        }
-
-        else{
-            billing.returnItems.push({
-                procurementId,
-                procurementName,
-                variant: variantId,
-                quantity, 
-                mrp
-            })
-
-            await billing.save();
-        }
-
-        //updating customer model
-
-        const customer = await Customer.findById(customerId);
-        let flag = true;
-
-        for (const obj of customer.returnHistory){
-            for (const item of obj.items){
-                if (String(item.procurementId) === String(procurementId)){
-                    item.quantity = quantity;
-                    item.mrp = mrp;
-                    item.variant = variantId;
-                    item.returnAmount = retAmount;
-
-                    await customer.save();
-                    flag = false;
-                    break;
-                }
-            }
-            obj.totalreturnAmount += retAmount;
-            await customer.save();
-
-            break;
-        }
-
-        if (flag){
-            const itemDict = {
-                procurementId,
-                procurementName,
-                variant: variantId,
-                quantity: quantity,
-                mrp: mrp,
-                returnAmount: retAmount
-            }
-
-            customer.returnHistory.push(
-                {
-                    items: [itemDict],
-                    totalreturnAmount: retAmount
-                }
-            )
-            await customer.save();
-        }
-
+const updateProcurementQty = async(procurementId, quantity) => {
         const procurements = await Procurements.findById(procurementId);
         procurements.remainingQuantity += quantity;
-
         await procurements.save();
-        return true;
-    }catch(error){
-        console.log(error.message);
-        return false;
-    }
+   
 }
 
 exports.returnPlant = async (req, res) => {
     try{
-        const {invoiceId, items} = req.body;
-        let numCorrect = 0;
-        
-        for (const item of items){
-            console.log(item)
-            const response = await implementReturn(invoiceId, item.procurementId, item.quantity);
-            if(!response){
-                console.log("Error in: ");
-                console.log(item);
-            }
-            else{
-                numCorrect ++;
-            }
-        }
-
-        if (numCorrect === 0 && items.length > 0){
-            return res.status(500).json(
+        const {invoiceId, items:returnItems} = req.body;
+        const billing = await Billing.findById(invoiceId);
+        if (!billing){
+            return res.status(404).json(
                 {
-                    message: "internal server error",
+                    message: "billing not found",
                     success: false
                 }
             )
+        }else{
+            let items = billing.items;
+            items = items.filter( (obj) => {
+                for (const item of returnItems){
+                    if (String(obj._id) === String(item._id) && item.quantity <= obj.quantity){
+                        obj.quantity = item.quantity;
+                        return obj;
+                    }
+                }
+            })
+            if (items.length !== returnItems.length){
+                return res.status(400).json(
+                    {
+                        message: "data mismatch found while returning",
+                        success: false
+                    }
+                )
+            }else{
+                billing.returnItems = items
+                await billing.save();
+                const promise = []
+                for (const item of items){
+                    promise.push(updateProcurementQty(item.procurementId, item.quantity));
+                }
+                await Promise.all(promise);
+            }
+
         }
 
-        return res.status(200).json(
-            {
-                message: `successfully filed return for ${numCorrect} items`,
-                success: true
-            }
-        )
+        // for (const item of items){
+        //     console.log(item)
+        //     const response = await implementReturn(invoiceId, item.procurementId, item.quantity);
+        //     if(!response){
+        //         console.log("Error in: ");
+        //         console.log(item);
+        //     }
+        //     else{
+        //         numCorrect ++;
+        //     }
+        // }
+
+        // if (numCorrect === 0 && items.length > 0){
+        //     return res.status(500).json(
+        //         {
+        //             message: "internal server error",
+        //             success: false
+        //         }
+        //     )
+        // }
+
+        // return res.status(200).json(
+        //     {
+        //         message: `successfully filed return for ${numCorrect} items`,
+        //         success: true
+        //     }
+        // )
     }catch(error){
         return res.status(500).json(
             {
