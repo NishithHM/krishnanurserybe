@@ -619,6 +619,7 @@ exports.fetchAllReturns = async(req, res) => {
     try{
         const invoiceId = req.params.invoiceId;
         const billing = await Billing.findById(invoiceId);
+        console.log("got it:", invoiceId);
 
         const returns = billing.returnItems;
         return res.status(200).json(

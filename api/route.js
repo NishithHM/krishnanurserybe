@@ -117,7 +117,7 @@ router.get('/api/billing/get-cart/:id', [authWall(['sales', 'preSales']),paramsT
 router.get('/api/billing/history', [authWall(['admin', 'sales']),paramsToBody(['pageNumber', 'isCount','startDate', 'endDate', 'sortBy', 'sortType', 'search', 'type'], 'query'), bodyValidator(getBillingHistory)], getAllBillingHistory)
 router.get('/api/billing/approve/:id', [authWall(['admin']), paramsToBody(['id'], 'params'), bodyValidator(getBillApproveSchema)], approveBill)
 router.post('/api/billing/return-plant',[authWall(['sales']), bodyValidator(returnInvoiceSchema)] ,returnPlant)
-router.get('/api/billing/fetchAllReturns/:invoiceId', fetchAllReturns)
+router.get('/api/billing/fetch-returns/:invoiceId', fetchAllReturns)
 router.get('/api/billing/fetchReturnsByCustomer/:customerId', fetchReturnsByCustomer)
 
 
