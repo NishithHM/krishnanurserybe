@@ -30,10 +30,10 @@ const { getVendorSchema, getVendorByIdSchema } = require('./validators/vendor.va
 const { getVendorList, getVendorById } = require('./controllers/vendor.controller');
 const { testUpload, videoRender } = require('./controllers/test.contoller');
 const { downloadFile, uploadAwsTest } = require('./utils');
-const { addPaymentScheme, getPaymentHistorySchema, getPaymentInfoSchema } = require('./validators/payment.validators');
+const { addPaymentScheme, getPaymentHistorySchema, getPaymentInfoSchema, getPaymentInfoNameSchema } = require('./validators/payment.validators');
 const { getBrokersSchema } = require('./validators/broker.validators');
 const { getBrokerList } = require('./controllers/brokers.controller');
-const { addPayment, getPaymentHistory, getPaymentInfo } = require('./controllers/payment.controller');
+const { addPayment, getPaymentHistory, getPaymentInfo, getPaymentInfoByName } = require('./controllers/payment.controller');
 const { dailyCron } = require('../crons/dailyCron');
 const { variantSchema, getAgriVariantSchema, deleteAgriVariantSchema, editVariantSchema, getVariantSchema } = require('./validators/agriVariants.validator');
 const { addAgriVariant, getAgriVariants, getTypes, getTypesOptions, deleteAgriVariant, updateAgriVariant, getAgriVariant } = require('./controllers/agriVariants.controller');
@@ -122,6 +122,8 @@ router.get('/api/billing/approve/:id', [authWall(['admin']), paramsToBody(['id']
 router.post('/api/payments/addPayment', [authWall(['sales', 'procurement', 'admin']), bodyValidator(addPaymentScheme)], addPayment)
 router.get('/api/payments/getAll', [authWall(['sales', 'procurement', 'admin']),paramsToBody(['pageNumber', 'isCount','startDate', 'endDate', 'sortBy', 'sortType', 'search', 'vendorId', 'businessType', 'type'], 'query', 'type'), bodyValidator(getPaymentHistorySchema)], getPaymentHistory)
 router.get('/api/payments/get-info/:phoneNumber', [authWall(['sales', 'procurement', 'admin']), paramsToBody(['phoneNumber'], 'params'), bodyValidator(getPaymentInfoSchema)], getPaymentInfo )
+router.get('/api/payments/get-info', [authWall(['sales', 'procurement', 'admin']), paramsToBody(['search'], 'query'), bodyValidator(getPaymentInfoNameSchema)], getPaymentInfoByName )
+
 // brokers
 router.get('/api/brokers/getAll', [authWall(['procurement', 'admin', 'sales']), paramsToBody(['search'], 'query'), bodyValidator(getBrokersSchema)], getBrokerList)
 
