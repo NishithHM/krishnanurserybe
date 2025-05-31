@@ -265,3 +265,49 @@ exports.getPaymentInfo = async (req, res)=>{
   const paymentData = await Payment.findOne({$or:[{phoneNumber}, {name:phoneNumber}]}).sort({createdAt:-1})
   res.json(paymentData)
 }
+
+exports.getPaymentInfoByName = async (req, res)=>{
+  const {search} = req.body
+  const paymentData = await Payment.aggregate([
+  {
+    $match:
+      /**
+       * query: The query in MQL.
+       */
+      {
+        name: {
+          $regex: search,
+          $options: "i"
+        }
+      }
+  },
+  {
+    $group:
+      /**
+       * _id: The id of the group.
+       * fieldN: The first field name.
+       */
+      {
+        _id: "$name",
+        data: {
+          $first: "$$ROOT"
+        }
+      }
+  },
+  {
+    $replaceRoot:
+      /**
+       * replacementDocument: A document or string.
+       */
+      {
+        newRoot: "$data"
+      }
+  },
+  {
+    $sort:{
+      createdAt: -1
+    }
+  }
+  ]);
+  res.json(paymentData)
+}

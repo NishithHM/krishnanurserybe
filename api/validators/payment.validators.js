@@ -1,4 +1,5 @@
 const Joi = require('joi');
+const { search } = require('../route');
 
 exports.addPaymentScheme = Joi.object().keys({
     brokerName: Joi.string().pattern(new RegExp(/[A-Za-z]/)),
@@ -37,4 +38,8 @@ exports.getPaymentHistorySchema = Joi.object().keys({
 
 exports.getPaymentInfoSchema = Joi.object().keys({
     phoneNumber: Joi.string()
+});
+
+exports.getPaymentInfoNameSchema = Joi.object().keys({
+    search: Joi.string()
 });
