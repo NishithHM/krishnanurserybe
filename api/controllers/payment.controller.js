@@ -262,7 +262,10 @@ exports.getPaymentHistory = async (req, res) => {
 
 exports.getPaymentInfo = async (req, res)=>{
   const {phoneNumber} = req.body
-  const paymentData = await Payment.findOne({$or:[{phoneNumber}, {name:phoneNumber}]}).sort({createdAt:-1})
+  let paymentData = await Payment.findOne({$or:[{phoneNumber}, {name:phoneNumber}], accountNumber:{$exists:true}}).sort({createdAt:-1})
+  if(!paymentData){
+    paymentData = await Payment.findOne({$or:[{phoneNumber}, {name:phoneNumber}]}).sort({createdAt:-1})
+  }
   res.json(paymentData)
 }
 
@@ -278,7 +281,8 @@ exports.getPaymentInfoByName = async (req, res)=>{
         name: {
           $regex: search,
           $options: "i"
-        }
+        },
+        accountNumber:{$exists:true}
       }
   },
   {
