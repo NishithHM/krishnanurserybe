@@ -150,6 +150,11 @@ exports.registerBusinessCustomer = async(req, res)=>{
    if (objIds.length != idMatchedInDBCount) {
     res.status(403).send("Forbidden Operation");
   } else {
+   const customerExists = await Customer.findOne({ phoneNumber: parseInt(phoneNumber, 10) })
+    if (customerExists) {
+      res.status(403).send("Forbidden Operation, Customer already exists with this phone number");
+      return;
+    }
     const customer = new Customer(
       { 
         name,
