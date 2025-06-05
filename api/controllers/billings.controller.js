@@ -548,33 +548,37 @@ exports.returnPlant = async (req, res) => {
                     success: false
                 }
             )
-        }else{
-            let items = billing.items;
-            items = items.filter( (obj) => {
-                for (const item of returnItems){
-                    if (String(obj._id) === String(item._id) && item.quantity <= obj.quantity){
-                        obj.quantity = item.quantity;
-                        return obj;
-                    }
-                }
-            })
-            if (items.length !== returnItems.length){
-                return res.status(400).json(
-                    {
-                        message: "data mismatch found while returning",
-                        success: false
-                    }
-                )
-            }else{
-                billing.returnItems = items
-                await billing.save();
-                const promise = []
-                for (const item of items){
-                    promise.push(updateProcurementQty(item.procurementId, item.quantity));
-                }
-                await Promise.all(promise);
-            }
+        }
 
+        let items = billing.items;
+        items = items.filter( (obj) => {
+            for (const item of returnItems){
+                if (String(obj._id) === String(item._id) && item.quantity <= obj.quantity){
+                    obj.quantity = item.quantity;
+                    return obj;
+                }
+            }
+        })
+        if (items.length !== returnItems.length){
+            return res.status(400).json(
+                {
+                    message: "data mismatch found while returning",
+                    success: false
+                }
+            )
+        }else{
+            billing.returnItems = items
+            await billing.save();
+            const promise = []
+            for (const item of items){
+                promise.push(updateProcurementQty(item.procurementId, item.quantity));
+            }
+            await Promise.all(promise);
+            
+            return res.status(200).json({
+                success: true,
+                message: `successfully returned ${promise.length} items`
+            });
         }
 
         // for (const item of items){
@@ -619,7 +623,9 @@ exports.fetchAllReturns = async(req, res) => {
     try{
         const invoiceId = req.params.invoiceId;
         const billing = await Billing.findById(invoiceId);
-        console.log("got it:", invoiceId);
+        // console.log("got it:", invoiceId);
+        // console.log("====return items:====")
+        // console.log(billing)
 
         const returns = billing.returnItems;
         return res.status(200).json(
