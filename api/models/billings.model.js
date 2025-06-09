@@ -112,6 +112,9 @@ const BillingHistory = new mongoose.Schema({
                 type: Number, 	// saving this bcz, admin might increase/decrease price later
                 required: true,
             },
+            returnId: {
+                type: Number,
+            }
         }
     ],
     totalPrice: {

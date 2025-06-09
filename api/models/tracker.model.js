@@ -60,6 +60,17 @@ const createDefaults =async ()=>{
                console.log(error)
           }
      }
+
+     const returnNursery = await Tracker.findOne({name: 'returnNursery'})
+     if (isEmpty(returnNursery)){
+          try {
+          const initial = new Tracker({name:'returnNursery', number:1})
+          initial.save()
+               
+          } catch (error) {
+               console.log(error)
+          }
+     }
 }
 
 createDefaults()

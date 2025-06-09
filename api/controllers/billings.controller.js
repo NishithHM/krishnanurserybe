@@ -541,6 +541,8 @@ exports.returnPlant = async (req, res) => {
     try{
         const {invoiceId, items:returnItems} = req.body;
         const billing = await Billing.findById(invoiceId);
+        const trackerVal = await Tracker.findOne({name: "returnNursery"});
+
         if (!billing){
             return res.status(404).json(
                 {
@@ -567,6 +569,15 @@ exports.returnPlant = async (req, res) => {
                 }
             )
         }else{
+            for (let i = 0; i < items.length; i++) {
+                let item = items[i];
+                item = item.toObject ? item.toObject() : item;
+                item.returnId = trackerVal.number;
+                trackerVal.number = trackerVal.number + 1;
+                await trackerVal.save();
+                items[i] = item;
+            }
+            
             billing.returnItems = items
             await billing.save();
             const promise = []
@@ -623,10 +634,6 @@ exports.fetchAllReturns = async(req, res) => {
     try{
         const invoiceId = req.params.invoiceId;
         const billing = await Billing.findById(invoiceId);
-        // console.log("got it:", invoiceId);
-        // console.log("====return items:====")
-        // console.log(billing)
-
         const returns = billing.returnItems;
         return res.status(200).json(
             {

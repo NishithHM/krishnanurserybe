@@ -116,10 +116,10 @@ router.post('/api/billing/confirm-cart/:id', [authWall(['sales']),paramsToBody([
 router.get('/api/billing/get-cart/:id', [authWall(['sales', 'preSales']),paramsToBody(['id'], "params"), bodyValidator(getCustomerCartSchema)], getCustomerCart)
 router.get('/api/billing/history', [authWall(['admin', 'sales']),paramsToBody(['pageNumber', 'isCount','startDate', 'endDate', 'sortBy', 'sortType', 'search', 'type'], 'query'), bodyValidator(getBillingHistory)], getAllBillingHistory)
 router.get('/api/billing/approve/:id', [authWall(['admin']), paramsToBody(['id'], 'params'), bodyValidator(getBillApproveSchema)], approveBill)
-router.post('/api/billing/return-plant',[authWall(['sales']), bodyValidator(returnInvoiceSchema)] ,returnPlant)
-router.get('/api/billing/fetch-returns/:invoiceId', fetchAllReturns)
+router.post('/api/billing/return-plant',[authWall(['sales', 'admin']), bodyValidator(returnInvoiceSchema)] ,returnPlant)
+router.get('/api/billing/fetch-returns/:invoiceId', [authWall(['sales', 'admin'])], fetchAllReturns)
 router.get('/api/billing/fetchReturnsByCustomer/:customerId', fetchReturnsByCustomer)
-
+// router.get('/api/billing/get-return-id/:invoiceId', [authWall(['admin', 'sales'])], getReturnId)
 
 // payments
 router.post('/api/payments/addPayment', [authWall(['sales', 'procurement', 'admin']), bodyValidator(addPaymentScheme)], addPayment)
