@@ -426,9 +426,23 @@ const updateCustomerPurchaseHistory = async (billData) => {
     await customer.save()
 }
 
+const extractDigit = (str) => {
+    let digstr = '';
+    for (let chr of str){
+      if ('0123456789'.indexOf(chr) >= 0)
+        digstr += chr;
+    }
+    return digstr? parseInt(digstr) : 0;
+  }
+
 exports.getAllBillingHistory = async (req, res) => {
     const { pageNumber, isCount, id, startDate, endDate, sortBy, sortType, search, type } = req.body;
     try {
+        let retBool = false;
+        if (search && search.toLowerCase().substring(0,3) === 'ret'){
+            retBool = true;
+        }
+
         let initialMatch = {
             status: "BILLED",
             type
@@ -479,15 +493,44 @@ exports.getAllBillingHistory = async (req, res) => {
             }]
         }
 
-        const numberSearch = /^\d+$/.test(search) ? parseInt(search) : search;
+        let numberSearch = /^\d+$/.test(search) ? parseInt(search) : search;
+        if (retBool){
+            numberSearch = extractDigit(search);
+        }
 
-        const searchMatch = [
+        let searchMatch = [
             {
                 '$match': {
                    $or: [ {customerName: { $regex: search, $options: "i" }}, {invoiceId: { $regex: search, $options: "i" }}, {customerNumber: numberSearch}]
                 }
             },
         ]
+
+        if (retBool){
+            const searchStr = numberSearch.toString();
+            const minValue = parseInt(searchStr);
+            let maxValue = minValue;
+
+            if (numberSearch < 10){
+                maxValue = parseInt(searchStr + '9'.repeat(10 - searchStr.length));
+            }
+            
+            searchMatch = [
+                {
+                    '$match': {
+                        'returnItems': {
+                            '$elemMatch': {
+                                'returnId': { 
+                                    $gte: minValue,
+                                    $lt: maxValue + 1
+                                }
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+
         const pipeline = []
         pipeline.push(...match)
         if (search) {
@@ -539,7 +582,7 @@ const updateProcurementQty = async(procurementId, quantity) => {
 
 exports.returnPlant = async (req, res) => {
     try{
-        const {invoiceId, items:returnItems} = req.body;
+        const {invoiceId, items: returnItems} = req.body;
         const billing = await Billing.findById(invoiceId);
         const trackerVal = await Tracker.findOne({name: "returnNursery"});
 
@@ -553,10 +596,12 @@ exports.returnPlant = async (req, res) => {
         }
 
         let items = billing.items;
+        let retQtyMap = {};
+
         items = items.filter( (obj) => {
             for (const item of returnItems){
                 if (String(obj._id) === String(item._id) && item.quantity <= obj.quantity){
-                    obj.quantity = item.quantity;
+                    retQtyMap[String(obj._id)] = item.quantity;
                     return obj;
                 }
             }
@@ -571,15 +616,18 @@ exports.returnPlant = async (req, res) => {
         }else{
             for (let i = 0; i < items.length; i++) {
                 let item = items[i];
+
                 item = item.toObject ? item.toObject() : item;
                 item.returnId = trackerVal.number;
+
                 trackerVal.number = trackerVal.number + 1;
                 await trackerVal.save();
+                item.quantity = retQtyMap[String(item._id)];
                 items[i] = item;
             }
-            
             billing.returnItems = items
             await billing.save();
+
             const promise = []
             for (const item of items){
                 promise.push(updateProcurementQty(item.procurementId, item.quantity));
