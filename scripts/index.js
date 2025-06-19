@@ -74,7 +74,7 @@ const clearS3 = ()=>{
 
 const dbCon = ()=>{
     const env = 'dev'
-    mongoose.connect(`mongodb+srv://admin:admin123@cluster0.t2cxv.mongodb.net/nursery_mgmt_${env}?retryWrites=true&w=majority`, {
+    mongoose.connect(`mongodb+srv://sknProd:1ONEvuYlmiexoPA7@sknprod.fionm1o.mongodb.net/nursery_mgmt_${env}?retryWrites=true&w=majority`, {
         useNewUrlParser: true,
         useUnifiedTopology: true,
     }).then(() => console.log("Database connected! ", env))
@@ -239,11 +239,14 @@ const updateProcurementName = async (id, newName) => {
       {timestamps: false}
     )
 
+    console.log('updatedProcurement', updatedProcurement)
+
     const updatedProcHistory = await procurementHistoryModel.updateMany(
       { procurementId: new mongoose.mongo.ObjectId(id) },
       {$set:{names:newName}},
       {timestamps: false}
     )
+    console.log('updatedProcHistory', updatedProcHistory.modifiedCount)
 
     const billings = await billingsModel.find({"items.procurementId": new mongoose.mongo.ObjectId(id)})
     for(let i=0; i< billings.length; i++){
@@ -255,6 +258,7 @@ const updateProcurementName = async (id, newName) => {
         return ele
        })
        await billingsModel.updateOne({_id:bill?._id}, {$set: {items}}, {timestamps: false})
+       console.log('updatedBill', bill._id, i)
     }
 
     const metaValues = await metaDataModel.updateMany(
@@ -262,12 +266,14 @@ const updateProcurementName = async (id, newName) => {
       {$set:{names:newName}},
       {timestamps: false}
     )
+    console.log('metaValues', metaValues.modifiedCount)
 
     const damages = await Damages.updateMany(
       { procurementId: new mongoose.mongo.ObjectId(id) },
       {$set:{names:newName}},
       {timestamps: false}
     )
+    console.log('damages', damages.modifiedCount)
 
 
     return updatedProcurement
@@ -285,15 +291,31 @@ const startScripts =async()=>{
     await new Promise(res=> setTimeout(()=>res(1), 1000))
     // testApi()
     console.log('db connected')
-    const name = {
-    "en": {
-      "name": "tea 1"
-    },
-    "ka": {
-      "name": "ಚಹಾ 1"
-    }
-  }
-   await updateProcurementName("644902225d698cdd131aacd9", name )
+    /*
+    PAPAYA 
+PHILODENDRON OXYCARDIUM XANADU 
+PLUMERIA RED 
+RED ANTHURIUM 
+RED SAMPIGE 
+SPATHIPHYLLUM GOLDEN  *
+STARLIGHT FICUS 
+STRAWBERRY 
+TECOMA CAPENSIS 
+THAI STAR FRUIT 
+WHITE APPLE 
+
+    */
+   
+const procurement = await procurmentModel.findOne({"names.en.name": "SPATHIPHYLLUM GOLDEN  "})
+ if(!procurement){
+    console.log('Procurement not found')
+    return
+}
+const newName = {...procurement.names}
+newName.en.name = procurement.names.en.name.trimEnd()
+console.log('newName', newName, procurement._id.toString())
+
+await updateProcurementName(procurement._id.toString(), newName )
    console.log('done')
 }
 
