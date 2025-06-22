@@ -426,14 +426,14 @@ const updateCustomerPurchaseHistory = async (billData) => {
     await customer.save()
 }
 
-const extractDigit = (str) => {
-    let digstr = '';
-    for (let chr of str){
-      if ('0123456789'.indexOf(chr) >= 0)
-        digstr += chr;
-    }
-    return digstr? parseInt(digstr) : 0;
-  }
+// const extractDigit = (str) => {
+//     let digstr = '';
+//     for (let chr of str){
+//       if ('0123456789'.indexOf(chr) >= 0)
+//         digstr += chr;
+//     }
+//     return digstr ? parseInt(digstr) : 0;
+//   }
 
 exports.getAllBillingHistory = async (req, res) => {
     const { pageNumber, isCount, id, startDate, endDate, sortBy, sortType, search, type } = req.body;
@@ -494,9 +494,9 @@ exports.getAllBillingHistory = async (req, res) => {
         }
 
         let numberSearch = /^\d+$/.test(search) ? parseInt(search) : search;
-        if (retBool){
-            numberSearch = extractDigit(search);
-        }
+        // if (retBool){
+        //     numberSearch = extractDigit(search);
+        // }
 
         let searchMatch = [
             {
@@ -507,24 +507,20 @@ exports.getAllBillingHistory = async (req, res) => {
         ]
 
         if (retBool){
-            const searchStr = numberSearch.toString();
-            const minValue = parseInt(searchStr);
-            let maxValue = minValue;
+            // const searchStr = numberSearch.toString();
+            // const minValue = parseInt(searchStr);
+            // let maxValue = minValue;
 
-            if (numberSearch < 10){
-                maxValue = parseInt(searchStr + '9'.repeat(10 - searchStr.length));
-            }
+            // if (numberSearch < 10){
+            //     maxValue = parseInt(searchStr + '9'.repeat(10 - searchStr.length));
+            // }
             
             searchMatch = [
                 {
                     '$match': {
-                        'returnItems': {
-                            '$elemMatch': {
-                                'returnId': { 
-                                    $gte: minValue,
-                                    $lt: maxValue + 1
-                                }
-                            }
+                        'returnId': { 
+                            $regex: search,
+                            $options: "i"
                         }
                     }
                 }
@@ -601,7 +597,10 @@ exports.returnPlant = async (req, res) => {
         items = items.filter( (obj) => {
             for (const item of returnItems){
                 if (String(obj._id) === String(item._id) && item.quantity <= obj.quantity){
-                    retQtyMap[String(obj._id)] = item.quantity;
+                    retQtyMap[String(obj._id)] = {
+                        quantity: item.quantity,
+                        rate: obj.rate
+                    };
                     return obj;
                 }
             }
@@ -616,16 +615,19 @@ exports.returnPlant = async (req, res) => {
         }else{
             for (let i = 0; i < items.length; i++) {
                 let item = items[i];
-
                 item = item.toObject ? item.toObject() : item;
-                item.returnId = trackerVal.number;
+                item.quantity = retQtyMap[String(item._id)].quantity;
+                item.mrp = retQtyMap[String(item._id)].rate;
 
-                trackerVal.number = trackerVal.number + 1;
-                await trackerVal.save();
-                item.quantity = retQtyMap[String(item._id)];
                 items[i] = item;
             }
+
             billing.returnItems = items
+            let retId = String(trackerVal.number);
+            billing.returnId = `RET_NUR_${retId}`;
+            trackerVal.number = trackerVal.number + 1;
+            
+            await trackerVal.save();
             await billing.save();
 
             const promise = []
@@ -639,34 +641,6 @@ exports.returnPlant = async (req, res) => {
                 message: `successfully returned ${promise.length} items`
             });
         }
-
-        // for (const item of items){
-        //     console.log(item)
-        //     const response = await implementReturn(invoiceId, item.procurementId, item.quantity);
-        //     if(!response){
-        //         console.log("Error in: ");
-        //         console.log(item);
-        //     }
-        //     else{
-        //         numCorrect ++;
-        //     }
-        // }
-
-        // if (numCorrect === 0 && items.length > 0){
-        //     return res.status(500).json(
-        //         {
-        //             message: "internal server error",
-        //             success: false
-        //         }
-        //     )
-        // }
-
-        // return res.status(200).json(
-        //     {
-        //         message: `successfully filed return for ${numCorrect} items`,
-        //         success: true
-        //     }
-        // )
     }catch(error){
         return res.status(500).json(
             {
@@ -683,30 +657,6 @@ exports.fetchAllReturns = async(req, res) => {
         const invoiceId = req.params.invoiceId;
         const billing = await Billing.findById(invoiceId);
         const returns = billing.returnItems;
-        return res.status(200).json(
-            {
-                message: "successfully fetched data",
-                data: returns,
-                success: true
-            }
-        )
-    }catch(error){
-        return res.status(500).json(
-            {
-                message: "some error occurred",
-                error: error.message,
-                success: false
-            }
-        )
-    }
-}
-
-exports.fetchReturnsByCustomer = async (req, res) => {
-    try{
-        const customerId = req.params.customerId;
-        const customer = await Customer.findById(customerId);
-
-        const returns = customer.returnHistory;
         return res.status(200).json(
             {
                 message: "successfully fetched data",

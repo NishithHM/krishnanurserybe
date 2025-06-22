@@ -118,9 +118,7 @@ router.get('/api/billing/history', [authWall(['admin', 'sales']),paramsToBody(['
 router.get('/api/billing/approve/:id', [authWall(['admin']), paramsToBody(['id'], 'params'), bodyValidator(getBillApproveSchema)], approveBill)
 router.post('/api/billing/return-plant',[authWall(['sales', 'admin']), bodyValidator(returnInvoiceSchema)] ,returnPlant)
 router.get('/api/billing/fetch-returns/:invoiceId', [authWall(['sales', 'admin'])], fetchAllReturns)
-router.get('/api/billing/fetchReturnsByCustomer/:customerId', fetchReturnsByCustomer)
-// router.get('/api/billing/get-return-id/:invoiceId', [authWall(['admin', 'sales'])], getReturnId)
-
+router
 // payments
 router.post('/api/payments/addPayment', [authWall(['sales', 'procurement', 'admin']), bodyValidator(addPaymentScheme)], addPayment)
 router.get('/api/payments/getAll', [authWall(['sales', 'procurement', 'admin']),paramsToBody(['pageNumber', 'isCount','startDate', 'endDate', 'sortBy', 'sortType', 'search', 'vendorId', 'businessType', 'type'], 'query', 'type'), bodyValidator(getPaymentHistorySchema)], getPaymentHistory)

@@ -111,12 +111,13 @@ const BillingHistory = new mongoose.Schema({
             mrp: {
                 type: Number, 	// saving this bcz, admin might increase/decrease price later
                 required: true,
-            },
-            returnId: {
-                type: Number,
             }
         }
     ],
+    returnId:{
+                type: String,
+                default: ''
+            },
     totalPrice: {
         type: Number,
         required: true,
