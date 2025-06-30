@@ -28,10 +28,10 @@ const { createCategory, deleteCategoryById, getAllCategories } = require('./cont
 const { requestProcurementSchema, getProcurementsSchema, getProcurementsHistorySchema, addVariantsSchema, setProcurementMinQuantitySchema, getProcurementsLowSchema, getOrderIdSchema, placeOrderSchema, rejectProcurementSchema, verifyProcurementSchema, addInvoiceProcurementSchema, getOrdersProcurementSchema, updateDeliveryProcurementSchema, updateDamageProcurementSchema, getDamagesSchema, updateMaintenanceProcurementSchema, getProcurementIdSchema, uploadPamphletSchema } = require('./validators/procurement.validators')
 const { requestOrder, getAllProcurements, getAllProcurementsHistory, addProcurementVariants, setMinimumQuantity, getLowProcurements, placeOrder, rejectOrderRequest, verifyOrder, uploadInvoiceToOrder, getAllOrders, updateDeliveryDate, updateDamage, getDamageList, getProcurementById, updateMaintenance, getVendorPlacedOrders, getOrderIdDetails, uploadPhamplet } = require('./controllers/procurement.controller')
 const { customerSchema, getCustomerSchema, pincodeSchema, businessCustomerSchema } = require('./validators/customer.validators')
-const { addToCartSchema, updateCartSchema, confirmCartSchema, getCustomerCartSchema, getBillingHistory, getBillApproveSchema } = require('./validators/billing.validators')
+const { addToCartSchema, updateCartSchema, confirmCartSchema, getCustomerCartSchema, getBillingHistory, getBillApproveSchema, returnInvoiceSchema } = require('./validators/billing.validators')
 
 const { customerRegister, getCustomerByNumber, getPincode, registerBusinessCustomer, getBusinessCustomers, getCustomersList } = require('./controllers/customer.controller');
-const { addToCart, updateCart, confirmCart, getCustomerCart, getAllBillingHistory, approveBill } = require('./controllers/billings.controller');
+const { addToCart, updateCart, confirmCart, getCustomerCart, getAllBillingHistory, approveBill, returnPlant, fetchAllReturns, fetchReturnsByCustomer } = require('./controllers/billings.controller');
 
 
 
@@ -139,8 +139,9 @@ router.post('/api/billing/confirm-cart/:id', [authWall(['sales']),paramsToBody([
 router.get('/api/billing/get-cart/:id', [authWall(['sales', 'preSales']),paramsToBody(['id'], "params"), bodyValidator(getCustomerCartSchema)], getCustomerCart)
 router.get('/api/billing/history', [authWall(['admin', 'sales']),paramsToBody(['pageNumber', 'isCount','startDate', 'endDate', 'sortBy', 'sortType', 'search', 'type'], 'query'), bodyValidator(getBillingHistory)], getAllBillingHistory)
 router.get('/api/billing/approve/:id', [authWall(['admin']), paramsToBody(['id'], 'params'), bodyValidator(getBillApproveSchema)], approveBill)
-
-
+router.post('/api/billing/return-plant',[authWall(['sales', 'admin']), bodyValidator(returnInvoiceSchema)] ,returnPlant)
+router.get('/api/billing/fetch-returns/:invoiceId', [authWall(['sales', 'admin'])], fetchAllReturns)
+router
 // payments
 router.post('/api/payments/addPayment', [authWall(['sales', 'procurement', 'admin']), bodyValidator(addPaymentScheme)], addPayment)
 router.get('/api/payments/getAll', [authWall(['sales', 'procurement', 'admin']),paramsToBody(['pageNumber', 'isCount','startDate', 'endDate', 'sortBy', 'sortType', 'search', 'vendorId', 'businessType', 'type'], 'query', 'type'), bodyValidator(getPaymentHistorySchema)], getPaymentHistory)

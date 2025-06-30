@@ -437,9 +437,23 @@ const updateCustomerPurchaseHistory = async (billData) => {
     await customer.save()
 }
 
+// const extractDigit = (str) => {
+//     let digstr = '';
+//     for (let chr of str){
+//       if ('0123456789'.indexOf(chr) >= 0)
+//         digstr += chr;
+//     }
+//     return digstr ? parseInt(digstr) : 0;
+//   }
+
 exports.getAllBillingHistory = async (req, res) => {
     const { pageNumber, isCount, id, startDate, endDate, sortBy, sortType, search, type } = req.body;
     try {
+        let retBool = false;
+        if (search && search.toLowerCase().substring(0,3) === 'ret'){
+            retBool = true;
+        }
+
         let initialMatch = {
             status: "BILLED",
             type
@@ -490,15 +504,40 @@ exports.getAllBillingHistory = async (req, res) => {
             }]
         }
 
-        const numberSearch = /^\d+$/.test(search) ? parseInt(search) : search;
+        let numberSearch = /^\d+$/.test(search) ? parseInt(search) : search;
+        // if (retBool){
+        //     numberSearch = extractDigit(search);
+        // }
 
-        const searchMatch = [
+        let searchMatch = [
             {
                 '$match': {
                    $or: [ {customerName: { $regex: search, $options: "i" }}, {invoiceId: { $regex: search, $options: "i" }}, {customerNumber: numberSearch}]
                 }
             },
         ]
+
+        if (retBool){
+            // const searchStr = numberSearch.toString();
+            // const minValue = parseInt(searchStr);
+            // let maxValue = minValue;
+
+            // if (numberSearch < 10){
+            //     maxValue = parseInt(searchStr + '9'.repeat(10 - searchStr.length));
+            // }
+            
+            searchMatch = [
+                {
+                    '$match': {
+                        'returnId': { 
+                            $regex: search,
+                            $options: "i"
+                        }
+                    }
+                }
+            ]
+        }
+
         const pipeline = []
         pipeline.push(...match)
         if (search) {
@@ -552,7 +591,112 @@ const mergeInfoSheets = async(items)=>{
     const buffer = await mergePdfs(procurementInfoSheetFiles)
     removeFiles(procurementInfoSheetFiles)
     return buffer
+}
 
+const updateProcurementQty = async(procurementId, quantity) => {
+        const procurements = await Procurements.findById(procurementId);
+        procurements.remainingQuantity += quantity;
+        await procurements.save();
+   
+}
+
+exports.returnPlant = async (req, res) => {
+    try{
+        const {invoiceId, items: returnItems} = req.body;
+        const billing = await Billing.findById(invoiceId);
+        const trackerVal = await Tracker.findOne({name: "returnNursery"});
+
+        if (!billing){
+            return res.status(404).json(
+                {
+                    message: "billing not found",
+                    success: false
+                }
+            )
+        }
+
+        let items = billing.items;
+        let retQtyMap = {};
+
+        items = items.filter( (obj) => {
+            for (const item of returnItems){
+                if (String(obj._id) === String(item._id) && item.quantity <= obj.quantity){
+                    retQtyMap[String(obj._id)] = {
+                        quantity: item.quantity,
+                        rate: obj.rate
+                    };
+                    return obj;
+                }
+            }
+        })
+        if (items.length !== returnItems.length){
+            return res.status(400).json(
+                {
+                    message: "data mismatch found while returning",
+                    success: false
+                }
+            )
+        }else{
+            for (let i = 0; i < items.length; i++) {
+                let item = items[i];
+                item = item.toObject ? item.toObject() : item;
+                item.quantity = retQtyMap[String(item._id)].quantity;
+                item.mrp = retQtyMap[String(item._id)].rate;
+
+                items[i] = item;
+            }
+
+            billing.returnItems = items
+            let retId = String(trackerVal.number);
+            billing.returnId = `RET_NUR_${retId}`;
+            trackerVal.number = trackerVal.number + 1;
+            
+            await trackerVal.save();
+            await billing.save();
+
+            const promise = []
+            for (const item of items){
+                promise.push(updateProcurementQty(item.procurementId, item.quantity));
+            }
+            await Promise.all(promise);
+            
+            return res.status(200).json({
+                success: true,
+                message: `successfully returned ${promise.length} items`
+            });
+        }
+    }catch(error){
+        return res.status(500).json(
+            {
+                message: "some error occurred",
+                error: error.message,
+                success: false
+            }
+        )
+    }
+}
+
+exports.fetchAllReturns = async(req, res) => {
+    try{
+        const invoiceId = req.params.invoiceId;
+        const billing = await Billing.findById(invoiceId);
+        const returns = billing.returnItems;
+        return res.status(200).json(
+            {
+                message: "successfully fetched data",
+                data: returns,
+                success: true
+            }
+        )
+    }catch(error){
+        return res.status(500).json(
+            {
+                message: "some error occurred",
+                error: error.message,
+                success: false
+            }
+        )
+    }
 }
 
 

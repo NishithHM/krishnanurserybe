@@ -86,6 +86,42 @@ const BillingHistory = new mongoose.Schema({
             }
         }],
     },
+    returnItems: [
+        {
+            procurementId: {
+                type: mongoose.Schema.Types.ObjectId,
+                required: true
+            },
+            procurementName: {
+                en: {
+                    name: {
+                        type: String,
+                        required: true,
+                    }
+                },
+                ka: {
+                    name: {
+                        type: String,
+                    }
+                }
+            },
+            variant: {
+                type: mongoose.Schema.Types.Mixed,
+            },
+            quantity: {
+                type: Number,
+                required: true,
+            },
+            mrp: {
+                type: Number, 	// saving this bcz, admin might increase/decrease price later
+                required: true,
+            }
+        }
+    ],
+    returnId:{
+                type: String,
+                default: ''
+            },
     totalPrice: {
         type: Number,
         required: true,
