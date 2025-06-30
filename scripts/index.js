@@ -14,7 +14,7 @@ const { caluclateMetaData } = require("../crons/dailyCron");
 const exl = require("convert-excel-to-json");
 const path = require("path");
 const plant_infoModel = require("../api/models/plant_info.model");
-const excelFilePath = "Sample-Add-Plants-DEV.xlsx";
+const excelFilePath = "new_1.xlsx";
 var request = require('request');
 var fs = require('fs');
 const agriOrderMgmtModel = require("../api/models/agriOrderMgmt.model")
@@ -115,7 +115,7 @@ const updateDate =async ()=>{
 
 const dbCon = ()=>{
     const env = 'dev'
-    mongoose.connect(`mongodb+srv:///nursery_mgmt_${env}?retryWrites=true&w=majority`, {
+    mongoose.connect(`mongodb+srv://admin:admin123@cluster0.t2cxv.mongodb.net/nursery_mgmt_${env}?retryWrites=true&w=majority`, {
         useNewUrlParser: true,
         useUnifiedTopology: true,
       }
@@ -275,7 +275,7 @@ const caluclateMetaDataAll = async () => {
 
 const excelImport= async (sheetName)=>{
 
-    readXlAndStore(sheetName).then((data) => {
+    readXlAndStore(sheetName).then(async(data) => {
 
 
       // console.log(convertedData[0].sections, "convertedData");
@@ -307,8 +307,8 @@ const excelImport= async (sheetName)=>{
           }
         }
       }
-
-      convertedData.forEach(async (ele) => {
+      for(let i=0; i<convertedData.length; i++){
+        const ele = convertedData[i]  
         const procId = await procurmentModel
           .findOne({"names.en.name":{$regex:ele?.name, $options:'i'}})
           .select("_id");
@@ -332,7 +332,7 @@ const excelImport= async (sheetName)=>{
             headers: {
               "Content-Type": "application/json",
               authorization:
-                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY0NDk0NzM2ZWUwNjE1ZWY2Mzc3MjU2MyIsIm5hbWUiOiJhZG1pbjEiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3MzUzNzE3NjcsImV4cCI6MTczNTQ1ODE2N30.jOTv1x4GBhbj8JG4Ld-B2qfxk6HngX7aM7QQPae6yJw",
+                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY0NDk0NzM2ZWUwNjE1ZWY2Mzc3MjU2MyIsIm5hbWUiOiJhZG1pbjEiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NTA5MjEwMDUsImV4cCI6MTc1MTAwNzQwNX0.E5NjIAdzx0FUBB6Uf-aEZXZNRojc7yv_jxhkRa0yeEs",
             },
           }
         );
@@ -342,12 +342,12 @@ const excelImport= async (sheetName)=>{
           headers: {
             "Content-Type": "application/json",
             authorization:
-              "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY0NDk0NzM2ZWUwNjE1ZWY2Mzc3MjU2MyIsIm5hbWUiOiJhZG1pbjEiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3MzUzNzE3NjcsImV4cCI6MTczNTQ1ODE2N30.jOTv1x4GBhbj8JG4Ld-B2qfxk6HngX7aM7QQPae6yJw",
+              "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY0NDk0NzM2ZWUwNjE1ZWY2Mzc3MjU2MyIsIm5hbWUiOiJhZG1pbjEiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NTA5MjEwMDUsImV4cCI6MTc1MTAwNzQwNX0.E5NjIAdzx0FUBB6Uf-aEZXZNRojc7yv_jxhkRa0yeEs",
           },
         })
-        await new Promise(res=> setTimeout(()=> res(), 200))
+        await new Promise(res=> setTimeout(()=> res(), 10000))
         console.log('succesfully added')
-      });
+      }
     });
     
 }
@@ -371,7 +371,7 @@ const sectionImport = async(sheetName)=>{
         headers: {
           "Content-Type": "application/json",
           authorization:
-            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY0NDk0NzM2ZWUwNjE1ZWY2Mzc3MjU2MyIsIm5hbWUiOiJhZG1pbjEiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3MzUzNzE3NjcsImV4cCI6MTczNTQ1ODE2N30.jOTv1x4GBhbj8JG4Ld-B2qfxk6HngX7aM7QQPae6yJw",
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY0NDk0NzM2ZWUwNjE1ZWY2Mzc3MjU2MyIsIm5hbWUiOiJhZG1pbjEiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NTA5MjEwMDUsImV4cCI6MTc1MTAwNzQwNX0.E5NjIAdzx0FUBB6Uf-aEZXZNRojc7yv_jxhkRa0yeEs",
         },
       }
     );
@@ -546,11 +546,11 @@ const startScripts =async()=>{
     // testApi()
     console.log('db connected')
     // await totalPriceWithoutGst()
-    await updateCustomer()
+    // await updateCustomer()
     console.log('done')
     // await updateDate()
     // await caluclateMetaDataAll()
-  //  await excelImport("Plant Info")
+   await excelImport("Plant Info")
       // await sectionImport('Section')
     // console.log('done')
 
