@@ -166,6 +166,10 @@ const BillingHistory = new mongoose.Schema({
         type: Date,
         default: ''
     },
+    returnDate: {
+        type: Date,
+        default: ''
+    },
     isWholeSale: {
         type: Boolean,
         default: false
