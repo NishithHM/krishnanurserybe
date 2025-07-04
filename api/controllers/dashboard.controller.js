@@ -233,6 +233,11 @@ exports.dahboardMetaData = async (req, res) => {
    
   const vendorPipeline = [
     {
+      $match: {
+        type: "NURSERY",
+      },
+    },
+    {
       $group:
         /**
          * _id: The id of the group.
@@ -310,6 +315,8 @@ exports.dahboardMetaData = async (req, res) => {
   resp.profit = resp.profit - _.get(resp, "roundOff", 0) - payments.payments
 
   resp.inventory = resp.underMaintenanceQuantity + resp.remainingQuantity
+
+  console.log(resp.investment, 'resp', vendorDevaition.deviation)
 
   resp.investment = resp.investment + vendorDevaition.deviation;
   // console.log(resp)
