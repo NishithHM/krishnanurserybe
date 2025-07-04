@@ -650,6 +650,8 @@ exports.returnPlant = async (req, res) => {
             let retId = String(trackerVal.number);
             billing.returnId = `RET_NUR_${retId}`;
             trackerVal.number = trackerVal.number + 1;
+
+            billing.returnDate = new Date();
             
             await trackerVal.save();
             await billing.save();
@@ -685,6 +687,7 @@ exports.fetchAllReturns = async(req, res) => {
             {
                 message: "successfully fetched data",
                 data: returns,
+                returnDate: billing.returnDate,
                 success: true
             }
         )
