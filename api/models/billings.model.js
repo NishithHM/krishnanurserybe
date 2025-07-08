@@ -218,6 +218,25 @@ const BillingHistory = new mongoose.Schema({
     },
     onlineAmount:{
         type: Number
+    },
+    returnPaymentDetails: {
+        paymentType: {
+            type: String,
+            enum: ['CASH', 'ONLINE', 'BOTH'],
+            // required: true
+        },
+        paymentInfo: {
+            type: String,
+            default: ''
+        },
+        cashAmount: {
+            type: Number,
+            default: 0
+        },
+        onlineAmount: {
+            type: Number,
+            default: 0
+        }
     }
 }, {
     timestamps: true

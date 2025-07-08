@@ -602,7 +602,7 @@ const updateProcurementQty = async(procurementId, quantity) => {
 
 exports.returnPlant = async (req, res) => {
     try{
-        const {invoiceId, items: returnItems} = req.body;
+        const {invoiceId, items: returnItems, paymentDetails} = req.body;
         const billing = await Billing.findById(invoiceId);
         const trackerVal = await Tracker.findOne({name: "returnNursery"});
 
@@ -652,7 +652,11 @@ exports.returnPlant = async (req, res) => {
             trackerVal.number = trackerVal.number + 1;
 
             billing.returnDate = new Date();
-            
+            billing.returnPaymentDetails.paymentType = paymentDetails.paymentType;
+            billing.returnPaymentDetails.paymentInfo = paymentDetails.paymentInfo;
+            billing.returnPaymentDetails.cashAmount = paymentDetails.cashAmount;
+            billing.returnPaymentDetails.onlineAmount = paymentDetails.onlineAmount;
+
             await trackerVal.save();
             await billing.save();
 
@@ -688,6 +692,7 @@ exports.fetchAllReturns = async(req, res) => {
                 message: "successfully fetched data",
                 data: returns,
                 returnDate: billing.returnDate,
+                paymentDetails: billing.returnPaymentDetails,
                 success: true
             }
         )
