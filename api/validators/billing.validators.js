@@ -56,6 +56,12 @@ exports.getBillingHistory = Joi.object().keys({
 exports.returnInvoiceSchema = Joi.object().keys(
     {
         invoiceId: Joi.string(),
-        items: Joi.array()
+        items: Joi.array(),
+        paymentDetails: Joi.object().keys({
+            paymentType: Joi.string().valid('CASH', 'ONLINE', 'BOTH').required(),
+            paymentInfo: Joi.string().allow(null, ''),
+            cashAmount: Joi.number().min(0).required(),
+            onlineAmount: Joi.number().min(0).required(),
+        })
     }
 )
