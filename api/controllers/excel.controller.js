@@ -299,7 +299,8 @@ exports.downloadPaymentExcel = async (req, res) => {
             onlineAmount:1,
             type:1,
             comments:1,
-            phoneNumber:1
+            phoneNumber:1,
+            date:1,
         }
     }
 

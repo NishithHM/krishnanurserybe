@@ -83,7 +83,7 @@ exports.addPayment = async (req, res) => {
 
     paymentData.amount = amount;
     paymentData.businessType = businessType;
-    paymentData.date = date
+    paymentData.date = date || dayjs().format("YYYY-MM-DD");
     if(type==='VENDOR'){
       paymentData.vendorId = vendorId;
       const vendor = await vendorModel.findById(vendorId);
@@ -158,11 +158,14 @@ exports.getPaymentHistory = async (req, res) => {
           $lt: dayjs(endDate, "YYYY-MM-DD").add(1, "day").toDate(),
         };
       }
+      const searchNumber = parseInt(search, 10) || 1;
       if (search) {
         match.$or = [
           { name: { $regex: search, $options: "i" } },
-          { invoiceId: { $regex: search, $options: "i" } },
-          { customerNumber: search },
+          { comment: { $regex: search, $options: "i" } },
+          { phoneNumber: search },
+          { contact: search },
+          { amount: searchNumber },
         ];
       }
     const pagination = [
