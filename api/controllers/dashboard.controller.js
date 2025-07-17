@@ -358,7 +358,7 @@ exports.dahboardMetaData = async (req, res) => {
   if(mode==="payments"){
     resp.profit = resp.sales - resp?.TOTAL?.payments - _.get(resp, "roundOff", 0)
   }else{
-    resp.profit = resp.sales - resp.investment - _.get(resp, "roundOff", 0) 
+    resp.profit = resp.sales - resp.investment
   }
   resp.inventory = resp.underMaintenanceQuantity + resp.remainingQuantity
 
