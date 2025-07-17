@@ -22,6 +22,8 @@ const AgriProcurementModel = require("../api/models/AgriProcurement.model")
 const agriVariantsModel = require("../api/models/agriVariants.model");
 const paymentModel = require("../api/models/payment.model");
 const customerModel = require("../api/models/customer.model")
+const { ObjectId } = require("mongodb")
+const { caluclateMetaData } = require("../crons/dailyCron")
 
 const addInvoiceToProcHistory = async () => {
   const res = await ProcurementHistory.updateMany(
@@ -375,8 +377,26 @@ const sectionImport = async(sheetName)=>{
         },
       }
     );
+
+const removeBillingAgri = async (async)=>{
+    const res = await billingsModel.deleteMany({type:"AGRI"})
+    console.log(res)
+}
+
+const caluclateMetaDataAll = async()=>{
+    const dates = []
+    let minDate = dayjs('2024-07-01', 'YYYY-MM-DD').toDate()
+    const maxDate = dayjs('2025-07-17', 'YYYY-MM-DD').toDate()
+    while(minDate<maxDate){
+        dates.push(minDate)
+        minDate = dayjs(minDate).add(1, 'day').toDate()
     }
-  })
+    console.log(dates.length)
+    for(let i=0; i<dates.length; i++){
+        await caluclateMetaData(dates[i])
+        console.log('added-date', dates[i], i)
+    }
+  }
 }
 
 
@@ -451,7 +471,9 @@ const migrateProcurementPayments = async () => {
   const procurementHistoryModel = require('../api/models/procurementHistory.model')
   const paymentModel = require('../api/models/payment.model')
 
-  const procurements = await procurementHistoryModel.find({ totalPrice: { $gt: 0 }, status:"VERIFIED" })
+  // const procurements = await procurementHistoryModel.find({ totalPrice: { $gt: 0 }, status:"VERIFIED" })
+  const procurements = await procurementHistoryModel.find({ _id:{$in:[new ObjectId('6663e80b8f6b2ba95ff8760d'), new ObjectId('64b0d42a7118f6e9b5d9d879')]}})
+
   console.log(procurements.length)
 
   for (const procurement of procurements) {
@@ -551,6 +573,7 @@ const startScripts =async()=>{
     // await updateDate()
     // await caluclateMetaDataAll()
    await excelImport("Plant Info")
+  //  await excelImport("Plant Info")
       // await sectionImport('Section')
     // console.log('done')
 
