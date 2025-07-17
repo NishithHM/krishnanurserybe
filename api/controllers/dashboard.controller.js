@@ -356,7 +356,7 @@ exports.dahboardMetaData = async (req, res) => {
   const resp = { ...metaData[0], ...payments, ...quantity[0], ...roundOffs[0], plants: plantsData, variants, ...percentages }
   resp.sales = resp.sales - _.get(resp, "roundOff", 0)
   if(mode==="payments"){
-    resp.profit = resp.sales - resp.TOTAL.payments - _.get(resp, "roundOff", 0)
+    resp.profit = resp.sales - resp?.TOTAL?.payments - _.get(resp, "roundOff", 0)
   }else{
     resp.profit = resp.sales - resp.investment - _.get(resp, "roundOff", 0) 
   }
