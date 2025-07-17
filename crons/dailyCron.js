@@ -296,19 +296,35 @@ exports.caluclateMetaData = async (currentDate) => {
           $gte: prevDate,
           $lt: currentDate,
         },
-        type:{$nin:["CAPITAL", "VENDOR"]},
+        type:{$nin:["CAPITAL"]},
         businessType: "NURSERY"
       }
     },
     {
       $group:
         {
-          _id: "$date",
+          _id: {date:"$date", type:"$type"},
           amount: {
             $sum: "$amount",
           },
+          cashAmount: {
+            $sum: "$cashAmount",
+          },
+          onlineAmount: {
+            $sum: "$onlineAmount",
+          }
         },
     },
+    {
+    $project: {
+      _id: 0,
+      paymentType: "$_id.type",
+      date: "$_id.date",
+      amount: 1,
+      cashAmount: 1,
+      onlineAmount: 1
+    }
+  }
   ]
   
   const roundOffPipeline = [
