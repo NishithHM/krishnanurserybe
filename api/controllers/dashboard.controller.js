@@ -4,11 +4,10 @@ const procurmentModel = require("../models/procurment.model")
 const { default: mongoose } = require("mongoose")
 const _ = require('lodash')
 const vendorModel = require("../models/vendor.model")
-
 exports.dahboardMetaData = async (req, res) => {
-  const { startDate, endDate, categories, plants } = req.body
-  const sDate = dayjs(startDate, 'YYYY-MM-DD').startOf('day').toDate()
-  const eDate = dayjs(endDate, 'YYYY-MM-DD').endOf('day').toDate()
+  const { startDate, endDate, categories, plants, mode="plants" } = req.body
+  const sDate = dayjs(startDate, 'YYYY-MM-DD').startOf('day').add(-330).toDate()
+  const eDate = dayjs(endDate, 'YYYY-MM-DD').endOf('day').add(-330).toDate()
   let plantIds = [], categoryIds = []
   const otherMetaMatch = {}, otherProcMatch = {}
   if (plants?.length) {
@@ -199,12 +198,50 @@ exports.dahboardMetaData = async (req, res) => {
     },
     {
       $group: {
-        _id: null,
+        _id: "$paymentType",
         payments: {
           $sum: "$amount",
         },
+        cashAmount: {
+          $sum: "$cashAmount"
+        },
+        onlineAmount: {
+          $sum: "$onlineAmount"
+        }
       },
     },
+    {
+      $group: {
+        _id: null,
+        values: {
+          $push: {
+            k: "$_id",
+            v: {
+              payments: "$payments",
+              cashAmount: "$cashAmount",
+              onlineAmount: "$onlineAmount"
+            }
+          }
+        }
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        paymentSummary: {
+          $arrayToObject: "$values"
+        }
+      }
+    },
+    {
+      $replaceRoot:
+      /**
+       * replacementDocument: A document or string.
+       */
+      {
+        newRoot: "$paymentSummary"
+      }
+    }
   ]
   const quantityPipeline = [
     {
@@ -229,8 +266,8 @@ exports.dahboardMetaData = async (req, res) => {
       },
     },
   ]
-  console.log(JSON.stringify(pipelinePayments))
-   
+  console.log('pipeline-payments', JSON.stringify(pipelinePayments))
+
   const vendorPipeline = [
     {
       $match: {
@@ -239,19 +276,19 @@ exports.dahboardMetaData = async (req, res) => {
     },
     {
       $group:
-        /**
-         * _id: The id of the group.
-         * fieldN: The first field name.
-         */
-        {
-          _id: null,
-          deviation: {
-            $sum: "$deviation",
-          },
+      /**
+       * _id: The id of the group.
+       * fieldN: The first field name.
+       */
+      {
+        _id: null,
+        deviation: {
+          $sum: "$deviation",
         },
+      },
     },
   ]
-  
+
   const metaData = await metaDataModel.aggregate(pipelineMeta)
   const plantsData = await metaDataModel.aggregate(pipelinePlants)
   const metaPayments = await metaDataModel.aggregate(pipelinePayments)
@@ -275,10 +312,10 @@ exports.dahboardMetaData = async (req, res) => {
         roundOff: {
           $sum: "$totalRoundOff",
         },
-        cashAmount:{
+        cashAmount: {
           $sum: "$totalCashAmount"
         },
-        onlineAmount:{
+        onlineAmount: {
           $sum: "$totalOnlineAmount"
         }
       },
@@ -298,27 +335,37 @@ exports.dahboardMetaData = async (req, res) => {
   console.log(JSON.stringify(roundOffPipeline))
   const quantity = await procurmentModel.aggregate(quantityPipeline)
   console.log(variants, 'variants')
-  
-  const timeData = await caluclateGraphs(startDate, endDate, categories, plants)
-  console.log(timeData)
+
+  const timeData = await caluclateGraphs(startDate, endDate, categories, plants, mode)
+  console.log('time_data', timeData)
   const percentages = caluclatePercentagesAll(timeData, startDate, endDate)
-  let payments = {payments:0}
-  let vendorDevaition = {deviation: 0}
-  if(plantIds.length===0){
+  let payments = { payments: 0 }
+  let vendorDevaition = { deviation: 0 }
+  if (plantIds.length === 0) {
     vendorDevaition = vendors[0]
   }
-  if(!_.isEmpty(metaPayments)){
+  if (!_.isEmpty(metaPayments)) {
     payments = metaPayments[0]
+    console.log(payments, 'payments', payments.VENDOR)
+    payments.TOTAL = {
+      payments: payments?.VENDOR?.payments + payments?.SALARY?.payments + payments?.OTHERS?.payments,
+      cashAmount: payments?.VENDOR?.cashAmount + payments?.SALARY?.cashAmount + payments?.OTHERS?.cashAmount,
+      onlineAmount: payments?.VENDOR?.onlineAmount + payments?.SALARY?.onlineAmount + payments?.OTHERS?.onlineAmount
+    }
   }
   const resp = { ...metaData[0], ...payments, ...quantity[0], ...roundOffs[0], plants: plantsData, variants, ...percentages }
   resp.sales = resp.sales - _.get(resp, "roundOff", 0)
-  resp.profit = resp.profit - _.get(resp, "roundOff", 0) - payments.payments
-
+  if(mode==="payments"){
+    resp.profit = resp.sales - resp.TOTAL.payments - _.get(resp, "roundOff", 0)
+  }else{
+    resp.profit = resp.sales - resp.investment - _.get(resp, "roundOff", 0) 
+  }
   resp.inventory = resp.underMaintenanceQuantity + resp.remainingQuantity
 
   console.log(resp.investment, 'resp', vendorDevaition.deviation)
 
-  resp.investment = resp.investment + vendorDevaition.deviation;
+  resp.investment = resp.investment;
+  resp.vendorDeviation = vendorDevaition.deviation;
   // console.log(resp)
 
   res.json(resp)
@@ -330,7 +377,7 @@ exports.dahboardMetaGraph = async (req, res) => {
   res.json(data)
 }
 
-const caluclateGraphs = async (startDate, endDate, categories, plants) => {
+const caluclateGraphs = async (startDate, endDate, categories, plants, mode) => {
   const sDate = dayjs(startDate, 'YYYY-MM').startOf('month').toDate()
   const eDate = dayjs(endDate, 'YYYY-MM').endOf('month').toDate()
   let plantIds = [], categoryIds = []
@@ -390,7 +437,7 @@ const caluclateGraphs = async (startDate, endDate, categories, plants) => {
         roundOff: {
           $sum: "$totalRoundOff"
         },
-        wastages:{
+        wastages: {
           $sum: "$damages"
         },
       },
@@ -419,20 +466,131 @@ const caluclateGraphs = async (startDate, endDate, categories, plants) => {
         sales: {
           $subtract: plantIds.length === 0 && categoryIds.length === 0 ? ["$sales", "$roundOff"] : ["$sales", 0],
         },
-        inventory:{
-          $add:["$underMaintenanceQuantity", "$remainingQuantity"]
-        }
+        inventory: {
+          $add: ["$underMaintenanceQuantity", "$remainingQuantity"]
+        },
+        vendorAmount: 0,
+        salaryAmount: 0,
+        othersAmount: 0,
+        vendorCashAmount: 0,
+        salaryCashAmount: 0,
+        othersCashAmount: 0,
+        vendorOnlineAmount: 0,
+        salaryOnlineAmount: 0,
+        othersOnlineAmount: 0
       },
 
     },
   ]
 
+  const paymentsPipeline = [
+    {
+      $match: {
+        date: { $gte: sDate, $lt: eDate },
+        type: "PAYMENT"
+      }
+    },
+    {
+      $sort: {
+        date: 1
+      }
+    },
+    {
+      $group: {
+        _id: {
+          year: {
+            $year: "$date"
+          },
+          month: {
+            $month: "$date"
+          },
+          paymentType: "$paymentType"
+        },
+        payments: {
+          $sum: "$amount"
+        },
+        cashAmount: {
+          $sum: "$cashAmount"
+        },
+        onlineAmount: {
+          $sum: "$onlineAmount"
+        }
+      }
+    },
+    {
+      $addFields: {
+        month: {
+          $concat: [
+            {
+              $toString: "$_id.year"
+            },
+            "/",
+            {
+              $toString: "$_id.month"
+            }
+          ]
+        },
+        paymentType: "$_id.paymentType",
+        "_id.paymentType": 0
+
+      }
+    },
+    {
+      $group:
+      /**
+       * _id: The id of the group.
+       * fieldN: The first field name.
+       */
+      {
+        _id: "$_id",
+        data: {
+          $push: "$$ROOT"
+        }
+      }
+    }
+  ]
+
   console.log(JSON.stringify(pipeline), 'graphs')
 
   const metaData = await metaDataModel.aggregate(pipeline)
+  const paymentData = await metaDataModel.aggregate(paymentsPipeline)
+  const newData = _.cloneDeep(metaData)
 
-  return fillMonths(metaData, startDate, endDate)
-  // return metaData
+  paymentData.forEach(ele => {
+    const { year, month } = ele._id
+    const monthStr = `${year}/${month}`
+
+    console.log('monthStr', monthStr)
+    const ind = newData.findIndex(ele => ele.month === monthStr)
+    const updaData = {}
+    ele.data.forEach(data => {
+      if (data.paymentType === "VENDOR") {
+        updaData.vendorAmount = data.payments
+        updaData.vendorCashAmount = data.cashAmount
+        updaData.vendorOnlineAmount = data.onlineAmount
+      } else if (data.paymentType === "SALARY") {
+        updaData.salaryAmount = data.payments
+        updaData.salaryCashAmount = data.cashAmount
+        updaData.salaryOnlineAmount = data.onlineAmount
+      } else if (data.paymentType === "OTHERS") {
+        updaData.othersAmount = data.payments
+        updaData.othersCashAmount = data.cashAmount
+        updaData.othersOnlineAmount = data.onlineAmount
+      }
+      if(mode==="payments"){
+        updaData.profit = newData[ind].sales - updaData.vendorAmount - updaData.salaryAmount - updaData.othersAmount
+      }
+    })
+    if (ind !== -1) {
+
+      newData[ind] = {
+        ...newData[ind],
+        ...updaData
+      }
+      console.log('update_data', updaData, ind, newData[ind])
+    }
+  })
+  return fillMonths(newData, startDate, endDate)
 
 }
 
@@ -454,7 +612,16 @@ const fillMonths = (metaData, startDate, endDate) => {
     "roundOff": 0,
     "profit": 0,
     "inventory": 0,
-    "wastages": 0
+    "wastages": 0,
+    "vendorAmount": 0,
+    "salaryAmount": 0,
+    "othersAmount": 0,
+    "vendorCashAmount": 0,
+    "salaryCashAmount": 0,
+    "othersCashAmount": 0,
+    "vendorOnlineAmount": 0,
+    "salaryOnlineAmount": 0,
+    "othersOnlineAmount": 0
   }
   const finalMeta = monhts.map(ele => {
     const month = metaData.filter(data => data.month === ele)
@@ -469,24 +636,24 @@ const fillMonths = (metaData, startDate, endDate) => {
 
 
 const caluclatePercentagesAll = (data, startDate, endDate) => {
-  const keys = ['payments', 'sales', 'saleQuantity', 'investment', 'profit', 'wastages']
+  const keys = ['payments', 'sales', 'saleQuantity', 'investment', 'profit', 'wastages', 'vendorAmount', 'salaryAmount', 'othersAmount', 'vendorCashAmount', 'salaryCashAmount', 'othersCashAmount', 'vendorOnlineAmount', 'salaryOnlineAmount', 'othersOnlineAmount']
   const sDate = dayjs(startDate, 'YYYY-MM').startOf('month')
   const eDate = dayjs(endDate, 'YYYY-MM').endOf('month')
-  const percentages ={}
-  keys.map(ele=>{
+  const percentages = {}
+  keys.map(ele => {
     const percentage = caluclatePercentageEach(data, ele, eDate.diff(sDate, 'months'))
-    percentages[ele+'_perecntage'] = percentage
+    percentages[ele + '_perecntage'] = percentage
   })
   return percentages
-  
+
 }
 
 const caluclatePercentageEach = (data, key, duration) => {
   let values = data.reduce((acc, val) => acc + val[key], 0)
-  const current =  _.last(data)[key]
+  const current = _.last(data)[key]
   values = values - current
-  const avg = values/duration ===0 ? 1 : values/duration
-  console.log(avg,key, current, duration,'percentage')
-  const percentage = ((current-avg) * 100)/Math.abs(avg)
+  const avg = values / duration === 0 ? 1 : values / duration
+  console.log(avg, key, current, duration, 'percentage')
+  const percentage = ((current - avg) * 100) / Math.abs(avg)
   return percentage
 }
