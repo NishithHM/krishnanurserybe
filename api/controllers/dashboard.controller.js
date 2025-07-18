@@ -6,8 +6,8 @@ const _ = require('lodash')
 const vendorModel = require("../models/vendor.model")
 exports.dahboardMetaData = async (req, res) => {
   const { startDate, endDate, categories, plants, mode="plants" } = req.body
-  const sDate = dayjs(startDate, 'YYYY-MM-DD').startOf('day').add(-330, 'minutes').toDate()
-  const eDate = dayjs(endDate, 'YYYY-MM-DD').endOf('day').add(-330, 'minutes').toDate()
+  const sDate = dayjs(startDate, 'YYYY-MM-DD').startOf('day').toDate()
+  const eDate = dayjs(endDate, 'YYYY-MM-DD').endOf('day').toDate()
   let plantIds = [], categoryIds = []
   const otherMetaMatch = {}, otherProcMatch = {}
   if (plants?.length) {
