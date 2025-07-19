@@ -32,6 +32,10 @@ exports.addPayment = async (req, res) => {
       date
     } = req.body;
     const role = req?.token?.role;
+    const createdBy = {
+            _id: req?.token?.id,
+            name: req?.token?.name
+        }
     let broker;
     if (invoiceId) {
       paymentData.invoiceId = invoiceId;
@@ -91,6 +95,7 @@ exports.addPayment = async (req, res) => {
       vendor.deviation = vendor.deviation - amount
       await vendor.save()
     }
+    paymentData.createdBy = createdBy;
     const payment = new Payment({ ...paymentData });
     await payment.save();
 
