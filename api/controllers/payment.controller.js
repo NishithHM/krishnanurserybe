@@ -163,7 +163,7 @@ exports.getPaymentHistory = async (req, res) => {
           $lt: dayjs(endDate, "YYYY-MM-DD").add(1, "day").toDate(),
         };
       }
-      const searchNumber = parseInt(search, 10) || 1;
+      const searchNumber = parseInt(search, 10) || null;
       if (search) {
         match.$or = [
           { name: { $regex: search, $options: "i" } },
