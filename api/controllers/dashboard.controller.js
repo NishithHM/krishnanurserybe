@@ -6,8 +6,13 @@ const _ = require('lodash')
 const vendorModel = require("../models/vendor.model")
 exports.dahboardMetaData = async (req, res) => {
   const { startDate, endDate, categories, plants, mode="plants" } = req.body
-  const sDate = dayjs(startDate, 'YYYY-MM-DD').startOf('day').toDate()
-  const eDate = dayjs(endDate, 'YYYY-MM-DD').endOf('day').toDate()
+  const sDateDjs = dayjs(startDate, 'YYYY-MM-DD').startOf('day')
+  const eDateDjs = dayjs(endDate, 'YYYY-MM-DD').endOf('day') 
+  const sDate = sDateDjs.toDate()
+  const eDate = eDateDjs.toDate()
+  const daysDiff = eDateDjs.diff(sDateDjs, 'days')
+  const sDateForGraph = sDateDjs.subtract(daysDiff, 'days').startOf('day').format('YYYY-MM-DD')
+  const eDateForGraph = eDateDjs.subtract(daysDiff, 'days').endOf('day').format('YYYY-MM-DD')
   let plantIds = [], categoryIds = []
   const otherMetaMatch = {}, otherProcMatch = {}
   if (plants?.length) {
@@ -336,9 +341,13 @@ exports.dahboardMetaData = async (req, res) => {
   const quantity = await procurmentModel.aggregate(quantityPipeline)
   console.log(variants, 'variants')
 
-  const timeData = await caluclateGraphs(startDate, endDate, categories, plants, mode)
-  console.log('time_data', timeData)
-  const percentages = caluclatePercentagesAll(timeData, startDate, endDate)
+  const timeDataPrev = await caluclateGraphs(sDateForGraph, eDateForGraph, categories, plants, mode)
+  const timeDataCurrent = await caluclateGraphs(startDate, endDate, categories, plants, mode)
+
+  console.log('time_data', timeDataPrev, timeDataCurrent)
+  const percentages = caluclatePercentagesAll(timeDataPrev, timeDataCurrent)
+  console.log('percentages', percentages)
+
   let payments = { payments: 0 }
   let vendorDevaition = { deviation: 0 }
   if (plantIds.length === 0) {
@@ -560,7 +569,6 @@ const caluclateGraphs = async (startDate, endDate, categories, plants, mode) => 
     const { year, month } = ele._id
     const monthStr = `${year}/${month}`
 
-    console.log('monthStr', monthStr)
     const ind = newData.findIndex(ele => ele.month === monthStr)
     const updaData = {}
     ele.data.forEach(data => {
@@ -587,7 +595,6 @@ const caluclateGraphs = async (startDate, endDate, categories, plants, mode) => 
         ...newData[ind],
         ...updaData
       }
-      console.log('update_data', updaData, ind, newData[ind])
     }
   })
   return fillMonths(newData, startDate, endDate)
@@ -635,25 +642,22 @@ const fillMonths = (metaData, startDate, endDate) => {
 }
 
 
-const caluclatePercentagesAll = (data, startDate, endDate) => {
+const caluclatePercentagesAll = (dataPrev, dataCurrent) => {
   const keys = ['payments', 'sales', 'saleQuantity', 'investment', 'profit', 'wastages', 'vendorAmount', 'salaryAmount', 'othersAmount', 'vendorCashAmount', 'salaryCashAmount', 'othersCashAmount', 'vendorOnlineAmount', 'salaryOnlineAmount', 'othersOnlineAmount']
-  const sDate = dayjs(startDate, 'YYYY-MM').startOf('month')
-  const eDate = dayjs(endDate, 'YYYY-MM').endOf('month')
   const percentages = {}
   keys.map(ele => {
-    const percentage = caluclatePercentageEach(data, ele, eDate.diff(sDate, 'months'))
+    const percentage = caluclatePercentageEach(dataPrev, dataCurrent, ele)
     percentages[ele + '_perecntage'] = percentage
   })
   return percentages
 
 }
 
-const caluclatePercentageEach = (data, key, duration) => {
-  let values = data.reduce((acc, val) => acc + val[key], 0)
-  const current = _.last(data)[key]
-  values = values - current
-  const avg = values / duration === 0 ? 1 : values / duration
-  console.log(avg, key, current, duration, 'percentage')
-  const percentage = ((current - avg) * 100) / Math.abs(avg)
+const caluclatePercentageEach = (dataPrev, dataCurrent, key) => {
+  let valuesPrev = dataPrev.reduce((acc, val) => acc + val[key], 0)
+  let valuesCurrent = dataCurrent.reduce((acc, val) => acc + val[key], 0)
+  valuesPrev = valuesPrev - valuesCurrent
+  console.log(key, valuesCurrent, valuesPrev, 'percentage')
+  const percentage = ((valuesCurrent - valuesPrev) * 100) / Math.abs(valuesPrev)
   return percentage
 }

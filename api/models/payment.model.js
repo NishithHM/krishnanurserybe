@@ -60,7 +60,17 @@ const payments = new mongoose.Schema(
     },
     date:{
       type: Date
-    }
+    },
+    createdBy: {
+      _id: {
+        type: String,
+        required: true,
+      },
+      name: {
+        type: String,
+        required: true,
+      },
+    },
   },
   {
     timestamps: true,

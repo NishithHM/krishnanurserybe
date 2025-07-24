@@ -369,6 +369,7 @@ exports.getAllOrders = async (req, res) => {
         "descriptionSales",
         "vendorId",
         "orderId",
+        "invoice"
       ],
       procurement: [
         "_id",

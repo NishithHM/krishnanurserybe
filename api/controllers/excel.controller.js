@@ -318,8 +318,7 @@ exports.downloadPaymentExcel = async (req, res) => {
     const count = await paymentModel.countDocuments(query)
     console.log(procs.length,)
     await writeExcel(headers, procs, 'payments')
-    res.header("Content-Disposition",
-    "attachment; filename=payments.xls");
+    res.header("Content-Disposition", "attachment; filename=payments.xlsx");
     res.header("Content-Type","application/octet-stream")
     res.header("count",count)
     res.header("isNext",(count-1000*1) > 0)
