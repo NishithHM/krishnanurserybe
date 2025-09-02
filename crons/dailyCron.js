@@ -362,7 +362,7 @@ exports.caluclateMetaData = async (currentDate) => {
   console.log(paymentData, JSON.stringify(paymentPipeline))
   if(!isEmpty(paymentData)){
     paymentData.forEach(async payment=>{
-      const date = payment?._id
+      const date = payment?.date
       delete payment?._id
       const metaData = new MetaData({ ...payment, type:'PAYMENT', date:dayjs(date).startOf('day').toDate(), businessType: "NURSERY"})
       await metaData.save()

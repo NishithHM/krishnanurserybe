@@ -4,6 +4,8 @@ const ExcelJS = require('exceljs');
 const damageHistoryModel = require("../models/damageHistory.model");
 const procurementHistoryModel = require("../models/procurementHistory.model");
 const paymentModel = require("../models/payment.model");
+const procurementModel = require("../models/procurment.model");
+
 
 exports.downloadBillingExcel = async (req, res) => {
     const { pageNumber = 1, startDate, endDate, type="NURSERY" } = req.body
@@ -22,7 +24,9 @@ exports.downloadBillingExcel = async (req, res) => {
     { name: 'invoice id', key: 'invoiceId' }, 
     { name: 'billed date', key: 'billedDate' }, 
     { name: 'sold by', key: 'soldBy' }, 
-    { name: 'billed by', key: 'billedBy' }]
+    { name: 'billed by', key: 'billedBy' },
+    { name: 'comment', key: 'paymentInfo' }
+]
 
     const query = {
         billedDate: {
@@ -66,7 +70,8 @@ exports.downloadBillingExcel = async (req, res) => {
             cashAmount:1,
             "soldBy":  "$soldBy.name",
             "billedBy": "$billedBy.name",
-            "_id": 0
+            "_id": 0,
+            paymentInfo:1,
         }
     }
 
@@ -326,6 +331,35 @@ exports.downloadPaymentExcel = async (req, res) => {
     res.sendFile('payments.xlsx', { root: __dirname });
 }
 
+
+exports.downloadPlantsExcel = async (req, res) => {
+    const headers = [
+        { name: 'Sl Number', key: 'slNo' },
+        { name: 'Plant Name (English)', key: 'plantNameEn' },
+        { name: 'Plant Name (Kannada)', key: 'plantNameKa' },
+        { name: 'Current Stock', key: 'remainingQuantity' }
+    ];
+
+    const plants = await procurementModel.find({}, {
+        'names.en.name': 1,
+        'names.ka.name': 1,
+        remainingQuantity: 1,
+        _id: 0
+    });
+
+    const data = plants.map((plant, idx) => ({
+        slNo: idx + 1,
+        plantNameEn: plant.names?.en?.name || '',
+        plantNameKa: plant.names?.ka?.name || '',
+        remainingQuantity: plant.remainingQuantity ?? 0
+    }));
+    await writeExcel(headers, data, 'plants');
+
+    res.header("Content-Disposition", "attachment; filename=plants.xlsx");
+    res.header("Content-Type", "application/octet-stream");
+    res.sendFile('plants.xlsx', { root: __dirname });
+}
+
 const writeExcel = async (headers, json, name) => {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Sheet1');
@@ -360,4 +394,4 @@ const spreadJson = (json, headers,key)=>{
         }
     }
     return res
-}
+} 

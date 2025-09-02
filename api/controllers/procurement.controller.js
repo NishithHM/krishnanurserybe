@@ -9,7 +9,7 @@ const dayjs = require("dayjs");
 const uniq = require("lodash/uniq");
 const { handleMongoError, uploadFile, deleteFile } = require("../utils");
 const loggers = require("../../loggers");
-const { isEmpty, isNumber } = require("lodash");
+const { isEmpty, isNumber, create } = require("lodash");
 const { ObjectId } = require("mongodb");
 const Tracker = require("../models/tracker.model");
 
@@ -274,6 +274,10 @@ exports.verifyOrder = async (req, res) => {
 exports.uploadInvoiceToOrder = async (req, res) => {
   try {
     const { orderData, finalAmountPaid, onlineAmount, cashAmount, comments , id} = req.body;
+    const createdBy = {
+            _id: req?.token?.id,
+            name: req?.token?.name
+        }
     const finalInvoiceAmount = orderData.totalAmount;
     const keys = [];
     const paths = [];
@@ -311,7 +315,7 @@ exports.uploadInvoiceToOrder = async (req, res) => {
         const vendorData = await Vendor.findById(vendorId);
         vendorData.deviation = vendorData.deviation + currentTxnDeviation;
         await vendorData.save();
-        await updatePayment(vendorData, finalAmountPaid, cashAmount, onlineAmount, comments)
+        await updatePayment(vendorData, finalAmountPaid, cashAmount, onlineAmount, comments, createdBy)
         
         res.status(200).json({
           message: "invoice uploaded",
@@ -1268,7 +1272,7 @@ const updatePayment =async(vendor, amount, cashAmount, onlineAmount, comment)=>{
   }else if (onlineAmount>0){
     type="ONLINE"
   }
-  const payment = new Payment({vendorId: vendor._id, name: vendor?.name, amount, cashAmount, onlineAmount, type:'VENDOR', phoneNumber: vendor.contact, comment, transferType: type, businessType:'NURSERY'})
+  const payment = new Payment({vendorId: vendor._id, name: vendor?.name, amount, cashAmount, onlineAmount, type:'VENDOR', phoneNumber: vendor.contact, comment, transferType: type, businessType:'NURSERY', createdBy});
   await payment.save()
   const capital = await Tracker.findOne({name: 'capital'});
   capital.number = capital.number - parseInt(amount, 10)

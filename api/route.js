@@ -52,7 +52,7 @@ const { getAgriItemDetials, getAgriItemDetails, agriAddToCart, updateAgriCart, c
 const { getAgriBillingDataSchema, agriAddToCartSchema, updateAgriCartSchema, confirmAgriCartSchema } = require('./validators/agriBilling.validator');
 const { metaDataValidator, metaGraphValidator } = require('./validators/dashboard.validator');
 const { dahboardMetaData, dahboardMetaGraph } = require('./controllers/dashboard.controller');
-const { downloadBillingExcel, downloadWasteMgmtExcel, downloadOrderMgmtExcel, downloadPaymentExcel } = require('./controllers/excel.controller');
+const { downloadBillingExcel, downloadWasteMgmtExcel, downloadOrderMgmtExcel, downloadPaymentExcel, downloadPlantsExcel } = require('./controllers/excel.controller');
 const { billingExcelValidator, wasteMgmtExcelValidator, orderMgmtExcelValidator, paymentExcelValidator } = require('./validators/excel.validator');
 const { addSectionValidator } = require('./validators/section.validator');
 const { addSection, getSections, getPlantsFromSection } = require('./controllers/section.controller');
@@ -194,6 +194,7 @@ router.get('/api/excel/billing', [authWall(['admin', 'procurement', 'sales']), p
 router.get('/api/excel/waste-mgmt', [authWall(['admin', 'procurement', 'sales']), paramsToBody(['pageNumber', 'isCount', 'startDate', 'endDate'], 'query'), bodyValidator(wasteMgmtExcelValidator)], downloadWasteMgmtExcel)
 router.get('/api/excel/order-mgmt', [authWall(['admin', 'procurement', 'sales']), paramsToBody(['pageNumber', 'isCount', 'startDate', 'endDate'], 'query'), bodyValidator(orderMgmtExcelValidator)], downloadOrderMgmtExcel)
 router.get('/api/excel/payments', [authWall(['admin', 'procurement', 'sales']), paramsToBody(['pageNumber', 'isCount', 'startDate', 'endDate', 'type'], 'query'), bodyValidator(paymentExcelValidator)], downloadPaymentExcel)
+router.get('/api/excel/plants', [authWall(['admin', 'procurement', 'sales'])], downloadPlantsExcel);
 
 // plant_info
 router.post('/api/customer/plant-info/add', [authWall('admin'), bodyValidator(addPlantInfoValidator)], addPlantInfo)
