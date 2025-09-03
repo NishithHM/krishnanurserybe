@@ -1265,7 +1265,7 @@ exports.uploadPhamplet=async(req, res)=>{
     message: "Successfully Added",
   });
 }
-const updatePayment =async(vendor, amount, cashAmount, onlineAmount, comment)=>{
+const updatePayment =async(vendor, amount, cashAmount, onlineAmount, comment, createdBy)=>{
   let type = "CASH"
   if(cashAmount>0 && onlineAmount>0){
     type = 'BOTH'
