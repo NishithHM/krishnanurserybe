@@ -5,9 +5,7 @@ const Joi = require('joi')
 exports.requestProcurementSchema = Joi.object({
   plants: Joi.array().items(
     Joi.object({
-      nameInEnglish: Joi.string()
-        .pattern(new RegExp(/^[A-Za-z\s]+$/)) // only letters and spaces
-        .required(),
+      nameInEnglish: Joi.string().pattern(new RegExp(/[A-Za-z]/)).required(),
       totalQuantity: Joi.number().min(1).required(),
       id: Joi.string().optional()
     })
@@ -59,9 +57,7 @@ exports.updateDeliveryProcurementSchema = Joi.object().keys({
 exports.placeOrderSchema = Joi.object({
   plants: Joi.array().items(
     Joi.object({
-      nameInEnglish: Joi.string()
-        .pattern(/^[A-Za-z\s]+$/) // allow letters and spaces
-        .required(),
+      nameInEnglish: Joi.string().pattern(new RegExp(/[A-Za-z]/)).required(),
       nameInKannada: Joi.string().allow("").optional(),
       totalQuantity: Joi.number().min(1).required(),
       totalPrice: Joi.number().min(0).required(),
@@ -75,7 +71,7 @@ exports.placeOrderSchema = Joi.object({
     })
   ).min(1).required(),
 
-  vendorName: Joi.string().required(),
+  vendorName: Joi.string().optional(), // ✅ was required, now optional
   vendorContact: Joi.string()
     .pattern(/^[0-9]{10}$/) // 10 digit number
     .required(),
@@ -85,10 +81,14 @@ exports.placeOrderSchema = Joi.object({
   id: Joi.string().optional(),
   currentPaidAmount: Joi.number().min(0).required(),
   expectedDeliveryDate: Joi.string()
-    .pattern(/\d{4}-\d{2}-\d{2}/)
+    .isoDate() // ✅ accepts full ISO date string like 2025-09-17T18:30:00.000Z
     .required(),
-  orderId: Joi.string().required()
+  orderId: Joi.string().optional(), // ✅ was required, now optional
+
+  totalPrice: Joi.number().min(0).optional(), // ✅ added to match your payload
+  totalQuantity: Joi.number().min(0).optional() // ✅ added to match your payload
 });
+
 
 
 exports.updateProcurementSchema = Joi.object().keys({
