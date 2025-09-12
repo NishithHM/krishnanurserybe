@@ -71,7 +71,7 @@ exports.placeOrderSchema = Joi.object({
     })
   ).min(1).required(),
 
-  vendorName: Joi.string().optional(), // ✅ was required, now optional
+  vendorName: Joi.string().optional(), // was required, now optional
   vendorContact: Joi.string()
     .pattern(/^[0-9]{10}$/) // 10 digit number
     .required(),
@@ -80,11 +80,11 @@ exports.placeOrderSchema = Joi.object({
   id: Joi.number().optional(),
   currentPaidAmount: Joi.number().min(0).required(),
   expectedDeliveryDate: Joi.string()
-    .isoDate() // ✅ accepts full ISO date string like 2025-09-17T18:30:00.000Z
+    .isoDate() 
     .required(),
-  orderId: Joi.number().optional(), // ✅ was required, now optional
-  totalPrice: Joi.number().min(0).optional(), // ✅ added to match your payload
-  totalQuantity: Joi.number().min(0).optional() // ✅ added to match your payload
+  orderId: Joi.number().optional(), 
+  totalPrice: Joi.number().min(0).optional(), 
+  totalQuantity: Joi.number().min(0).optional()
 });
 
 
