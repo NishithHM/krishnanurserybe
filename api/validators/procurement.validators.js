@@ -71,9 +71,9 @@ exports.placeOrderSchema = Joi.object({
     })
   ).min(1).required(),
 
-  vendorName: Joi.string().optional(), // was required, now optional
+  vendorName: Joi.string().optional(),
   vendorContact: Joi.string()
-    .pattern(/^[0-9]{10}$/) // 10 digit number
+    .pattern(/^[0-9]{10}$/) 
     .required(),
   vendorId: Joi.number().optional(),
   description: Joi.string().max(1000).required(),
