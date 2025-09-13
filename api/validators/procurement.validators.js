@@ -75,16 +75,16 @@ exports.placeOrderSchema = Joi.object({
   vendorContact: Joi.string()
     .pattern(/^[0-9]{10}$/) 
     .required(),
-  vendorId: Joi.number().optional(),
+  vendorId: Joi.string().optional(),
   description: Joi.string().max(1000).required(),
-  id: Joi.number().optional(),
   currentPaidAmount: Joi.number().min(0).required(),
   expectedDeliveryDate: Joi.string()
     .isoDate() 
     .required(),
   orderId: Joi.number().optional(), 
   totalPrice: Joi.number().min(0).optional(), 
-  totalQuantity: Joi.number().min(0).optional()
+  totalQuantity: Joi.number().min(0).optional(),
+  id: Joi.string().optional(),
 });
 
 
