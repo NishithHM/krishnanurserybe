@@ -14,95 +14,100 @@ const { ObjectId } = require("mongodb");
 const Tracker = require("../models/tracker.model");
 
 exports.requestOrder = async (req, res) => {
-  const { nameInEnglish, totalQuantity, id, descriptionSales, ownProduction } =
-    req.body;
-  const names = {
-    en: {
-      name: nameInEnglish,
-    },
-    ka: {
-      name: "",
-    },
-  };
+  const { plants, descriptionSales, ownProduction } = req.body; // changed: we now take plants[]
+
   const vendorData = {};
   const requestedBy = {
     _id: req?.token?.id,
     name: req?.token?.name,
   };
+
   if (ownProduction) {
     const vData = await Vendor.findOne({ isDefault: true });
-    vendorData.vendorName = vData.name;
-    vendorData.vendorContact = vData.contact;
-    vendorData.vendorId = vData._id.toString();
-  }
-  let procurement;
-  let procurementHis;
-  if (id) {
-    procurement = await Procurement.findById(id);
-  } else {
-    procurement = new Procurement({ names, remainingQuantity: 0 });
-  }
-  try {
-    if (id) {
-      procurementHis = new ProcurementHistory({
-        procurementId: procurement._id,
-        names: procurement.names,
-        requestedQuantity: totalQuantity,
-        requestedBy,
-        status: "REQUESTED",
-        descriptionSales,
-        ...vendorData,
-      });
-    } else {
-      const res = await procurement.save();
-      procurementHis = new ProcurementHistory({
-        procurementId: res._id,
-        names,
-        requestedQuantity: totalQuantity,
-        requestedBy,
-        descriptionSales,
-        status: "REQUESTED",
-        ...vendorData,
-      });
+    if (vData) {
+      vendorData.vendorName = vData.name;
+      vendorData.vendorContact = vData.contact;
+      vendorData.vendorId = vData._id.toString();
     }
-    await procurementHis.save();
-    res.status(201).json({
-      message: "Successfully Requested",
+  }
+
+  try {
+    // iterate over each plant in plants[]
+    for (const plant of plants) {
+      const { nameInEnglish, totalQuantity, id } = plant;
+
+      const names = {
+        en: { name: nameInEnglish },
+        ka: { name: "" },
+      };
+
+      let procurement;
+      let procurementHis;
+
+      if (id) {
+        procurement = await Procurement.findById(id);
+        if (!procurement) {
+          continue; // skip if invalid id
+        }
+      } else {
+        procurement = new Procurement({ names, remainingQuantity: 0 });
+      }
+
+      if (id) {
+        // updating existing procurement
+        procurementHis = new ProcurementHistory({
+          procurementId: procurement._id,
+          names: procurement.names,
+          requestedQuantity: totalQuantity,
+          requestedBy,
+          status: "REQUESTED",
+          descriptionSales,
+          ...vendorData,
+        });
+      } else {
+        const savedProcurement = await procurement.save(); // fixed name conflict
+        procurementHis = new ProcurementHistory({
+          procurementId: savedProcurement._id,
+          names,
+          requestedQuantity: totalQuantity,
+          requestedBy,
+          descriptionSales,
+          status: "REQUESTED",
+          ...vendorData,
+        });
+      }
+
+      await procurementHis.save();
+    }
+
+    return res.status(201).json({
+      message: "Successfully Requested for all plants",
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     loggers.info(`addNewProcurement-error, ${error}`);
     const err = handleMongoError(error);
-    res.status(500).send(err);
+    return res.status(500).send(err);
   }
 };
 
 exports.placeOrder = async (req, res) => {
+  // changed: destructure plants and common fields
   const {
-    nameInEnglish,
-    totalQuantity,
-    nameInKannada,
+    plants,
     vendorContact,
     vendorName,
     vendorId,
     description,
-    categories,
-    id,
-    procurementId,
-    totalPrice,
+    id, // optional comes from sales request
     currentPaidAmount,
     expectedDeliveryDate,
     orderId,
   } = req.body;
-  const names = {
-    en: {
-      name: nameInEnglish,
-    },
-    ka: {
-      name: nameInKannada,
-    },
-  };
+
   let newVendorId;
+
+  // vendor creation logic moved OUTSIDE loop
   if (!vendorId) {
     const vendorData = new Vendor({
       contact: vendorContact,
@@ -110,82 +115,109 @@ exports.placeOrder = async (req, res) => {
       type: "NURSERY",
     });
     newVendorId = vendorData._id;
-    vendorData.save();
+    await vendorData.save();
   }
+
   const placedBy = {
     _id: req?.token?.id,
     name: req?.token?.name,
   };
-  const newData = {
-    names,
-    orderedQuantity: totalQuantity,
-    descriptionProc: description,
-    placedBy,
-    vendorName,
-    vendorContact,
-    vendorId: vendorId || newVendorId,
-    status: "PLACED",
-    expectedDeliveryDate: dayjs(expectedDeliveryDate, "YYYY-MM-DD"),
-    currentPaidAmount,
-    totalPrice,
-    orderId,
-  };
-  try {
-    if (id) {
-      let procurementHis = await ProcurementHistory.findById(id);
-      const proc = await Procurement.findById(procurementHis.procurementId);
-      proc.names = names;
-      proc.categories = categories;
-      procurementHis.names = names;
-      (procurementHis.orderedQuantity = totalQuantity),
-        (procurementHis.descriptionProc = description),
-        (procurementHis.placedBy = placedBy),
-        (procurementHis.vendorName = vendorName),
-        (procurementHis.vendorContact = vendorContact),
-        (procurementHis.vendorId = vendorId || newVendorId),
-        (procurementHis.status = "PLACED"),
-        (procurementHis.orderId = orderId);
-      (procurementHis.expectedDeliveryDate = dayjs(
-        expectedDeliveryDate,
-        "YYYY-MM-DD"
-      )),
-        (procurementHis.currentPaidAmount = currentPaidAmount);
-      procurementHis.totalPrice = totalPrice;
 
-      procurementHis.save();
-      proc.save();
-      res.status(200).json({
-        message: "Successfully Placed",
-      });
-    } else {
-      let procId;
-      if (procurementId) {
-        procId = procurementId;
-        const proc = await Procurement.findById(procurementId);
+  try {
+
+    // Validation: edits only allow one plant at a time
+  if (id && plants.length > 1) {
+    return res.status(400).json({
+      message: "Procurement edits support only one plant at a time",
+    });
+  }
+    // iterate plants array
+    for (const plant of plants) {
+      const {
+        nameInEnglish,
+        totalQuantity,
+        nameInKannada,
+        categories,
+        procurementId,
+        totalPrice,
+      } = plant;
+
+      const names = {
+        en: { name: nameInEnglish },
+        ka: { name: nameInKannada },
+      };
+
+      const newData = {
+        names,
+        orderedQuantity: totalQuantity,
+        descriptionProc: description,
+        placedBy,
+        vendorName,
+        vendorContact,
+        vendorId: vendorId || newVendorId,
+        status: "PLACED",
+        expectedDeliveryDate: dayjs(expectedDeliveryDate, "YYYY-MM-DD"),
+        currentPaidAmount,
+        totalPrice,
+        orderId,
+      };
+
+      if (id) {
+        // edit existing order (only one plant supported at a time per requirement)
+        let procurementHis = await ProcurementHistory.findById(id);
+        const proc = await Procurement.findById(procurementHis.procurementId);
+
+        proc.names = names;
         proc.categories = categories;
+
+        procurementHis.names = names;
+        procurementHis.orderedQuantity = totalQuantity;
+        procurementHis.descriptionProc = description;
+        procurementHis.placedBy = placedBy;
+        procurementHis.vendorName = vendorName;
+        procurementHis.vendorContact = vendorContact;
+        procurementHis.vendorId = vendorId || newVendorId;
+        procurementHis.status = "PLACED";
+        procurementHis.orderId = orderId;
+        procurementHis.expectedDeliveryDate = dayjs(expectedDeliveryDate, "YYYY-MM-DD");
+        procurementHis.currentPaidAmount = currentPaidAmount;
+        procurementHis.totalPrice = totalPrice;
+
+        await procurementHis.save();
         await proc.save();
       } else {
-        const procurement = new Procurement({
-          names,
-          remainingQuantity: 0,
-          categories,
+        // new order flow
+        let procId;
+        if (procurementId) {
+          procId = procurementId;
+          const proc = await Procurement.findById(procurementId);
+          proc.categories = categories;
+          await proc.save();
+        } else {
+          const procurement = new Procurement({
+            names,
+            remainingQuantity: 0,
+            categories,
+          });
+          const savedProc = await procurement.save();
+          procId = savedProc._id;
+        }
+
+        const procurementHis = new ProcurementHistory({
+          procurementId: procId,
+          requestedQuantity: totalQuantity,
+          requestedBy: placedBy,
+          ...newData,
         });
-        const res = await procurement.save();
-        procId = res._id;
+        await procurementHis.save();
       }
-      const procurementHis = new ProcurementHistory({
-        procurementId: procId,
-        requestedQuantity: totalQuantity,
-        requestedBy: placedBy,
-        ...newData,
-      });
-      await procurementHis.save();
-      res.status(200).json({
-        message: "Successfully Placed",
-      });
     }
+
+    res.status(200).json({
+      message: "Successfully Placed for all plants",
+    });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     loggers.info(`addNewProcurement-error, ${error}`);
     const err = handleMongoError(error);
     res.status(500).send(err);
