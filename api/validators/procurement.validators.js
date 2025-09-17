@@ -1,12 +1,19 @@
 const Joi = require('joi')
 
-exports.requestProcurementSchema = Joi.object().keys({
-    nameInEnglish: Joi.string().pattern(new RegExp(/[A-Za-z]/)).required(),
-    totalQuantity: Joi.number().required(),
-    id: Joi.string(),
-    ownProduction: Joi.boolean().default(false),
-    descriptionSales: Joi.string().max(1000).required()
+// update the new schema for request order .
+
+exports.requestProcurementSchema = Joi.object({
+  plants: Joi.array().items(
+    Joi.object({
+      nameInEnglish: Joi.string().pattern(new RegExp(/[A-Za-z]/)).required(),
+      totalQuantity: Joi.number().min(1).required(),
+      id: Joi.number().optional()
+    })
+  ).min(1).required(), // must have at least one plant
+  descriptionSales: Joi.string().max(1000).required(),
+  ownProduction: Joi.boolean().default(false)
 });
+
 
 exports.rejectProcurementSchema = Joi.object().keys({
     id: Joi.string().required(),
@@ -44,26 +51,43 @@ exports.updateDeliveryProcurementSchema = Joi.object().keys({
     expectedDeliveryDate: Joi.string().pattern(new RegExp(/\d{4}-\d{2}-\d{2}/))
 });
 
-exports.placeOrderSchema = Joi.object().keys({
-    nameInEnglish: Joi.string().pattern(new RegExp(/[A-Za-z]/)).required(),
-    nameInKannada: Joi.string().required(),
-    vendorName: Joi.string().required(),
-    vendorContact: Joi.string().min(10).max(10),
-    totalQuantity: Joi.number().required(),
-    totalPrice: Joi.number().required(),
-    description: Joi.string(),
-    vendorId: Joi.string(),
-    categories: Joi.array().items(Joi.object().keys({
-        _id:Joi.string().required(),
-        name: Joi.string().required()
-    })),
-    expectedDeliveryDate: Joi.string().pattern(new RegExp(/\d{4}-\d{2}-\d{2}/)),
-    id: Joi.string(),
-    procurementId: Joi.string(),
-    currentPaidAmount: Joi.number().required(),
-    orderId: Joi.number().required()
 
+// updated the new schema for the placeorder as well .
+
+exports.placeOrderSchema = Joi.object({
+  plants: Joi.array().items(
+    Joi.object({
+      nameInEnglish: Joi.string().pattern(new RegExp(/[A-Za-z]/)).required(),
+      nameInKannada: Joi.string().allow("").optional(),
+      totalQuantity: Joi.number().min(1).required(),
+      totalPrice: Joi.number().min(0).required(),
+      categories: Joi.array().items(
+        Joi.object({
+          _id: Joi.string().required(),
+          name: Joi.string().required()
+        })
+      ).default([]),
+      procurementId: Joi.string().optional()
+    })
+  ).min(1).required(),
+
+  vendorName: Joi.string().optional(),
+  vendorContact: Joi.string()
+    .pattern(/^[0-9]{10}$/) 
+    .required(),
+  vendorId: Joi.string().optional(),
+  description: Joi.string().max(1000).required(),
+  currentPaidAmount: Joi.number().min(0).required(),
+  expectedDeliveryDate: Joi.string()
+    .isoDate() 
+    .required(),
+  orderId: Joi.number().optional(), 
+  totalPrice: Joi.number().min(0).optional(), 
+  totalQuantity: Joi.number().min(0).optional(),
+  id: Joi.string().optional(),
 });
+
+
 
 exports.updateProcurementSchema = Joi.object().keys({
     id: Joi.string().required(),
