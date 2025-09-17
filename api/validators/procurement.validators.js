@@ -6,8 +6,8 @@ exports.requestProcurementSchema = Joi.object({
   plants: Joi.array().items(
     Joi.object({
       nameInEnglish: Joi.string().pattern(new RegExp(/[A-Za-z]/)).required(),
-      totalQuantity: Joi.number().min(1).required(),
-      id: Joi.number().optional()
+      totalQuantity: Joi.number().min(0).required(),
+      id: Joi.string().optional(),
     })
   ).min(1).required(), // must have at least one plant
   descriptionSales: Joi.string().max(1000).required(),
