@@ -8,6 +8,8 @@ const paymentModel = require("../models/payment.model");
 const { createXML, createLegderXML } = require("../utils");
 const { uniq } = require("lodash");
 const mongoose = require("mongoose");
+const AdmZip = require('adm-zip');
+const path = require('path');
 
 exports.downloadBillingExcel = async (req, res) => {
     const { pageNumber = 1, startDate, endDate } = req.body
@@ -119,184 +121,124 @@ exports.downloadBillingExcel = async (req, res) => {
 }
 
 exports.downloadBillingXML = async (req, res) => {
-    const { pageNumber = 1, startDate, endDate } = req.body
+  try {
+    const { startDate, endDate } = req.body;
 
     const query = {
-        billedDate: {
-            $gte: dayjs(startDate, 'YYYY-MM-DD').toDate(),
-            $lte: dayjs(endDate, 'YYYY-MM-DD').endOf('day').toDate()
-        },
-        status: 'BILLED',
-        type: 'NURSERY'
-    }
-    const match = {
-        $match: query
-    }
+      billedDate: {
+        $gte: dayjs(startDate, "YYYY-MM-DD").toDate(),
+        $lte: dayjs(endDate, "YYYY-MM-DD").endOf("day").toDate(),
+      },
+      status: "BILLED",
+      type: "NURSERY",
+    };
 
-    const sort = {
-        $sort: {
-            billedDate: 1
-        }
-    }
-    const skip = {
-        // $skip: (pageNumber - 1) * 1000
-        $skip: 0
-    }
-    const limit = {
-        $limit: 10000
-    }
-
-    const project = {
-        $project: {
-            customerId: 1,
-            customerName: 1,
-            customerNumber: 1,
-            "items.procurementName": 1,
-            "items.variant": 1,
-            "items.quantity": 1,
-            "items.mrp": 1,
-            "items.rate": 1,
-            totalPrice: 1,
-            discount: 1,
-            roundOff: 1,
-            invoiceId: 1,
-            billedDate: 1,
-            onlineAmount: 1,
-            cashAmount: 1,
-            paymentType: 1,
-            "soldBy": "$soldBy.name",
-            "billedBy": "$billedBy.name",
-            "_id": 0
-        }
-    }
-
-    const addField = {
+    const bills = await billingsModel.aggregate([
+      { $match: query },
+      { $sort: { billedDate: 1 } },
+      { $skip: 0 },
+      { $limit: 10000 },
+      {
         $addFields: {
-            items: {
-                $map: {
-                    input: "$items",
-                    as: "item",
-                    in: {
-                        $mergeObjects: [
-                            "$$item",
-                            {
-                                "procurementName": "$$item.procurementName.en.name",
-                                "variant": "$$item.variant.en.name"
-                            }
-                        ]
-                    }
-                }
-            }
-        }
-    }
-
-    const pipeline = []
-    pipeline.push(match)
-    pipeline.push(sort)
-    pipeline.push(skip)
-    pipeline.push(limit)
-    pipeline.push(addField)
-    pipeline.push(project)
-
-    console.log('bills-pipeline-xml', JSON.stringify(pipeline))
-
-    const bills = await billingsModel.aggregate(pipeline);
-    const count = await billingsModel.countDocuments(query)
-    const customerIds = uniq(bills?.map(ele => ele.customerId?.toString()))
-    console.log('bills-pipeline-res', bills.length, customerIds.length)
-    const newCustomerPipeline = [
-        {
-            $addFields: {
-                /**
-                 * newField: The new field name.
-                 * expression: The new field expression.
-                 */
-                _id: {
-                    $toString: "$_id"
-                }
-            }
-        },
-        {
-            $match: {
-                _id: {
-                    $in: customerIds
-                }
-            }
-        },
-        {
-            $match: {
-                _id: {
-                    $in: customerIds
-                }
-            }
-        },
-        {
-            $lookup: {
-                from: "billing_histories",
-                let: {
-                    cId: "$_id"
-                },
-                pipeline: [
-                    {
-                        $match: {
-                            $expr: {
-                                $and: [
-                                    {
-                                        $eq: ["$customerId", "$$cId"]
-                                    },
-                                    {
-                                        $eq: ["$type", "NURSERY"]
-                                    },
-                                    {
-                                        $gt: ["$onlineAmount", 0]
-                                    },
-                                    {
-                                        $lt: [
-                                            "$billedDate",
-                                            dayjs(startDate, 'YYYY-MM-DD').toDate()
-                                        ]
-                                    }
-                                ]
-                            }
-                        }
-                    },
-                    {
-                        $limit: 1
-                    }
+          items: {
+            $map: {
+              input: "$items",
+              as: "item",
+              in: {
+                $mergeObjects: [
+                  "$$item",
+                  {
+                    procurementName: "$$item.procurementName.en.name",
+                    variant: "$$item.variant.en.name",
+                  },
                 ],
-                as: "result"
-            }
+              },
+            },
+          },
         },
-        {
-            $match: {
+      },
+      {
+        $project: {
+          customerId: 1,
+          customerName: 1,
+          customerNumber: 1,
+          "items.procurementName": 1,
+          "items.variant": 1,
+          "items.quantity": 1,
+          "items.mrp": 1,
+          "items.rate": 1,
+          totalPrice: 1,
+          discount: 1,
+          roundOff: 1,
+          invoiceId: 1,
+          billedDate: 1,
+          onlineAmount: 1,
+          cashAmount: 1,
+          paymentType: 1,
+          soldBy: "$soldBy.name",
+          billedBy: "$billedBy.name",
+          _id: 0,
+        },
+      },
+    ]);
+
+    const count = await billingsModel.countDocuments(query);
+
+    const customerIds = uniq(bills?.map((ele) => ele.customerId?.toString()));
+
+    const customers = await customerModel.aggregate([
+      { $addFields: { _id: { $toString: "$_id" } } },
+      { $match: { _id: { $in: customerIds } } },
+      {
+        $lookup: {
+          from: "billing_histories",
+          let: { cId: "$_id" },
+          pipeline: [
+            {
+              $match: {
                 $expr: {
-                    $eq: [0, { $size: "$result" }]
-                }
-            }
+                  $and: [
+                    { $eq: ["$customerId", "$$cId"] },
+                    { $eq: ["$type", "NURSERY"] },
+                    { $gt: ["$onlineAmount", 0] },
+                    { $lt: ["$billedDate", dayjs(startDate, "YYYY-MM-DD").toDate()] },
+                  ],
+                },
+              },
+            },
+            { $limit: 1 },
+          ],
+          as: "result",
         },
-        {
-            $skip: 0,
-        },
-        {
-            $limit: 10000
-        }
-    ]
-    const customers = await customerModel.aggregate(newCustomerPipeline)
-    console.log('customer-pipeline', JSON.stringify(newCustomerPipeline))
-    console.log('customer-pipeline-res', customers.length)
-    await createLegderXML(customers)
-    console.log(bills?.length)
-    // const items = bills?.map(ele => ele.items.map(i => i.procurementName)).flat()
-    // console.log(JSON.stringify(uniq(items)))
-    await createXML(bills)
-    res.header("Content-Disposition",
-        "attachment; filename=ledger_xml.xml");
-    res.header("Access-Control-Expose-Headers", "*")
-    res.header("Content-Type", "xml")
-    res.header("count", count)
-    res.header("isNext", (count - 1000 * 1) > 0)
-    res.sendFile('ledger_xml.xml', { root: __dirname });
-}
+      },
+      { $match: { $expr: { $eq: [0, { $size: "$result" }] } } },
+      { $skip: 0 },
+      { $limit: 10000 },
+    ]);
+
+    await createLegderXML(customers);
+    await createXML(bills);
+
+    // Headers
+    res.setHeader("Content-Disposition", "attachment; filename=billing_ledger_xml.zip");
+    res.setHeader("Content-Type", "application/zip");
+    res.setHeader("Access-Control-Expose-Headers", "*");
+    res.setHeader("count", count); // optional
+    
+
+    // Zip the files
+    const zip = new AdmZip();
+    zip.addLocalFile(path.join(__dirname, "ledger_xml.xml"));
+    zip.addLocalFile(path.join(__dirname, "billing_xml.xml"));
+    const zipBuffer = zip.toBuffer();
+
+    res.send(zipBuffer);
+  } catch (err) {
+    console.error("Error generating billing XML:", err);
+    res.status(500).json({ error: "Failed to generate XML export" });
+  }
+};
+
 
 exports.downloadWasteMgmtExcel = async (req, res) => {
     const { pageNumber = 1, startDate, endDate } = req.body

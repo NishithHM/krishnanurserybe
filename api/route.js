@@ -37,7 +37,7 @@ const { getAgriBillingDataSchema, agriAddToCartSchema, updateAgriCartSchema, con
 const { metaDataValidator, metaGraphValidator } = require('./validators/dashboard.validator');
 const { dahboardMetaData, dahboardMetaGraph } = require('./controllers/dashboard.controller');
 const { downloadBillingExcel, downloadWasteMgmtExcel, downloadOrderMgmtExcel, downloadPaymentExcel, downloadBillingXML } = require('./controllers/excel.controller');
-const { billingExcelValidator, wasteMgmtExcelValidator, orderMgmtExcelValidator, paymentExcelValidator } = require('./validators/excel.validator');
+const { billingExcelValidator, wasteMgmtExcelValidator, orderMgmtExcelValidator, paymentExcelValidator, billingXmlValidator } = require('./validators/excel.validator');
 
 const fileStorageEngine = multer.diskStorage({
 	destination:(req,file,cb) =>{
@@ -151,7 +151,7 @@ router.post('/api/dashboard/meta-graph', [authWall(['admin']),bodyValidator(meta
 
 // excel download
 router.get('/api/excel/billing', [authWall(['admin', 'procurement', 'sales']), paramsToBody(['pageNumber', 'isCount', 'startDate', 'endDate'], 'query'), bodyValidator(billingExcelValidator)], downloadBillingExcel)
-router.get('/api/xml/billing', [authWall(['admin', 'procurement', 'sales']), paramsToBody(['pageNumber', 'isCount', 'startDate', 'endDate'], 'query'), bodyValidator(billingExcelValidator)], downloadBillingXML)
+router.get('/api/xml/billing', [authWall(['admin', 'procurement', 'sales']), paramsToBody(['startDate', 'endDate'], 'query'), bodyValidator(billingExcelValidator)], downloadBillingXML);
 router.get('/api/excel/waste-mgmt', [authWall(['admin', 'procurement', 'sales']), paramsToBody(['pageNumber', 'isCount', 'startDate', 'endDate'], 'query'), bodyValidator(wasteMgmtExcelValidator)], downloadWasteMgmtExcel)
 router.get('/api/excel/order-mgmt', [authWall(['admin', 'procurement', 'sales']), paramsToBody(['pageNumber', 'isCount', 'startDate', 'endDate'], 'query'), bodyValidator(orderMgmtExcelValidator)], downloadOrderMgmtExcel)
 router.get('/api/excel/payments', [authWall(['admin', 'procurement', 'sales']), paramsToBody(['pageNumber', 'isCount', 'startDate', 'endDate', 'type'], 'query'), bodyValidator(paymentExcelValidator)], downloadPaymentExcel)
