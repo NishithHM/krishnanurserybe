@@ -3,9 +3,8 @@ const Joi = require("joi");
 exports.billingExcelValidator = Joi.object().keys({
     startDate: Joi.string().required(),
     endDate: Joi.string().required(),
-    pageNumber: Joi.string().required(),
-    isCount: Joi.number(),
-    type: Joi.string().required()
+    pageNumber: Joi.string().optional(),
+    isCount: Joi.number()
 });
 
 exports.wasteMgmtExcelValidator = Joi.object().keys({

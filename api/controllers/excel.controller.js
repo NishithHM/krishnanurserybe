@@ -1,18 +1,24 @@
 const dayjs = require("dayjs")
 const billingsModel = require("../models/billings.model")
+const customerModel = require("../models/customer.model")
 const ExcelJS = require('exceljs');
 const damageHistoryModel = require("../models/damageHistory.model");
 const procurementHistoryModel = require("../models/procurementHistory.model");
 const paymentModel = require("../models/payment.model");
 const procurementModel = require("../models/procurment.model");
 
+const { createXML, createLegderXML } = require("../utils");
+const { uniq } = require("lodash");
+const mongoose = require("mongoose");
+const AdmZip = require('adm-zip');
+const path = require('path');
 
 exports.downloadBillingExcel = async (req, res) => {
     const { pageNumber = 1, startDate, endDate, type="NURSERY" } = req.body
     const headers = [{ name: 'Customer Name', key: 'customerName' },
-    { name: 'Customer Number', key: 'customerNumber' }, 
-    { name: 'item name', key: 'procurementName' }, 
-    { name: 'variant name', key: 'variant' }, 
+    { name: 'Customer Number', key: 'customerNumber' },
+    { name: 'item name', key: 'procurementName' },
+    { name: 'variant name', key: 'variant' },
     { name: 'item rate', key: 'rate' },
     { name: 'item mrp', key: 'mrp' },
     { name: 'item quantity', key: 'quantity' }, 
@@ -41,8 +47,8 @@ exports.downloadBillingExcel = async (req, res) => {
     }
 
     const sort = {
-        $sort:{
-            billedDate:1
+        $sort: {
+            billedDate: 1
         }
     }
     const skip = {
@@ -66,9 +72,9 @@ exports.downloadBillingExcel = async (req, res) => {
             roundOff: 1,
             invoiceId: 1,
             billedDate: 1,
-            onlineAmount:1,
-            cashAmount:1,
-            "soldBy":  "$soldBy.name",
+            onlineAmount: 1,
+            cashAmount: 1,
+            "soldBy": "$soldBy.name",
             "billedBy": "$billedBy.name",
             "_id": 0,
             paymentInfo:1,
@@ -76,24 +82,24 @@ exports.downloadBillingExcel = async (req, res) => {
     }
 
     const addField = {
-        $addFields:{
-        items: {
-          $map: {
-            input: "$items",
-            as: "item",
-            in: {
-              $mergeObjects: [
-                "$$item",
-                {
-                  "procurementName": "$$item.procurementName.en.name",
-                  "variant": "$$item.variant.en.name"
+        $addFields: {
+            items: {
+                $map: {
+                    input: "$items",
+                    as: "item",
+                    in: {
+                        $mergeObjects: [
+                            "$$item",
+                            {
+                                "procurementName": "$$item.procurementName.en.name",
+                                "variant": "$$item.variant.en.name"
+                            }
+                        ]
+                    }
                 }
-              ]
             }
-          }
         }
     }
-  }
 
     const pipeline = []
     pipeline.push(match)
@@ -108,23 +114,143 @@ exports.downloadBillingExcel = async (req, res) => {
     const bills = await billingsModel.aggregate(pipeline);
     const count = await billingsModel.countDocuments(query)
     console.log(bills.length, bills[0])
-    const itempSpreaded= spreadJson(bills,headers, 'items')
+    const itempSpreaded = spreadJson(bills, headers, 'items')
     await writeExcel(headers, itempSpreaded, 'billing')
     res.header("Content-Disposition",
-    "attachment; filename=billing.xls");
+        "attachment; filename=billing.xls");
     res.header("Access-Control-Expose-Headers", "*")
-    res.header("Content-Type","application/octet-stream")
-    res.header("count",count)
-    res.header("isNext",(count-1000*1) > 0)
+    res.header("Content-Type", "application/octet-stream")
+    res.header("count", count)
+    res.header("isNext", (count - 1000 * 1) > 0)
     res.sendFile('billing.xlsx', { root: __dirname });
 }
 
+exports.downloadBillingXML = async (req, res) => {
+  try {
+    const { startDate, endDate } = req.body;
+
+    const query = {
+      billedDate: {
+        $gte: dayjs(startDate, "YYYY-MM-DD").toDate(),
+        $lte: dayjs(endDate, "YYYY-MM-DD").endOf("day").toDate(),
+      },
+      status: "BILLED",
+      type: "NURSERY",
+    };
+
+    const bills = await billingsModel.aggregate([
+      { $match: query },
+      { $sort: { billedDate: 1 } },
+      { $skip: 0 },
+      { $limit: 10000 },
+      {
+        $addFields: {
+          items: {
+            $map: {
+              input: "$items",
+              as: "item",
+              in: {
+                $mergeObjects: [
+                  "$$item",
+                  {
+                    procurementName: "$$item.procurementName.en.name",
+                    variant: "$$item.variant.en.name",
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          customerId: 1,
+          customerName: 1,
+          customerNumber: 1,
+          "items.procurementName": 1,
+          "items.variant": 1,
+          "items.quantity": 1,
+          "items.mrp": 1,
+          "items.rate": 1,
+          totalPrice: 1,
+          discount: 1,
+          roundOff: 1,
+          invoiceId: 1,
+          billedDate: 1,
+          onlineAmount: 1,
+          cashAmount: 1,
+          paymentType: 1,
+          soldBy: "$soldBy.name",
+          billedBy: "$billedBy.name",
+          _id: 0,
+        },
+      },
+    ]);
+
+    const count = await billingsModel.countDocuments(query);
+
+    const customerIds = uniq(bills?.map((ele) => ele.customerId?.toString()));
+
+    const customers = await customerModel.aggregate([
+      { $addFields: { _id: { $toString: "$_id" } } },
+      { $match: { _id: { $in: customerIds } } },
+      {
+        $lookup: {
+          from: "billing_histories",
+          let: { cId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$customerId", "$$cId"] },
+                    { $eq: ["$type", "NURSERY"] },
+                    { $gt: ["$onlineAmount", 0] },
+                    { $lt: ["$billedDate", dayjs(startDate, "YYYY-MM-DD").toDate()] },
+                  ],
+                },
+              },
+            },
+            { $limit: 1 },
+          ],
+          as: "result",
+        },
+      },
+      { $match: { $expr: { $eq: [0, { $size: "$result" }] } } },
+      { $skip: 0 },
+      { $limit: 10000 },
+    ]);
+
+    await createLegderXML(customers);
+    await createXML(bills);
+
+    // Headers
+    res.setHeader("Content-Disposition", "attachment; filename=billing_ledger_xml.zip");
+    res.setHeader("Content-Type", "application/zip");
+    res.setHeader("Access-Control-Expose-Headers", "*");
+    res.setHeader("count", count); // optional
+    
+
+    // Zip the files
+    const zip = new AdmZip();
+    zip.addLocalFile(path.join(__dirname, "ledger_xml.xml"));
+    zip.addLocalFile(path.join(__dirname, "billing_xml.xml"));
+    const zipBuffer = zip.toBuffer();
+
+    res.send(zipBuffer);
+  } catch (err) {
+    console.error("Error generating billing XML:", err);
+    res.status(500).json({ error: "Failed to generate XML export" });
+  }
+};
+
+
 exports.downloadWasteMgmtExcel = async (req, res) => {
     const { pageNumber = 1, startDate, endDate } = req.body
-    
-    const headers = [   { name: 'name', key: 'name' }, 
-    { name: 'damage quantity', key: 'damagedQuantity' }, 
-    { name: 'created date', key: 'createdAt' }, 
+
+    const headers = [{ name: 'name', key: 'name' },
+    { name: 'damage quantity', key: 'damagedQuantity' },
+    { name: 'created date', key: 'createdAt' },
     { name: 'reported by', key: 'reportedBy' },
     ]
 
@@ -148,13 +274,13 @@ exports.downloadWasteMgmtExcel = async (req, res) => {
         $project: {
             "name": "$names.en.name",
             damagedQuantity: 1,
-            createdAt:1,
-            reportedBy:"$reportedBy.name",
+            createdAt: 1,
+            reportedBy: "$reportedBy.name",
             "_id": 0
         }
     }
 
-   
+
 
     const pipeline = []
     pipeline.push(match)
@@ -169,10 +295,10 @@ exports.downloadWasteMgmtExcel = async (req, res) => {
     console.log(damages.length,)
     await writeExcel(headers, damages, 'damages')
     res.header("Content-Disposition",
-    "attachment; filename=damages.xls");
-    res.header("Content-Type","application/octet-stream")
-    res.header("count",count)
-    res.header("isNext",(count-1000*1) > 0)
+        "attachment; filename=damages.xls");
+    res.header("Content-Type", "application/octet-stream")
+    res.header("count", count)
+    res.header("isNext", (count - 10000 * 1) > 0)
     res.header("Access-Control-Expose-Headers", "*")
     res.sendFile('damages.xlsx', { root: __dirname });
 }
@@ -180,23 +306,23 @@ exports.downloadWasteMgmtExcel = async (req, res) => {
 exports.downloadOrderMgmtExcel = async (req, res) => {
     const { pageNumber = 1, startDate, endDate } = req.body
 
-    
-    const headers = [   { name: 'name', key: 'name' }, 
-    { name: 'created date', key: 'createdAt' }, 
+
+    const headers = [{ name: 'name', key: 'name' },
+    { name: 'created date', key: 'createdAt' },
     { name: 'requested by', key: 'requestedBy' },
     { name: 'total price', key: 'totalPrice' },
-    {name: 'current paid amount', key:'currentPaidAmount'},
-    {name: 'vendor name', key:'vendorName'},
-    {name: 'vendor contact', key:'vendorContact'},
-    {name: 'sales description', key:'descriptionSales'},
-    {name: 'status', key:'status'},
-    {name: 'quantity', key:'quantity'},
-    {name: 'requested quantity', key:'requestedQuantity'},
-    {name: 'ordered quantity', key:'orderedQuantity'},
-    {name: 'proc description', key:'descriptionProc'},
-    {name: 'expected delivery date', key:'expectedDeliveryDate'},
-    {name: 'placed by', key:'placedBy'},
-    {name: 'order id', key:'orderId'},
+    { name: 'current paid amount', key: 'currentPaidAmount' },
+    { name: 'vendor name', key: 'vendorName' },
+    { name: 'vendor contact', key: 'vendorContact' },
+    { name: 'sales description', key: 'descriptionSales' },
+    { name: 'status', key: 'status' },
+    { name: 'quantity', key: 'quantity' },
+    { name: 'requested quantity', key: 'requestedQuantity' },
+    { name: 'ordered quantity', key: 'orderedQuantity' },
+    { name: 'proc description', key: 'descriptionProc' },
+    { name: 'expected delivery date', key: 'expectedDeliveryDate' },
+    { name: 'placed by', key: 'placedBy' },
+    { name: 'order id', key: 'orderId' },
     ]
 
     const query = {
@@ -218,8 +344,8 @@ exports.downloadOrderMgmtExcel = async (req, res) => {
     const project = {
         $project: {
             "name": "$names.en.name",
-            createdAt:1,
-            requestedBy:"$requestedBy.name",
+            createdAt: 1,
+            requestedBy: "$requestedBy.name",
             requestedQuantity: 1,
             "totalPrice": 1,
             "currentPaidAmount": 1,
@@ -230,15 +356,15 @@ exports.downloadOrderMgmtExcel = async (req, res) => {
             "quantity": 1,
             "orderedQuantity": 1,
             descriptionProc: 1,
-            expectedDeliveryDate:1,
+            expectedDeliveryDate: 1,
             placedBy: "$placedBy.name",
-            orderId:1,
-            requestedQuantity:1,
+            orderId: 1,
+            requestedQuantity: 1,
             "_id": 0
         }
     }
 
-   
+
 
     const pipeline = []
     pipeline.push(match)
@@ -253,10 +379,10 @@ exports.downloadOrderMgmtExcel = async (req, res) => {
     console.log(procs.length,)
     await writeExcel(headers, procs, 'orders')
     res.header("Content-Disposition",
-    "attachment; filename=order.xls");
-    res.header("Content-Type","application/octet-stream")
-    res.header("count",count)
-    res.header("isNext",(count-1000*1) > 0)
+        "attachment; filename=order.xls");
+    res.header("Content-Type", "application/octet-stream")
+    res.header("count", count)
+    res.header("isNext", (count - 1000 * 1) > 0)
     res.header("Access-Control-Expose-Headers", "*")
     res.sendFile('orders.xlsx', { root: __dirname });
 }
@@ -309,7 +435,7 @@ exports.downloadPaymentExcel = async (req, res) => {
         }
     }
 
-   
+
 
     const pipeline = []
     pipeline.push(match)
@@ -363,9 +489,9 @@ exports.downloadPlantsExcel = async (req, res) => {
 const writeExcel = async (headers, json, name) => {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Sheet1');
-    worksheet.columns = headers.map(ele=>{
+    worksheet.columns = headers.map(ele => {
         return {
-            header: ele.name, key: ele.key, width: 20 
+            header: ele.name, key: ele.key, width: 20
 
         }
     })
@@ -373,23 +499,23 @@ const writeExcel = async (headers, json, name) => {
     json.forEach((data) => {
         worksheet.addRow(data);
     });
-    
+
     // Save the workbook to a file
     await workbook.xlsx.writeFile(`${__dirname}/${name}.xlsx`)
 
 }
 
-const spreadJson = (json, headers,key)=>{
+const spreadJson = (json, headers, key) => {
     const res = []
-    for(let i=0; i<json.length; i++){
-        const base = {...json[i]}
-        const rebase= {...json[i]}
+    for (let i = 0; i < json.length; i++) {
+        const base = { ...json[i] }
+        const rebase = { ...json[i] }
         delete rebase.items
-        for(let j=0; j<base[key]?.length; j++){
-            if(j===0){
-                res.push({...rebase, ...base[key][j] })
-            }else{
-                res.push({...base[key][j] })
+        for (let j = 0; j < base[key]?.length; j++) {
+            if (j === 0) {
+                res.push({ ...rebase, ...base[key][j] })
+            } else {
+                res.push({ ...base[key][j] })
             }
         }
     }

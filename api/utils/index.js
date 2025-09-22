@@ -1,6 +1,7 @@
 const fs = require("fs");
 const { last } = require("lodash");
 const PdfMerger = require('pdf-merger-js')
+const { txnData, baseFileData, baseLedgerData, ledgerDate, ledgerData } = require("../controllers/paymentXMLTemplate");
 
 exports.handleMongoError = (error) => {
   console.log(JSON.parse(JSON.stringify(error)));
@@ -183,6 +184,45 @@ exports.removeFiles = async (paths)=>{
       return null
   }
 }
+
 exports.escapeRegex=(input)=> {
   return input?.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // Escape special regex characters
+}
+
+exports.createXML = async (data)=>{
+    const txtInput = data.map(({customerName, customerNumber, billedDate, paymentType, items, totalPrice, roundOff}, index)=> txnData({customerName, customerNumber, billedDate, paymentType, items, totalPrice, index: index+1, roundOff}))
+    const fullXML = baseFileData(txtInput)
+    // console.log(fullXML)
+    const xmlPath = 'api/controllers/billing_xml.xml'
+    return new Promise((res, rej)=>{
+      fs.writeFile(xmlPath, fullXML, (err) => {
+        if (err) {
+          console.error('Error writing XML to file:', err);
+          rej(err)
+        } else {
+          console.log('XML file has been saved successfully.');
+          res(xmlPath)
+        }
+      });
+    })
+    
+}
+
+exports.createLegderXML = async (data)=>{
+  const txtInput = data.map(({name}, index)=> ledgerData({customerName:name}))
+  const fullXML = baseLedgerData(txtInput)
+  // console.log(fullXML)
+  const xmlPath = 'api/controllers/ledger_xml.xml'
+  return new Promise((res, rej)=>{
+    fs.writeFile(xmlPath, fullXML, (err) => {
+      if (err) {
+        console.error('Error writing XML to file:', err);
+        rej(err)
+      } else {
+        console.log('XML file has been saved successfully.');
+        res(xmlPath)
+      }
+    });
+  })
+  
 }
