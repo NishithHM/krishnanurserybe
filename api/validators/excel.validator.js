@@ -3,7 +3,7 @@ const Joi = require("joi");
 exports.billingExcelValidator = Joi.object().keys({
     startDate: Joi.string().required(),
     endDate: Joi.string().required(),
-    pageNumber: Joi.string().required(),
+    pageNumber: Joi.string().optional(),
     isCount: Joi.number()
 });
 
