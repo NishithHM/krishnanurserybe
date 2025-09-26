@@ -170,10 +170,13 @@ exports.getPaymentHistory = async (req, res) => {
 
       if (search) {
          if (isExactSearch) {
-                //  exact search (no regex, only full match)
+              //  exact search (no regex, only full match)
+              // exact search with case-insensitive match
+
+            const exactRegex = new RegExp(`^${search}$`, "i");  
             match.$or = [
-              { name: search },
-              { comment: search },
+              { name: exactRegex },
+              { comment: exactRegex },
               { phoneNumber: search },
               { contact: search },
               { amount: searchNumber },
