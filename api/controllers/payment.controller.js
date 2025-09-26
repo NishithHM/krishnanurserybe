@@ -136,7 +136,8 @@ exports.getPaymentHistory = async (req, res) => {
       search,
       type,
       businessType,
-      vendorId
+      vendorId,
+      exactSearch
     } = req.body;
     const role = req?.token?.role;
     let typeFilter = type;
@@ -164,16 +165,31 @@ exports.getPaymentHistory = async (req, res) => {
         };
       }
       const searchNumber = parseInt(search, 10) || null;
+      // ensure it's always boolean
+      const isExactSearch = Boolean(exactSearch === true || exactSearch === "true" || exactSearch === 1 || exactSearch === "1");
+
       if (search) {
-        match.$or = [
-          { name: { $regex: search, $options: "i" } },
-          { comment: { $regex: search, $options: "i" } },
-          { phoneNumber: search },
-          { contact: search },
-          { amount: searchNumber },
-        ];
-      }
-    const pagination = [
+         if (isExactSearch) {
+                //  exact search (no regex, only full match)
+            match.$or = [
+              { name: search },
+              { comment: search },
+              { phoneNumber: search },
+              { contact: search },
+              { amount: searchNumber },
+           ];
+          } else {
+            //  fallback to regex search
+            match.$or = [
+                { name: { $regex: search, $options: "i" } },
+                { comment: { $regex: search, $options: "i" } },
+                { phoneNumber: search },
+                { contact: search },
+                { amount: searchNumber },
+            ];
+          }
+       } 
+      const pagination = [
       {
         $skip: 10 * (pageNumber - 1),
       },
