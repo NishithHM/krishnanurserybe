@@ -45,15 +45,21 @@ exports.downloadBillingExcel = async (req, res) => {
         type
     }
 
-    //  If search exists, add Regex filter on customerName, invoiceId, customerNumber
+    // if search is present, add $or conditions for customerName, invoiceId, and customerNumber
     if (search) {
-        const numberSearch = /^\d+$/.test(search) ? parseInt(search) : search;
-        query.$or = [
-            { customerName: { $regex: search, $options: "i" } },
-            { invoiceId: { $regex: search, $options: "i" } },
-            { customerNumber: numberSearch }
+
+        const searchConditions = [
+          { customerName: { $regex: search, $options: "i" } },
+          { invoiceId: { $regex: search, $options: "i" } }
         ];
+
+        if (/^\d+$/.test(search)) {
+            searchConditions.push({ customerNumber: parseInt(search) });
+        }
+        query.$or = searchConditions;
+
     }
+
     const match = {
         $match: query
     }
