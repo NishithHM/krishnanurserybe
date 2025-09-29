@@ -6,7 +6,8 @@ exports.billingExcelValidator = Joi.object().keys({
     isCount: Joi.number(),
     type: Joi.string().optional(),
     pageNumber: Joi.string().optional(),
-    isCount: Joi.number()
+    isCount: Joi.number(),
+    search: Joi.string().optional() 
 });
 
 exports.wasteMgmtExcelValidator = Joi.object().keys({

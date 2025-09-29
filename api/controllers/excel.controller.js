@@ -14,7 +14,7 @@ const AdmZip = require('adm-zip');
 const path = require('path');
 
 exports.downloadBillingExcel = async (req, res) => {
-    const { pageNumber = 1, startDate, endDate, type="NURSERY" } = req.body
+    const { pageNumber = 1, startDate, endDate, type="NURSERY", search } = req.body
     const headers = [{ name: 'Customer Name', key: 'customerName' },
     { name: 'Customer Number', key: 'customerNumber' },
     { name: 'item name', key: 'procurementName' },
@@ -33,7 +33,9 @@ exports.downloadBillingExcel = async (req, res) => {
     { name: 'billed by', key: 'billedBy' },
     { name: 'comment', key: 'paymentInfo' }
 ]
-
+    
+    
+    
     const query = {
         billedDate: {
             $gte: dayjs(startDate, 'YYYY-MM-DD').toDate(),
@@ -41,6 +43,16 @@ exports.downloadBillingExcel = async (req, res) => {
         },
         status: 'BILLED',
         type
+    }
+
+    //  If search exists, add Regex filter on customerName, invoiceId, customerNumber
+    if (search) {
+        const numberSearch = /^\d+$/.test(search) ? parseInt(search) : search;
+        query.$or = [
+            { customerName: { $regex: search, $options: "i" } },
+            { invoiceId: { $regex: search, $options: "i" } },
+            { customerNumber: numberSearch }
+        ];
     }
     const match = {
         $match: query
