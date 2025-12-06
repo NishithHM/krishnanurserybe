@@ -31,7 +31,7 @@ const server = app.listen(port, () => {
     logger.info(`Server is running on port ${port}`)
     // createXML([{name:"govindhappa", number:"9008171631", date: "20240706", partyName: "CASH",  items:[{pricePerPlant:"30", price: "300", qty: 10, itemName: "Clove"}], totalPrice: "300"}])
 })
-server.setTimeout(5000)
+server.setTimeout(30*1000)
 
 /* 
 Order table 

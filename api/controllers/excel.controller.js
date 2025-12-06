@@ -223,6 +223,7 @@ exports.downloadBillingXML = async (req, res) => {
 
     await createLegderXML(customers);
     await createXML(bills);
+    console.log("XML files created successfully.");
 
     // Headers
     res.setHeader("Content-Disposition", "attachment; filename=billing_ledger_xml.zip");
@@ -236,7 +237,7 @@ exports.downloadBillingXML = async (req, res) => {
     zip.addLocalFile(path.join(__dirname, "ledger_xml.xml"));
     zip.addLocalFile(path.join(__dirname, "billing_xml.xml"));
     const zipBuffer = zip.toBuffer();
-
+    console.log("XML files zipped successfully.");
     res.send(zipBuffer);
   } catch (err) {
     console.error("Error generating billing XML:", err);
