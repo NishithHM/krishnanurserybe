@@ -104,7 +104,7 @@ exports.confirmCart = async (req, res) => {
         if (billData) {
             loggers.info("fetched-bill-data",id)
             const roundOfError = validateRoundOff(billData.totalPrice, roundOff);
-            if(billData.isApproved || !billData.isWholeSale){
+            if( isCartApproved(billData)){
                 if (isEmpty(roundOfError)) {
                     const procurementQuantityMapping = {}
                     const itemList = billData?.items?.map(ele => {
@@ -175,10 +175,10 @@ exports.confirmCart = async (req, res) => {
                     res.status(400).send({ error: roundOfError })
                 }
             }else{
-                res.status(400).send("Bill not approved by admin. Please try again")
+                res.status(400).send({ error: 'Cart is not approved, please approve and try again' })
             }
         } else {
-            res.status(400).send("Unable to find the cart items, try again")
+            res.status(400).send({ error: 'Unable to find the cart items, try again' })
         }
 
     } catch (error) {
@@ -456,12 +456,12 @@ exports.getAllBillingHistory = async (req, res) => {
     const { pageNumber, isCount, id, startDate, endDate, sortBy, sortType, search, type } = req.body;
     try {
         let initialMatch = {
-            status: "BILLED",
+            status: { $in: ['BILLED', 'RE_CART'] },
             type
         }
         if (req.token?.role === "admin") {
              initialMatch = {
-                $or:[{status: "BILLED"}, {status:"CART", isApproved: false, isWholeSale: true}],
+                $or:[{status: "BILLED"}, {status:"CART", isApproved: false, isWholeSale: true}, {status:"RE_CART", isApproved: false}],
                 type
             }
           }
@@ -548,7 +548,7 @@ exports.approveBill = async (req, res)=>{
         _id: req?.token?.id,
         name: req?.token?.name
     }
-    const billData = await Billing.findOne({ _id: new mongoose.mongo.ObjectId(id), status: 'CART' })
+    const billData = await Billing.findOne({ _id: new mongoose.mongo.ObjectId(id), status: { $in: ['CART', 'RE_CART'] } })
     billData.isApproved = true
     billData.approvedBy = approvedBy
     billData.approvedOn = new Date()
@@ -567,6 +567,7 @@ const updateCronJobData = async (billData, oldCashAmount, oldOnlineAmount, oldRo
     const oldBilledItems = billData?.oldBilledItems
     const billedDate = dayjs(dayjs(billData.billedDate), 'YYYY-MM-DD').startOf('day').add(330, 'minute').toDate()
     const diff = []
+    const newlyAddedItems = items.filter(ele => !oldBilledItems.find(item => item.procurementId.toString() === ele.procurementId.toString() && item.variant.variantId.toString() === ele.variant.variantId.toString()))
 
     oldBilledItems.forEach(ele => {
         const {quantity:oldQty, mrp:oldMrp, rate:oldRate, procurementId, variant} = ele
@@ -608,6 +609,41 @@ const updateCronJobData = async (billData, oldCashAmount, oldOnlineAmount, oldRo
         procurment.remainingQuantity = procurment.remainingQuantity + removedQuantity
         await procurment.save()
     }
+
+    for (const element of newlyAddedItems) {
+        const {procurementId, variant, quantity, rate} = element
+        const procurement = await Procurements.findById(procurementId)
+        procurement.remainingQuantity = procurement.remainingQuantity - quantity
+        await procurement.save()
+        const metaData = await MetaData.findOne({procurementId: new mongoose.mongo.ObjectId(procurementId), date: billedDate, type: "NURSERY"})
+        if (metaData) {
+            const bill_data = metaData?.bill_data || []
+            const sales = metaData.sales
+            for (const bill of bill_data) {
+                if (bill.variant.variantId.toString() === variant.variantId.toString()) {
+                    bill.quantity = bill.quantity + quantity
+                    bill.saleAmount = bill.saleAmount + quantity * rate
+                    bill.salePerQuantity = bill.saleAmount / bill.quantity
+                }
+            }
+            sales.totalQuantity = sales.totalQuantity + quantity
+            sales.totalSales = sales.totalSales + quantity * rate
+        }else{
+            const newMetaData = new MetaData({
+                procurementId: new mongoose.mongo.ObjectId(procurementId),
+                name: procurement.names,
+                remainingQuantity: procurement.remainingQuantity,
+                underMaintenanceQuantity: procurement.underMaintenanceQuantity,
+                category: procurement.category,
+                date: billedDate,
+                type: "NURSERY",
+                bill_data: [{ variant, quantity, saleAmount: quantity * rate, salePerQuantity: rate }],
+                sales: { totalQuantity: quantity, totalSales: quantity * rate }
+            })
+            await MetaData.create(newMetaData.toJSON())
+        }
+    }
+
     const metaData = await MetaData.findOne({date: billedDate, type: "ROUNDOFF"})
     metaData.set('totalRoundOff', metaData.totalRoundOff - (oldRoundOff - billData.roundOff))
     metaData.set('totalCashAmount', metaData.totalCashAmount - (oldCashAmount - billData.cashAmount))
@@ -617,6 +653,13 @@ const updateCronJobData = async (billData, oldCashAmount, oldOnlineAmount, oldRo
 
 }
 
+const isCartApproved = (billData) => {
+    if(billData.isWholeSale && !billData.isApproved){
+        return false
+    }
 
-
-
+    if(billData.status === 'RE_CART' && !billData.isApproved){
+        return false
+    }
+    return true
+}
