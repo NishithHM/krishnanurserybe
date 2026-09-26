@@ -19,10 +19,10 @@ const { createCategory, deleteCategoryById, getAllCategories } = require('./cont
 const { requestProcurementSchema, getProcurementsSchema, getProcurementsHistorySchema, addVariantsSchema, setProcurementMinQuantitySchema, getProcurementsLowSchema, getOrderIdSchema, placeOrderSchema, rejectProcurementSchema, verifyProcurementSchema, addInvoiceProcurementSchema, getOrdersProcurementSchema, updateDeliveryProcurementSchema, updateDamageProcurementSchema, getDamagesSchema, updateMaintenanceProcurementSchema, getProcurementIdSchema } = require('./validators/procurement.validators')
 const { requestOrder, getAllProcurements, getAllProcurementsHistory, addProcurementVariants, setMinimumQuantity, getLowProcurements, placeOrder, rejectOrderRequest, verifyOrder, uploadInvoiceToOrder, getAllOrders, updateDeliveryDate, updateDamage, getDamageList, getProcurementById, updateMaintenance, getVendorPlacedOrders, getOrderIdDetails } = require('./controllers/procurement.controller')
 const { customerSchema, getCustomerSchema, pincodeSchema, businessCustomerSchema } = require('./validators/customer.validators')
-const { addToCartSchema, updateCartSchema, confirmCartSchema, getCustomerCartSchema, getBillingHistory, getBillApproveSchema } = require('./validators/billing.validators')
+const { addToCartSchema, updateCartSchema, confirmCartSchema, getCustomerCartSchema, getBillingHistory, getBillApproveSchema, getBillByIdSchema } = require('./validators/billing.validators')
 
 const { customerRegister, getCustomerByNumber, getPincode, registerBusinessCustomer, getBusinessCustomers, getCustomersList } = require('./controllers/customer.controller');
-const { addToCart, updateCart, confirmCart, getCustomerCart, getAllBillingHistory, approveBill } = require('./controllers/billings.controller');
+const { addToCart, updateCart, confirmCart, getCustomerCart, getAllBillingHistory, approveBill, getBillById } = require('./controllers/billings.controller');
 
 
 
@@ -113,9 +113,10 @@ router.get('/api/customer/get-customer/:phoneNumber', [authWall(['sales', 'preSa
 router.post('/api/billing/addToCart', [authWall(['sales', 'preSales']), bodyValidator(addToCartSchema)], addToCart)
 router.post('/api/billing/update-cart/:id', [authWall(['sales', 'preSales']),paramsToBody(['id'], "params"), bodyValidator(updateCartSchema)], updateCart)
 router.post('/api/billing/confirm-cart/:id', [authWall(['sales']),paramsToBody(['id'], "params"), bodyValidator(confirmCartSchema)], confirmCart)
-router.get('/api/billing/get-cart/:id', [authWall(['sales', 'preSales']),paramsToBody(['id'], "params"), bodyValidator(getCustomerCartSchema)], getCustomerCart)
+router.get('/api/billing/get-cart/:id', [authWall(['sales', 'preSales']),paramsToBody(['id'], "params"), paramsToBody(['billId'], "query"), bodyValidator(getCustomerCartSchema)], getCustomerCart)
 router.get('/api/billing/history', [authWall(['admin', 'sales']),paramsToBody(['pageNumber', 'isCount','startDate', 'endDate', 'sortBy', 'sortType', 'search', 'type'], 'query'), bodyValidator(getBillingHistory)], getAllBillingHistory)
 router.get('/api/billing/approve/:id', [authWall(['admin']), paramsToBody(['id'], 'params'), bodyValidator(getBillApproveSchema)], approveBill)
+router.get('/api/billing/get-bill/:id', [authWall(['admin', 'sales']), paramsToBody(['id'], 'params'), bodyValidator(getBillByIdSchema)], getBillById)
 
 
 // payments

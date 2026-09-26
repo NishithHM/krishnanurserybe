@@ -170,7 +170,61 @@ const BillingHistory = new mongoose.Schema({
     },
     onlineAmount:{
         type: Number
-    }
+    },
+    oldBilledItems:{
+        type: [{
+            procurementId: {
+                type: mongoose.Schema.Types.ObjectId,
+                required: true
+            },
+            procurementName: {
+                en: {
+                    name: {
+                        type: String,
+                        required: true,
+                    }
+                },
+                ka: {
+                    name: {
+                        type: String,
+                    }
+                }
+            },
+            variant: {
+                type: mongoose.Schema.Types.Mixed,
+            },
+            quantity: {
+                type: Number,
+                required: true,
+            },
+            mrp: {
+                type: Number, 	// saving this bcz, admin might increase/decrease price later
+                required: true,
+            },
+            rate: {
+                type: Number,
+                required: true,
+            },
+            type: {
+                type: String,
+            },
+            typeName: {
+                type: String,
+            },
+            gstAmount:{
+                type:Number
+            },
+            rateWithGst:{
+                type:Number
+            },
+            hsnCode:{
+                type:String
+            },
+            gst:{
+                type: Number
+            }
+        }],
+    },
 }, {
     timestamps: true
 })

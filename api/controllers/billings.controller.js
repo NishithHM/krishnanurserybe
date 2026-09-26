@@ -9,6 +9,7 @@ const { handleMongoError } = require('../utils');
 const loggers = require('../../loggers');
 const { uniqBy } = require('lodash');
 const Tracker = require('../models/tracker.model');
+const MetaData = require('../models/metaData.model');
 
 exports.addToCart = async (req, res) => {
     try {
@@ -67,11 +68,15 @@ exports.updateCart = async (req, res) => {
             const { errors, formattedItems, totalPrice, discount } = await validatePricesAndQuantityAndFormatItems(items, isWholeSale)
             if (isEmpty(errors)) {
                 if (formattedItems.length > 0) {
-                    billData.items = formattedItems;
                     billData.totalPrice = totalPrice;
                     billData.discount = discount;
                     billData.isWholeSale = isWholeSale
                     billData.isApproved = false
+                    if (billData.status === 'BILLED') {
+                        billData.status = 'RE_CART'
+                        billData.oldBilledItems = billData.items
+                    }
+                    billData.items = formattedItems;
                     const cartDetails = await billData.save()
                     res.status(200).send(cartDetails)
                 } else {
@@ -95,7 +100,7 @@ exports.updateCart = async (req, res) => {
 exports.confirmCart = async (req, res) => {
     const { id, roundOff = 0, paymentInfo, paymentType, cashAmount, onlineAmount} = req.body;
     try {
-        const billData = await Billing.findOne({ _id: new mongoose.mongo.ObjectId(id), status: 'CART' })
+        const billData = await Billing.findOne({ _id: new mongoose.mongo.ObjectId(id), status: { $in: ['CART', 'RE_CART'] } })
         if (billData) {
             loggers.info("fetched-bill-data",id)
             const roundOfError = validateRoundOff(billData.totalPrice, roundOff);
@@ -122,28 +127,44 @@ exports.confirmCart = async (req, res) => {
                             _id: req?.token?.id,
                             name: req?.token?.name
                         }
+                        const status = billData.status
+                        const oldCashAmount = billData.cashAmount
+                        const oldOnlineAmount = billData.onlineAmount
+                        const oldRoundOff = billData.roundOff
                         billData.totalPrice = billData.totalPrice - roundOff
                         billData.roundOff = roundOff
                         billData.status = "BILLED"
                         billData.billedBy = billedBy
-                        billData.billedDate = new Date()
                         billData.paymentInfo = paymentInfo
                         billData.cashAmount = cashAmount
                         billData.paymentType = paymentType
                         billData.onlineAmount = onlineAmount
-                        const trackerVal = await Tracker.findOne({name:"invoiceId"})
-                        loggers.info("fetched-bill-tracker", JSON.stringify({tracker:trackerVal.number, id}))
-                        console.log("fetched-bill-tracker", JSON.stringify({tracker:trackerVal.number, id}))
-                        billData.invoiceId = `NUR_${trackerVal.number}`
+                        let trackerVal
+                        if(status === 'CART'){
+                            trackerVal = await Tracker.findOne({name:"invoiceId"})
+                            loggers.info("fetched-bill-tracker", JSON.stringify({tracker:trackerVal.number, id}))
+                            console.log("fetched-bill-tracker", JSON.stringify({tracker:trackerVal.number, id}))
+                            billData.invoiceId = `NUR_${trackerVal.number}`
+                            billData.billedDate = new Date()
+                        }
+                        if (status === 'RE_CART') {
+                          const is_error =  await updateCronJobData(billData.toJSON(), oldCashAmount, oldOnlineAmount, oldRoundOff)
+                          if(is_error){
+                            res.status(400).send({ error: 'quantity cannot be increased while returning' })
+                            return
+                          }
+                        }
                         await billData.save()
-                        await updateRemainingQuantity(procurementQuantityMapping)
                         if (billData.customerNumber !== 1234567890) {
                             await updateCustomerPurchaseHistory(billData)
                         }
-                        trackerVal.number = trackerVal.number + 1
-                        await trackerVal.save()
-                        const trackerValNew = await Tracker.findOne({name:"invoiceId"})
-                        loggers.info("fetched-bill-tracker-new", JSON.stringify({ttracker:trackerValNew.number, id}))
+                        if (status === 'CART') {
+                            await updateRemainingQuantity(procurementQuantityMapping)
+                            trackerVal.number = trackerVal.number + 1
+                            await trackerVal.save()
+                            const trackerValNew = await Tracker.findOne({name:"invoiceId"})
+                            loggers.info("fetched-bill-tracker-new", JSON.stringify({ttracker:trackerValNew.number, id}))
+                        }
                         res.status(200).send(billData)
                     } else {
                         res.status(400).send({ error: errors.join(' ') })
@@ -169,15 +190,20 @@ exports.confirmCart = async (req, res) => {
 }
 
 exports.getCustomerCart = async (req, res) => {
-    const { id } = req.body;
-    try {
-        const pipeline = [
-            {
-                '$match': {
+    const { id, billId } = req.body;
+    const match = {
                     'customerId': new mongoose.mongo.ObjectId(id),
                     'status': 'CART',
                     type:"NURSERY"
-                },
+                }
+    if (billId) {
+        match._id = new mongoose.mongo.ObjectId(billId)
+        match.status = { $in: ['BILLED', 'RE_CART'] }
+    }            
+    try {
+        const pipeline = [
+            {
+                '$match': match,
             }, {
                 '$sort': {
                     updatedAt: -1
@@ -530,11 +556,67 @@ exports.approveBill = async (req, res)=>{
     res.json(billData.toJSON())
 }
 
+exports.getBillById = async (req, res)=>{
+    const {id} = req.body
+    const billData = await Billing.findOne({ _id: new mongoose.mongo.ObjectId(id), status: { $in: ['BILLED', 'RE_CART'] } })
+    res.json(billData.toJSON())
+}
+
+const updateCronJobData = async (billData, oldCashAmount, oldOnlineAmount, oldRoundOff) => {
+    const items = billData?.items
+    const oldBilledItems = billData?.oldBilledItems
+    const billedDate = dayjs(dayjs(billData.billedDate), 'YYYY-MM-DD').startOf('day').add(330, 'minute').toDate()
+    const diff = []
+
+    oldBilledItems.forEach(ele => {
+        const {quantity:oldQty, mrp:oldMrp, rate:oldRate, procurementId, variant} = ele
+        const item = items.find(item => item.procurementId.toString() === ele.procurementId.toString() && item.variant.variantId.toString() === ele.variant.variantId.toString())
+        diff.push({procurementId, variant, removedQuantity: oldQty - (item ? item.quantity : 0), saleAmountDiff: oldQty * oldRate - (item ? item.quantity * item.rate : 0)})
+    })
+
+    const is_error = diff.some(ele => {
+        return ele.removedQuantity < 0
+    })
+
+    if(is_error){
+        return true
+    }
+
+
+    for (const element of diff) {
+        const {procurementId, variant, removedQuantity, saleAmountDiff} = element
+        console.log("query", JSON.stringify({procurementId: new mongoose.mongo.ObjectId(procurementId), date: billedDate, type: "NURSERY"}))
+        const metaData = await MetaData.findOne({procurementId: new mongoose.mongo.ObjectId(procurementId), date: billedDate, type: "NURSERY"})
+        const bill_data = metaData?.bill_data || []
+        const new_bill = []
+        for (const bill of bill_data) {
+            if (bill.variant.variantId.toString() === variant.variantId.toString()) {
+                bill.quantity = bill.quantity - removedQuantity
+                bill.saleAmount = bill.saleAmount - saleAmountDiff
+                bill.salePerQuantity = bill.saleAmount / bill.quantity
+            }
+            new_bill.push(bill)
+        }
+        console.log("bill_data", metaData._id)
+        metaData.set('bill_data', new_bill)
+        console.log("metaData", metaData.toJSON())
+        const sales = metaData.sales 
+        sales.totalQuantity = sales.totalQuantity - removedQuantity
+        sales.totalSales = sales.totalSales - saleAmountDiff
+        await MetaData.findByIdAndUpdate(metaData._id, metaData.toJSON())
+        const procurment = await Procurements.findById(procurementId)
+        procurment.remainingQuantity = procurment.remainingQuantity + removedQuantity
+        await procurment.save()
+    }
+    const metaData = await MetaData.findOne({date: billedDate, type: "ROUNDOFF"})
+    metaData.set('totalRoundOff', metaData.totalRoundOff - (oldRoundOff - billData.roundOff))
+    metaData.set('totalCashAmount', metaData.totalCashAmount - (oldCashAmount - billData.cashAmount))
+    metaData.set('totalOnlineAmount', metaData.totalOnlineAmount - (oldOnlineAmount - billData.onlineAmount))
+    await MetaData.findByIdAndUpdate(metaData._id, metaData.toJSON())
+    return false
+
+}
 
 
 
-//should not be less than min price , more than max price
-//quantity should not be more than remaining quantity
-//cross verify total
-//should add sales done by
-//should add billedby,billed datetime
+

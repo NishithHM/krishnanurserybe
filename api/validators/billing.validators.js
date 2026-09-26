@@ -36,9 +36,14 @@ exports.confirmCartSchema = Joi.object().keys({
 
 exports.getCustomerCartSchema = Joi.object().keys({
     id: Joi.string().required(),
+    billId: Joi.string().optional()
 });
 
 exports.getBillApproveSchema = Joi.object().keys({
+    id: Joi.string().required(),
+});
+
+exports.getBillByIdSchema = Joi.object().keys({
     id: Joi.string().required(),
 });
 
