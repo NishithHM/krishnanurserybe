@@ -588,6 +588,9 @@ const updateCronJobData = async (billData, oldCashAmount, oldOnlineAmount, oldRo
         const {procurementId, variant, removedQuantity, saleAmountDiff} = element
         console.log("query", JSON.stringify({procurementId: new mongoose.mongo.ObjectId(procurementId), date: billedDate, type: "NURSERY"}))
         const metaData = await MetaData.findOne({procurementId: new mongoose.mongo.ObjectId(procurementId), date: billedDate, type: "NURSERY"})
+        if(!metaData){
+            continue
+        }
         const bill_data = metaData?.bill_data || []
         const new_bill = []
         for (const bill of bill_data) {
@@ -598,9 +601,7 @@ const updateCronJobData = async (billData, oldCashAmount, oldOnlineAmount, oldRo
             }
             new_bill.push(bill)
         }
-        console.log("bill_data", metaData._id)
         metaData.set('bill_data', new_bill)
-        console.log("metaData", metaData.toJSON())
         const sales = metaData.sales 
         sales.totalQuantity = sales.totalQuantity - removedQuantity
         sales.totalSales = sales.totalSales - saleAmountDiff
@@ -645,10 +646,12 @@ const updateCronJobData = async (billData, oldCashAmount, oldOnlineAmount, oldRo
     }
 
     const metaData = await MetaData.findOne({date: billedDate, type: "ROUNDOFF"})
-    metaData.set('totalRoundOff', metaData.totalRoundOff - (oldRoundOff - billData.roundOff))
-    metaData.set('totalCashAmount', metaData.totalCashAmount - (oldCashAmount - billData.cashAmount))
-    metaData.set('totalOnlineAmount', metaData.totalOnlineAmount - (oldOnlineAmount - billData.onlineAmount))
-    await MetaData.findByIdAndUpdate(metaData._id, metaData.toJSON())
+    if(metaData) {
+        metaData.set('totalRoundOff', metaData.totalRoundOff - (oldRoundOff - billData.roundOff))
+        metaData.set('totalCashAmount', metaData.totalCashAmount - (oldCashAmount - billData.cashAmount))
+        metaData.set('totalOnlineAmount', metaData.totalOnlineAmount - (oldOnlineAmount - billData.onlineAmount))
+        await MetaData.findByIdAndUpdate(metaData._id, metaData.toJSON())
+    }
     return false
 
 }
