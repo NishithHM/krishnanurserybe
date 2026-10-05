@@ -587,6 +587,9 @@ const updateCronJobData = async (billData, oldCashAmount, oldOnlineAmount, oldRo
     for (const element of diff) {
         const {procurementId, variant, removedQuantity, saleAmountDiff} = element
         console.log("query", JSON.stringify({procurementId: new mongoose.mongo.ObjectId(procurementId), date: billedDate, type: "NURSERY"}))
+        const procurment = await Procurements.findById(procurementId)
+        procurment.remainingQuantity = procurment.remainingQuantity + removedQuantity
+        await procurment.save()
         const metaData = await MetaData.findOne({procurementId: new mongoose.mongo.ObjectId(procurementId), date: billedDate, type: "NURSERY"})
         if(!metaData){
             continue
@@ -606,9 +609,7 @@ const updateCronJobData = async (billData, oldCashAmount, oldOnlineAmount, oldRo
         sales.totalQuantity = sales.totalQuantity - removedQuantity
         sales.totalSales = sales.totalSales - saleAmountDiff
         await MetaData.findByIdAndUpdate(metaData._id, metaData.toJSON())
-        const procurment = await Procurements.findById(procurementId)
-        procurment.remainingQuantity = procurment.remainingQuantity + removedQuantity
-        await procurment.save()
+       
     }
 
     for (const element of newlyAddedItems) {
@@ -632,7 +633,7 @@ const updateCronJobData = async (billData, oldCashAmount, oldOnlineAmount, oldRo
         }else{
             const newMetaData = new MetaData({
                 procurementId: new mongoose.mongo.ObjectId(procurementId),
-                name: procurement.names,
+                names: procurement.names,
                 remainingQuantity: procurement.remainingQuantity,
                 underMaintenanceQuantity: procurement.underMaintenanceQuantity,
                 category: procurement.category,
