@@ -562,13 +562,21 @@ exports.getBillById = async (req, res)=>{
     res.json(billData.toJSON())
 }
 
+const isToday = (date) => {
+    const today = dayjs().startOf('day')
+    const givenDate = dayjs(date).startOf('day')
+    return today.isSame(givenDate)
+}
+
 const updateCronJobData = async (billData, oldCashAmount, oldOnlineAmount, oldRoundOff) => {
     const items = billData?.items
     const oldBilledItems = billData?.oldBilledItems
     const billedDate = dayjs(dayjs(billData.billedDate), 'YYYY-MM-DD').startOf('day').add(330, 'minute').toDate()
     const diff = []
     const newlyAddedItems = items.filter(ele => !oldBilledItems.find(item => item.procurementId.toString() === ele.procurementId.toString() && item.variant.variantId.toString() === ele.variant.variantId.toString()))
-
+    if (isToday(billedDate)) {
+        return true
+    }
     oldBilledItems.forEach(ele => {
         const {quantity:oldQty, mrp:oldMrp, rate:oldRate, procurementId, variant} = ele
         const item = items.find(item => item.procurementId.toString() === ele.procurementId.toString() && item.variant.variantId.toString() === ele.variant.variantId.toString())

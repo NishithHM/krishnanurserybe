@@ -12,6 +12,7 @@ const AgriProcurementModel = require("../api/models/AgriProcurement.model")
 const agriVariantsModel = require("../api/models/agriVariants.model");
 const paymentModel = require("../api/models/payment.model");
 const customerModel = require("../api/models/customer.model")
+const { caluclateMetaData } = require("../crons/dailyCron")
 
 const addInvoiceToProcHistory = async ()=>{
     const res = await ProcurementHistory.updateMany({}, {$set: {invoice: 'null'}}, {upsert: false})
@@ -83,7 +84,7 @@ const clearS3 = ()=>{
 
 const dbCon = ()=>{
     const env = 'dev'
-    mongoose.connect(`mongodb+srv://sknProd:1ONEvuYlmiexoPA7@sknprod.fionm1o.mongodb.net/nursery_mgmt_${env}?retryWrites=true&w=majority`, {
+    mongoose.connect(`mongodb+srv://admin:admin123@cluster0.t2cxv.mongodb.net/nursery_mgmt_${env}?retryWrites=true&w=majority`, {
         useNewUrlParser: true,
         useUnifiedTopology: true,
       }
@@ -209,8 +210,8 @@ const removeBillingAgri = async (async)=>{
 
 const caluclateMetaDataAll = async()=>{
     const dates = []
-    let minDate = dayjs('2023-05-25', 'YYYY-MM-DD').add(330, 'minutes').toDate()
-    const maxDate = dayjs('2024-07-04', 'YYYY-MM-DD').add(330, 'minutes').toDate()
+    let minDate = dayjs('2026-10-07', 'YYYY-MM-DD').add(330, 'minutes').toDate()
+    const maxDate = dayjs('2026-10-08', 'YYYY-MM-DD').add(330, 'minutes').toDate()
     while(minDate<maxDate){
         dates.push(minDate)
         minDate = dayjs(minDate).add(1, 'day').toDate()
@@ -389,9 +390,9 @@ const startScripts =async()=>{
     // testApi()
     console.log('db connected')
     // await totalPriceWithoutGst()
-    await updateCustomer()
+    // await updateCustomer()
     console.log('done')
-    // await caluclateMetaDataAll()
+    await caluclateMetaDataAll()
   //  await excelImport("Plant Info")
       // await sectionImport('Section')
     // console.log('done')
