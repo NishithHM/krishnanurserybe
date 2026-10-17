@@ -571,7 +571,7 @@ const isToday = (date) => {
 const updateCronJobData = async (billData, oldCashAmount, oldOnlineAmount, oldRoundOff) => {
     const items = billData?.items
     const oldBilledItems = billData?.oldBilledItems
-    const billedDate = dayjs(dayjs(billData.billedDate), 'YYYY-MM-DD').startOf('day').add(330, 'minute').toDate()
+    const billedDate = dayjs(dayjs(billData.billedDate), 'YYYY-MM-DD').startOf('day').toDate()
     const diff = []
     const newlyAddedItems = items.filter(ele => !oldBilledItems.find(item => item.procurementId.toString() === ele.procurementId.toString() && item.variant.variantId.toString() === ele.variant.variantId.toString()))
     if (isToday(billedDate)) {
